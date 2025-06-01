@@ -1,3 +1,4 @@
+// components/about.tsx
 "use client"
 
 import { motion } from "framer-motion"
@@ -9,7 +10,7 @@ export default function About() {
     <section id="about" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <motion.h2
-          className="text-center mb-16"
+          className="text-center mb-16 text-4xl font-bold"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -19,6 +20,7 @@ export default function About() {
         </motion.h2>
 
         <div className="grid md:grid-cols-2 gap-12 items-center">
+          {/* Left: Headshot */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -27,8 +29,8 @@ export default function About() {
           >
             <div className="relative w-full aspect-square max-w-md mx-auto">
               <Image
-                src="/placeholder.svg?height=400&width=400"
-                alt="John Doe"
+                src="/victor-nabasu.jpg"
+                alt="Victor Nabasu"
                 width={400}
                 height={400}
                 className="rounded-lg object-cover shadow-lg"
@@ -36,6 +38,7 @@ export default function About() {
             </div>
           </motion.div>
 
+          {/* Right: Concise Bio */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -44,20 +47,12 @@ export default function About() {
           >
             <Card className="shadow-lg border-none">
               <CardContent className="p-6 md:p-8">
-                <h3 className="text-2xl font-bold mb-4">Hi, I'm John</h3>
-                <p className="mb-4">
-                  I'm a passionate Full Stack Developer with over 5 years of experience building modern web
-                  applications. I specialize in creating responsive, accessible, and performant websites that deliver
-                  exceptional user experiences.
+                <h3 className="text-2xl font-bold mb-4">Hi, I’m Victor</h3>
+                <p className="mb-6 text-base leading-relaxed">
+                  I’m a Full Stack Developer and software engineering student in London, passionate about transforming complex problems into elegant, production-ready code.
                 </p>
-                <p className="mb-4">
-                  My journey in web development began with a curiosity about how things work on the internet. That
-                  curiosity evolved into a career where I've had the opportunity to work with startups and established
-                  companies alike, helping them bring their digital visions to life.
-                </p>
-                <p>
-                  When I'm not coding, you can find me exploring new technologies, contributing to open-source projects,
-                  or enjoying outdoor activities to recharge my creative energy.
+                <p className="text-base leading-relaxed">
+                  I’ve worked on projects ranging from satellite modeling to domain‐specific languages (DSML) and AI‐powered web apps. In my free time, I mentor aspiring developers and explore new AI and DevOps technologies.
                 </p>
               </CardContent>
             </Card>

@@ -1,159 +1,128 @@
+// components/projects.tsx
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, Github, ChevronDown, LayoutGrid } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
 
-const projects = [
+interface Project {
+  id: number
+  title: string
+  description: string
+  image?: string
+  technologies: string[]
+  liveUrl?: string
+  githubUrl?: string
+}
+
+const projects: Project[] = [
   {
     id: 1,
-    title: "E-Commerce Platform",
-    description: "A full-featured online store with cart, checkout, and payment processing",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["Next.js", "TypeScript", "Tailwind CSS", "Stripe"],
-    liveUrl: "#",
-    githubUrl: "#",
+    title: "Simple SQL Server",
+    description:
+      "A lightweight SQLite clone with persistence written in C—built from scratch following the cstack tutorial.",
+    image: "/projects/simple-sql.svg",
+    technologies: ["C", "Bash"],
+    githubUrl: "https://github.com/NeroSiegfried/simple-sql-server",
   },
   {
     id: 2,
-    title: "Task Management App",
-    description: "A collaborative task manager with real-time updates and team features",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["React", "Firebase", "Styled Components", "Redux"],
-    liveUrl: "#",
-    githubUrl: "#",
+    title: "EasyChess DSML",
+    description:
+      "A domain-specific modelling language for chess notation, with syntax highlighting, code validation, and code generation—implemented in Java & Xtext.",
+    image: "/projects/easychess-dsml.svg",
+    technologies: ["Java", "Xtext", "Xtend"],
+    githubUrl: "https://github.com/NeroSiegfried/easychess-dsml",
   },
   {
     id: 3,
-    title: "Health & Fitness Tracker",
-    description: "Mobile-first application for tracking workouts and nutrition goals",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["React Native", "GraphQL", "Node.js", "MongoDB"],
-    liveUrl: "#",
-    githubUrl: "#",
+    title: "Fitness Tracker",
+    description:
+      "A web-based fitness tracker that recommends workouts and meals for beginners via OpenAI API. Includes metrics, workout history, and progressive overload features.",
+    image: "/projects/fitness-tracker.svg",
+    technologies: ["React", "Node.js", "OpenAI API"],
+    liveUrl: "#", // add if deployed
+    githubUrl: "https://github.com/NeroSiegfried/fitness-tracker",
   },
   {
     id: 4,
-    title: "AI Content Generator",
-    description: "Tool that uses machine learning to generate blog posts and social media content",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["Python", "TensorFlow", "Flask", "React"],
+    title: "Anagrams Game",
+    description:
+      "A single-player, web-based implementation of Game Pigeon’s anagram game—for practice and paywall feature access simulation.",
+    image: "/projects/anagrams-game.svg",
+    technologies: ["JavaScript", "HTML", "CSS"],
     liveUrl: "#",
-    githubUrl: "#",
+    githubUrl: "https://github.com/NeroSiegfried/anagrams-game",
   },
   {
     id: 5,
-    title: "Real Estate Marketplace",
-    description: "Platform connecting buyers, sellers, and agents with property listings and virtual tours",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["Vue.js", "Node.js", "Express", "MongoDB"],
+    title: "Blog Platform",
+    description:
+      "A simple multi-role blog with separate features for the owner, registered users, and guests—showcasing full-stack front-end and back-end skills.",
+    image: "/projects/blog-platform.svg",
+    technologies: ["React", "Node.js", "MongoDB"],
     liveUrl: "#",
-    githubUrl: "#",
+    githubUrl: "https://github.com/NeroSiegfried/blog-platform",
   },
   {
     id: 6,
-    title: "Social Media Dashboard",
-    description: "Analytics dashboard for tracking engagement across multiple social platforms",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["React", "D3.js", "Material UI", "Firebase"],
-    liveUrl: "#",
-    githubUrl: "#",
+    title: "Report Generator",
+    description:
+      "Web app that automates a departmental report by scraping an external database and formatting results; integrates AI API to suggest insights to newcomers.",
+    image: "/projects/report-generator.svg",
+    technologies: ["Python", "Flask", "BeautifulSoup", "AI API"],
+    githubUrl: "https://github.com/NeroSiegfried/report-generator",
   },
   {
     id: 7,
-    title: "Video Streaming Service",
-    description: "Platform for creators to upload, manage, and monetize video content",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["Next.js", "AWS S3", "FFmpeg", "Stripe"],
-    liveUrl: "#",
-    githubUrl: "#",
-  },
-  {
-    id: 8,
-    title: "Recipe Sharing Community",
-    description: "Social platform for food enthusiasts to share and discover recipes",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["React", "GraphQL", "PostgreSQL", "Cloudinary"],
-    liveUrl: "#",
-    githubUrl: "#",
-  },
-  {
-    id: 9,
-    title: "Learning Management System",
-    description: "Educational platform with courses, quizzes, and progress tracking",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["Angular", "Node.js", "MongoDB", "Socket.io"],
-    liveUrl: "#",
-    githubUrl: "#",
-  },
-  {
-    id: 10,
-    title: "Weather Forecast App",
-    description: "Real-time weather data with interactive maps and alerts",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["React", "OpenWeatherAPI", "Mapbox", "PWA"],
-    liveUrl: "#",
-    githubUrl: "#",
-  },
-  {
-    id: 11,
-    title: "Cryptocurrency Dashboard",
-    description: "Real-time tracking and analysis of cryptocurrency markets",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["Vue.js", "Chart.js", "CoinGecko API", "Vuetify"],
-    liveUrl: "#",
-    githubUrl: "#",
-  },
-  {
-    id: 12,
-    title: "Travel Itinerary Planner",
-    description: "Tool for planning and organizing travel itineraries with maps and recommendations",
-    image: "/placeholder.svg?height=300&width=500",
-    technologies: ["React", "Google Maps API", "Node.js", "MongoDB"],
-    liveUrl: "#",
-    githubUrl: "#",
+    title: "Model Surveillance Satellite",
+    description:
+      "Collaborated on a team to design, model, and program a surveillance satellite prototype—handled networking, image processing, and general programming.",
+    image: "/projects/model-satellite.svg",
+    technologies: ["C++", "Python", "OpenCV"],
+    githubUrl: "https://github.com/NeroSiegfried/model-surveillance-satellite",
   },
 ]
 
 export default function Projects() {
-  const [visibleProjects, setVisibleProjects] = useState(3)
+  const [visible, setVisible] = useState(3)
 
-  const showMoreProjects = () => {
-    setVisibleProjects((prev) => Math.min(prev + 3, projects.length))
+  const showMore = () => {
+    setVisible((prev) => Math.min(prev + 3, projects.length))
   }
-
-  const showAllProjects = () => {
-    setVisibleProjects(projects.length)
+  const showAll = () => {
+    setVisible(projects.length)
   }
 
   return (
     <section id="projects" className="py-20">
       <div className="container mx-auto px-4">
         <motion.h2
-          className="text-center mb-16"
+          className="text-center mb-16 text-4xl font-bold"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          Featured Projects
+          My Projects
         </motion.h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.slice(0, visibleProjects).map((project, index) => (
+          {projects.slice(0, visible).map((project, idx) => (
             <motion.div
               key={project.id}
               className="project-card"
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
             >
               <div className="project-card-inner h-full">
+                {/* Front side */}
                 <Card className="project-card-front h-full flex flex-col">
                   <div className="relative h-48 w-full">
                     <Image
@@ -165,7 +134,9 @@ export default function Projects() {
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
                     <h3 className="text-xl font-bold mb-2">{project.title}</h3>
-                    <p className="text-muted-foreground mb-4 flex-grow">{project.description}</p>
+                    <p className="text-muted-foreground mb-4 flex-grow">
+                      {project.description}
+                    </p>
                     <div className="flex flex-wrap gap-2 mt-auto">
                       {project.technologies.slice(0, 2).map((tech) => (
                         <Badge key={tech} variant="secondary" className="text-xs">
@@ -181,6 +152,7 @@ export default function Projects() {
                   </div>
                 </Card>
 
+                {/* Back side */}
                 <Card className="project-card-back absolute inset-0 h-full flex flex-col justify-center items-center p-6">
                   <h3 className="text-xl font-bold mb-4">{project.title}</h3>
                   <div className="flex flex-wrap gap-2 justify-center mb-6">
@@ -191,18 +163,22 @@ export default function Projects() {
                     ))}
                   </div>
                   <div className="flex gap-4">
-                    <Button asChild size="sm" className="gap-2">
-                      <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        Live Demo
-                      </a>
-                    </Button>
-                    <Button asChild variant="outline" size="sm" className="gap-2">
-                      <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
-                        <Github className="h-4 w-4" />
-                        Code
-                      </a>
-                    </Button>
+                    {project.liveUrl && (
+                      <Button asChild size="sm" className="gap-2">
+                        <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                          Live Demo
+                        </a>
+                      </Button>
+                    )}
+                    {project.githubUrl && (
+                      <Button asChild variant="outline" size="sm" className="gap-2">
+                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                          <Github className="h-4 w-4" />
+                          Code
+                        </a>
+                      </Button>
+                    )}
                   </div>
                 </Card>
               </div>
@@ -210,7 +186,7 @@ export default function Projects() {
           ))}
         </div>
 
-        {visibleProjects < projects.length && (
+        {visible < projects.length && (
           <motion.div
             className="flex justify-center mt-12 gap-4"
             initial={{ opacity: 0 }}
@@ -218,16 +194,15 @@ export default function Projects() {
             transition={{ delay: 0.5 }}
           >
             <Button
-              onClick={showMoreProjects}
+              onClick={showMore}
               variant="outline"
               className="gap-2 border-primary text-primary hover:bg-primary/10"
             >
               Show More
               <ChevronDown className="h-4 w-4" />
             </Button>
-
             <Button
-              onClick={showAllProjects}
+              onClick={showAll}
               variant="outline"
               className="gap-2 border-secondary text-secondary hover:bg-secondary/10"
             >

@@ -1,3 +1,4 @@
+// components/footer.tsx
 "use client"
 
 import { motion, useScroll, useTransform } from "framer-motion"
@@ -27,25 +28,11 @@ export default function Footer() {
           aria-hidden="true"
         >
           <defs>
-            <pattern
-              id="trianglePattern"
-              patternUnits="userSpaceOnUse"
-              width="40"
-              height="40"
-            >
-              {/* Upward‐pointing triangle */}
-              <polygon
-                points="20,0 40,20 0,20"
-                fill="rgba(255, 255, 255, 0.1)"
-              />
-              {/* Downward‐pointing triangle */}
-              <polygon
-                points="20,40 0,20 40,20"
-                fill="rgba(255, 255, 255, 0.1)"
-              />
+            <pattern id="trianglePattern" patternUnits="userSpaceOnUse" width="40" height="40">
+              <polygon points="20,0 40,20 0,20" fill="rgba(255,255,255,0.1)" />
+              <polygon points="20,40 0,20 40,20" fill="rgba(255,255,255,0.1)" />
             </pattern>
           </defs>
-
           <rect width="100%" height="100%" fill="url(#trianglePattern)" />
         </svg>
       </div>
@@ -53,16 +40,18 @@ export default function Footer() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-6 md:mb-0">
-            <h3 className="text-2xl font-bold">John Doe</h3>
-            <p className="text-primary-foreground/80">Full Stack Developer</p>
+            <h3 className="text-2xl font-bold">Victor Nabasu</h3>
+            <p className="text-primary-foreground/80">Full Stack Developer & Engineer</p>
           </div>
 
           <div className="flex gap-6">
             <a
-              href="#"
+              href="https://github.com/NeroSiegfried"
               className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+              aria-label="GitHub"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <span className="sr-only">GitHub</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -80,10 +69,12 @@ export default function Footer() {
               </svg>
             </a>
             <a
-              href="#"
+              href="https://www.linkedin.com/in/victor-nabasu-8b5223212/"
               className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+              aria-label="LinkedIn"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <span className="sr-only">LinkedIn</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -104,8 +95,9 @@ export default function Footer() {
             <a
               href="#"
               className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+              aria-label="Twitter"
             >
-              <span className="sr-only">Twitter</span>
+              {/* If you don’t have a Twitter, you can remove this or link to another */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -126,7 +118,7 @@ export default function Footer() {
 
         <div className="mt-8 pt-8 border-t border-primary-foreground/20 text-center">
           <p className="text-primary-foreground/80">
-            &copy; {new Date().getFullYear()} John Doe. All rights reserved.
+            &copy; {new Date().getFullYear()} Victor Nabasu. All rights reserved.
           </p>
         </div>
       </div>

@@ -103,7 +103,7 @@
   transition: filter 0.3s ease;
 }
 
-.tech-logo:hover {
+.tech-item:hover .tech-logo {
   filter: grayscale(0%);
 }
 

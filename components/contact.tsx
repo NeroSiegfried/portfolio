@@ -1,6 +1,5 @@
+// components/contact.tsx
 "use client"
-
-import type React from "react"
 
 import { useState } from "react"
 import { motion } from "framer-motion"
@@ -17,7 +16,6 @@ export default function Contact() {
     email: "",
     message: "",
   })
-
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -29,25 +27,20 @@ export default function Contact() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate form submission
+    // simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Here you would normally send the form data to Formspree or another service
     console.log("Form submitted:", formState)
 
-    // Reset form
     setFormState({ name: "", email: "", message: "" })
     setIsSubmitting(false)
-
-    // Show success message (in a real app, you'd use a toast or alert)
     alert("Message sent successfully!")
   }
 
   return (
-    <section id="contact" className="py-20">
+    <section id="contact" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <motion.h2
-          className="text-center mb-16"
+          className="text-center mb-16 text-4xl font-bold"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -57,54 +50,71 @@ export default function Contact() {
         </motion.h2>
 
         <div className="grid lg:grid-cols-2 gap-12">
+          {/* Left: Contact info */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="h-full">
+            <Card className="h-full border-none shadow-lg">
               <CardContent className="p-6 flex flex-col h-full">
                 <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
-
-                <div className="space-y-6 flex-grow">
+                <div className="space-y-6 flex-grow text-sm">
                   <div className="flex items-start gap-4">
                     <Mail className="h-6 w-6 text-primary mt-1" />
                     <div>
                       <h4 className="font-medium">Email</h4>
                       <a
-                        href="mailto:hello@johndoe.dev"
+                        href="mailto:victornabasu@yahoo.com"
                         className="text-muted-foreground hover:text-primary transition-colors"
                       >
-                        hello@johndoe.dev
+                        victornabasu@yahoo.com
                       </a>
                     </div>
                   </div>
-
                   <div className="flex items-start gap-4">
                     <Phone className="h-6 w-6 text-primary mt-1" />
                     <div>
-                      <h4 className="font-medium">Phone</h4>
-                      <a href="tel:+11234567890" className="text-muted-foreground hover:text-primary transition-colors">
-                        +1 (123) 456-7890
+                      <h4 className="font-medium">Phone (UK)</h4>
+                      <a
+                        href="tel:+447881177717"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        +44 7881 177717
                       </a>
                     </div>
                   </div>
-
+                  <div className="flex items-start gap-4">
+                    <Phone className="h-6 w-6 text-primary mt-1" />
+                    <div>
+                      <h4 className="font-medium">Phone (Nigeria)</h4>
+                      <a
+                        href="tel:+2348099016465"
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        +234 8099 016465
+                      </a>
+                    </div>
+                  </div>
                   <div className="flex items-start gap-4">
                     <MapPin className="h-6 w-6 text-primary mt-1" />
                     <div>
                       <h4 className="font-medium">Location</h4>
-                      <p className="text-muted-foreground">San Francisco, CA</p>
+                      <p className="text-muted-foreground">London, UK (Remote)</p>
                     </div>
                   </div>
                 </div>
-
                 <div className="mt-8">
-                  <h4 className="font-medium mb-4">Follow Me</h4>
+                  <h4 className="font-medium mb-4">Social Profiles</h4>
                   <div className="flex gap-4">
                     <Button variant="outline" size="icon" asChild>
-                      <a href="#" aria-label="GitHub">
+                      <a
+                        href="https://github.com/NeroSiegfried"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="GitHub"
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -123,7 +133,12 @@ export default function Contact() {
                       </a>
                     </Button>
                     <Button variant="outline" size="icon" asChild>
-                      <a href="#" aria-label="LinkedIn">
+                      <a
+                        href="https://www.linkedin.com/in/victor-nabasu-8b5223212/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="LinkedIn"
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -142,40 +157,22 @@ export default function Contact() {
                         </svg>
                       </a>
                     </Button>
-                    <Button variant="outline" size="icon" asChild>
-                      <a href="#" aria-label="Twitter">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="lucide lucide-twitter"
-                        >
-                          <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                        </svg>
-                      </a>
-                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
+          {/* Right: Contact form */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Card>
+            <Card className="border-none shadow-lg">
               <CardContent className="p-6">
                 <h3 className="text-2xl font-bold mb-6">Send Me a Message</h3>
-
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-base">
@@ -191,7 +188,6 @@ export default function Contact() {
                       className="h-12"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-base">
                       Email
@@ -207,7 +203,6 @@ export default function Contact() {
                       className="h-12"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="message" className="text-base">
                       Message
@@ -222,7 +217,6 @@ export default function Contact() {
                       className="min-h-[150px] resize-none"
                     />
                   </div>
-
                   <Button
                     type="submit"
                     className="w-full h-12 bg-primary hover:bg-primary/90 text-white"
