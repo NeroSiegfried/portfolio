@@ -8,6 +8,10 @@ import nodemailer from "nodemailer"
 // e.g. use a dedicated SMTP service like Gmail, SendGrid, or ProtonMail.
 // Below is an example using a Gmail SMTP account. Adapt as needed.
 
+export async function GET() {
+  return NextResponse.json({ status: "ok" });
+}
+
 export async function POST(request: NextRequest) {
   const { name, email, message } = await request.json()
 

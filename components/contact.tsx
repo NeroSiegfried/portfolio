@@ -18,7 +18,9 @@ export default function Contact() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target
     setFormState((prev) => ({ ...prev, [name]: value }))
   }
@@ -27,13 +29,23 @@ export default function Contact() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Form submitted:", formState)
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formState),
+      })
 
-    setFormState({ name: "", email: "", message: "" })
-    setIsSubmitting(false)
-    alert("Message sent successfully!")
+      if (!response.ok) throw new Error("Network response was not ok")
+
+      setFormState({ name: "", email: "", message: "" })
+      alert("Message sent successfully!") // or use a toast
+    } catch (error) {
+      console.error("Error submitting form:", error)
+      alert("There was an error sending your message.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -101,7 +113,9 @@ export default function Contact() {
                     <MapPin className="h-6 w-6 text-primary mt-1" />
                     <div>
                       <h4 className="font-medium">Location</h4>
-                      <p className="text-muted-foreground">London, UK (Remote)</p>
+                      <p className="text-muted-foreground">
+                        London, UK (Remote)
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -157,6 +171,29 @@ export default function Contact() {
                         </svg>
                       </a>
                     </Button>
+                    <Button variant="outline" size="icon" asChild>
+                      <a
+                        href="https://twitter.com/NeroSiegfried"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Twitter"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-twitter"
+                        >
+                          <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                        </svg>
+                      </a>
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -172,7 +209,9 @@ export default function Contact() {
           >
             <Card className="border-none shadow-lg">
               <CardContent className="p-6">
-                <h3 className="text-2xl font-bold mb-6">Send Me a Message</h3>
+                <h3 className="text-2xl font-bold mb-6">
+                  Send Me a Message
+                </h3>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-base">
