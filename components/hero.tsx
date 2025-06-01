@@ -1,3 +1,4 @@
+// components/Hero.tsx
 "use client"
 
 import { useEffect, useRef } from "react"
@@ -17,10 +18,10 @@ export default function Hero() {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Keep track of mouse position & whether it's over the canvas
-    const mouse = { x: 0, y: 0, isOver: false }
+    // Start the mouse far away; we'll update it when it's over the canvas
+    const mouse = { x: -9999, y: -9999 }
 
-    // Resize canvas to full viewport
+    // Resize canvas to fill its parent (Hero is h-screen)
     const resizeCanvas = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
@@ -28,20 +29,26 @@ export default function Hero() {
     resizeCanvas()
     window.addEventListener("resize", resizeCanvas)
 
-    // Add mouse listeners to capture cursor position
+    // Every time the cursor moves, compute its position relative to the canvas bounding box.
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect()
-      mouse.x = e.clientX - rect.left
-      mouse.y = e.clientY - rect.top
-      mouse.isOver = true
-    }
-    const handleMouseLeave = () => {
-      mouse.isOver = false
-    }
-    canvas.addEventListener("mousemove", handleMouseMove)
-    canvas.addEventListener("mouseleave", handleMouseLeave)
+      const mx = e.clientX - rect.left
+      const my = e.clientY - rect.top
 
-    // Particle class (same as before, but we'll add a “repel” step in update())
+      // If the cursor is within the visible part of this canvas element:
+      if (mx >= 0 && mx <= rect.width && my >= 0 && my <= rect.height) {
+        mouse.x = mx
+        mouse.y = my
+      } else {
+        // If the cursor is outside the canvas area, push it far away
+        mouse.x = -9999
+        mouse.y = -9999
+      }
+    }
+
+    window.addEventListener("mousemove", handleMouseMove)
+
+    // Particle class, same as before but using updated mouse.x/mouse.y logic
     class Particle {
       x: number
       y: number
@@ -58,44 +65,36 @@ export default function Hero() {
       }
 
       update() {
-        // Basic drift
+        // 1) Drift
         this.x += this.speedX
         this.y += this.speedY
 
-        // Wrap around edges
+        // 2) Wrap around edges
         if (this.x > canvas.width) this.x = 0
         else if (this.x < 0) this.x = canvas.width
         if (this.y > canvas.height) this.y = 0
         else if (this.y < 0) this.y = canvas.height
 
-        // If the mouse is over the canvas, apply a small repelling force
-        if (mouse.isOver) {
-          const dx = this.x - mouse.x
-          const dy = this.y - mouse.y
-          const dist = Math.hypot(dx, dy)
+        // 3) Compute distance to mouse every frame
+        const dx = this.x - mouse.x
+        const dy = this.y - mouse.y
+        const dist = Math.hypot(dx, dy)
 
-          // If within 100px of cursor, push particle away
-          const influenceRadius = 100
-          if (dist < influenceRadius && dist > 0) {
-            // Normed direction vector:
-            const ux = dx / dist
-            const uy = dy / dist
+        const influenceRadius = 100
+        if (dist < influenceRadius && dist > 0) {
+          // Normalize
+          const ux = dx / dist
+          const uy = dy / dist
+          // Strength falls off from 1 at dist=0 → 0 at dist=100
+          const force = (influenceRadius - dist) / influenceRadius
+          const pushStrength = 2.5 // tweak for a more noticeable bounce
 
-            // The “strength” falls off as you get farther from the cursor:
-            // so particles right at the cursor get strongest push,
-            // and at 100px there's no push.
-            const force = (influenceRadius - dist) / influenceRadius
-
-            // Apply a small instantaneous push to the particle’s position
-            const pushStrength = 2 // tweak this (e.g. 1.5–3) to taste
-            this.x += ux * force * pushStrength
-            this.y += uy * force * pushStrength
-          }
+          this.x += ux * force * pushStrength
+          this.y += uy * force * pushStrength
         }
       }
 
       draw() {
-        if (!ctx) return
         ctx.fillStyle =
           resolvedTheme === "dark"
             ? "rgba(47, 112, 255, 0.3)"
@@ -107,6 +106,7 @@ export default function Hero() {
       }
     }
 
+    // Initialize particles
     const particles: Particle[] = []
     const particleCount = 100
 
@@ -137,16 +137,13 @@ export default function Hero() {
     if (!prefersReducedMotion) {
       animate()
     } else {
-      // If reduced motion is requested, draw a static snapshot
-      for (const p of particles) {
-        p.draw()
-      }
+      // If reduced motion is requested, just draw one static frame
+      for (const p of particles) p.draw()
     }
 
     return () => {
       window.removeEventListener("resize", resizeCanvas)
-      canvas.removeEventListener("mousemove", handleMouseMove)
-      canvas.removeEventListener("mouseleave", handleMouseLeave)
+      window.removeEventListener("mousemove", handleMouseMove)
       cancelAnimationFrame(animationId)
     }
   }, [resolvedTheme])
