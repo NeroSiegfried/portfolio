@@ -13,10 +13,10 @@ interface Project {
   id: number
   title: string
   description: string
-  image?: string
+  coverUrl: string          // GitHub OG preview URL
   technologies: string[]
   liveUrl?: string
-  githubUrl?: string
+  githubUrl: string         // actual GitHub repo URL
 }
 
 const projects: Project[] = [
@@ -25,78 +25,74 @@ const projects: Project[] = [
     title: "Simple SQL Server",
     description:
       "A lightweight SQLite clone with persistence written in C—built from scratch following the cstack tutorial.",
-    image: "/projects/simple-sql.svg",
+    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/C-Database", 
     technologies: ["C", "Bash"],
-    githubUrl: "https://github.com/NeroSiegfried/simple-sql-server",
+    githubUrl: "https://github.com/NeroSiegfried/C-Database", 
   },
   {
     id: 2,
     title: "EasyChess DSML",
     description:
       "A domain-specific modelling language for chess notation, with syntax highlighting, code validation, and code generation—implemented in Java & Xtext.",
-    image: "/projects/easychess-dsml.svg",
+    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/EasyChess-DSL", 
     technologies: ["Java", "Xtext", "Xtend"],
-    githubUrl: "https://github.com/NeroSiegfried/easychess-dsml",
+    githubUrl: "https://github.com/NeroSiegfried/EasyChess-DSL", 
   },
   {
     id: 3,
     title: "Fitness Tracker",
     description:
       "A web-based fitness tracker that recommends workouts and meals for beginners via OpenAI API. Includes metrics, workout history, and progressive overload features.",
-    image: "/projects/fitness-tracker.svg",
+    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/fitness-tracker", 
     technologies: ["React", "Node.js", "OpenAI API"],
-    liveUrl: "#", // add if deployed
-    githubUrl: "https://github.com/NeroSiegfried/fitness-tracker",
+    liveUrl: "#", // update if deployed
+    githubUrl: "https://github.com/NeroSiegfried/fitness-tracker", 
   },
   {
     id: 4,
     title: "Anagrams Game",
     description:
       "A single-player, web-based implementation of Game Pigeon’s anagram game—for practice and paywall feature access simulation.",
-    image: "/projects/anagrams-game.svg",
+    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/anagrams-game", 
     technologies: ["JavaScript", "HTML", "CSS"],
     liveUrl: "#",
-    githubUrl: "https://github.com/NeroSiegfried/anagrams-game",
+    githubUrl: "https://github.com/NeroSiegfried/anagrams-game", 
   },
   {
     id: 5,
     title: "Blog Platform",
     description:
-      "A simple multi-role blog with separate features for the owner, registered users, and guests—showcasing full-stack front-end and back-end skills.",
-    image: "/projects/blog-platform.svg",
-    technologies: ["React", "Node.js", "MongoDB"],
+      "A simple multi-role blog with separate features for the owner, registered users, and guests—showcasing full-stack front-end and back-end skills using EJS templates and PostgreSQL.",
+    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/blog-project", 
+    technologies: ["EJS", "HTML", "CSS", "JavaScript", "PostgreSQL"],
     liveUrl: "#",
-    githubUrl: "https://github.com/NeroSiegfried/blog-platform",
+    githubUrl: "https://github.com/NeroSiegfried/blog-project", 
   },
   {
     id: 6,
     title: "Report Generator",
     description:
       "Web app that automates a departmental report by scraping an external database and formatting results; integrates AI API to suggest insights to newcomers.",
-    image: "/projects/report-generator.svg",
+    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/report-generator", 
     technologies: ["Python", "Flask", "BeautifulSoup", "AI API"],
-    githubUrl: "https://github.com/NeroSiegfried/report-generator",
+    githubUrl: "https://github.com/NeroSiegfried/report-generator", 
   },
   {
     id: 7,
     title: "Model Surveillance Satellite",
     description:
       "Collaborated on a team to design, model, and program a surveillance satellite prototype—handled networking, image processing, and general programming.",
-    image: "/projects/model-satellite.svg",
-    technologies: ["C++", "Python", "OpenCV"],
-    githubUrl: "https://github.com/NeroSiegfried/model-surveillance-satellite",
+    coverUrl: "/projects/model-satellite.jpg", 
+    technologies: ["Python", "Linux", "Bash", "FFmpeg"],
+    githubUrl: "#", // Not on GitHub
   },
 ]
 
 export default function Projects() {
   const [visible, setVisible] = useState(3)
 
-  const showMore = () => {
-    setVisible((prev) => Math.min(prev + 3, projects.length))
-  }
-  const showAll = () => {
-    setVisible(projects.length)
-  }
+  const showMore = () => setVisible((prev) => Math.min(prev + 3, projects.length))
+  const showAll = () => setVisible(projects.length)
 
   return (
     <section id="projects" className="py-20">
@@ -126,20 +122,26 @@ export default function Projects() {
                 <Card className="project-card-front h-full flex flex-col">
                   <div className="relative h-48 w-full">
                     <Image
-                      src={project.image || "/placeholder.svg"}
-                      alt={project.title}
+                      src={project.coverUrl}
+                      alt={`${project.title} cover`}
                       fill
                       className="object-cover rounded-t-lg"
                     />
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-xl font-bold mb-2">{project.title}</h3>
+                    <h3 className="text-xl font-bold mb-2">
+                      {project.title}
+                    </h3>
                     <p className="text-muted-foreground mb-4 flex-grow">
                       {project.description}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-auto">
                       {project.technologies.slice(0, 2).map((tech) => (
-                        <Badge key={tech} variant="secondary" className="text-xs">
+                        <Badge
+                          key={tech}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {tech}
                         </Badge>
                       ))}
@@ -157,7 +159,11 @@ export default function Projects() {
                   <h3 className="text-xl font-bold mb-4">{project.title}</h3>
                   <div className="flex flex-wrap gap-2 justify-center mb-6">
                     {project.technologies.map((tech) => (
-                      <Badge key={tech} variant="secondary" className="text-xs">
+                      <Badge
+                        key={tech}
+                        variant="secondary"
+                        className="text-xs"
+                      >
                         {tech}
                       </Badge>
                     ))}
@@ -165,15 +171,23 @@ export default function Projects() {
                   <div className="flex gap-4">
                     {project.liveUrl && (
                       <Button asChild size="sm" className="gap-2">
-                        <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={project.liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <ExternalLink className="h-4 w-4" />
                           Live Demo
                         </a>
                       </Button>
                     )}
-                    {project.githubUrl && (
+                    {project.githubUrl !== "#" && (
                       <Button asChild variant="outline" size="sm" className="gap-2">
-                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={project.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <Github className="h-4 w-4" />
                           Code
                         </a>
