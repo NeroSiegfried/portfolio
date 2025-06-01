@@ -87,7 +87,6 @@ export default function TechStack() {
   useEffect(() => {
     const unsubscribe = x.onChange((latest) => {
       if (latest <= -ONE_SET_WIDTH + 3) {
-        console.log("Resetting loop")
         // Stop the current animation
         controls.stop()
         x.set(0) // Reset x to 0
