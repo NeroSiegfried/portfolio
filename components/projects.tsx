@@ -22,15 +22,25 @@ interface Project {
 const projects: Project[] = [
   {
     id: 1,
+    title: "Anagrams - Word Puzzle Game",
+    description:
+      "A cozy word-play challenge with casino-style elegance. Features single-player mode and real-time multiplayer matches. This was an experiment to test the limitations of AI tools in building complex web applications with modern technologies.",
+    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/anagrams2", 
+    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "PostgreSQL", "Neon", "Vercel", "Cursor"],
+    liveUrl: "https://v0-anagram-game-requirements-bipbl8ho2-nerosiegfrieds-projects.vercel.app",
+    githubUrl: "https://github.com/NeroSiegfried/anagrams2", 
+  },
+  {
+    id: 2,
     title: "Simple SQL Server",
     description:
       "A lightweight SQLite clone with persistence written in C—built from scratch following the cstack tutorial.",
     coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/C-Database", 
-    technologies: ["C", "Bash"],
+    technologies: ["C", "Bash", "RSpec"],
     githubUrl: "https://github.com/NeroSiegfried/C-Database", 
   },
   {
-    id: 2,
+    id: 3,
     title: "EasyChess DSML",
     description:
       "A domain-specific modelling language for chess notation, with syntax highlighting, code validation, and code generation—implemented in Java & Xtext.",
@@ -39,7 +49,7 @@ const projects: Project[] = [
     githubUrl: "https://github.com/NeroSiegfried/EasyChess-DSL", 
   },
   {
-    id: 3,
+    id: 4,
     title: "Fitness Tracker",
     description:
       "A web-based fitness tracker that recommends workouts and meals for beginners via OpenAI API. Includes metrics, workout history, and progressive overload features.",
@@ -49,17 +59,17 @@ const projects: Project[] = [
     githubUrl: "https://github.com/NeroSiegfried/fitness-tracker", 
   },
   {
-    id: 4,
-    title: "Anagrams Game",
+    id: 5,
+    title: "Anagrams Game (Legacy)",
     description:
-      "A single-player, web-based implementation of Game Pigeon’s anagram game—for practice and paywall feature access simulation.",
+      "A single-player, web-based implementation of Game Pigeon's anagram game—for practice and paywall feature access simulation.",
     coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/anagrams-game", 
     technologies: ["JavaScript", "HTML", "CSS"],
     liveUrl: "#",
     githubUrl: "https://github.com/NeroSiegfried/anagrams-game", 
   },
   {
-    id: 5,
+    id: 6,
     title: "Blog Platform",
     description:
       "A simple multi-role blog with separate features for the owner, registered users, and guests—showcasing full-stack front-end and back-end skills using EJS templates and PostgreSQL.",
@@ -69,7 +79,7 @@ const projects: Project[] = [
     githubUrl: "https://github.com/NeroSiegfried/blog-project", 
   },
   {
-    id: 6,
+    id: 7,
     title: "Report Generator",
     description:
       "Web app that automates a departmental report by scraping an external database and formatting results; integrates AI API to suggest insights to newcomers.",
@@ -78,7 +88,7 @@ const projects: Project[] = [
     githubUrl: "https://github.com/NeroSiegfried/report-generator", 
   },
   {
-    id: 7,
+    id: 8,
     title: "Model Surveillance Satellite",
     description:
       "Collaborated on a team to design, model, and program a surveillance satellite prototype—handled networking, image processing, and general programming.",
