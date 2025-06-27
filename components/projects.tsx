@@ -27,7 +27,7 @@ const projects: Project[] = [
       "A cozy word-play challenge with casino-style elegance. Features single-player mode and real-time multiplayer matches. This was an experiment to test the limitations of AI tools in building complex web applications with modern technologies.",
     coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/anagrams2", 
     technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "PostgreSQL", "Neon", "Vercel", "Cursor"],
-    liveUrl: "https://v0-anagram-game-requirements-bipbl8ho2-nerosiegfrieds-projects.vercel.app",
+    liveUrl: "https://v0-anagram-game-requirements-3kan9rqne-nerosiegfrieds-projects.vercel.app/",
     githubUrl: "https://github.com/NeroSiegfried/anagrams2", 
   },
   {
