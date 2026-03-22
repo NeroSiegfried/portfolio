@@ -21,11 +21,21 @@ interface Project {
 
 const projects: Project[] = [
   {
+    id: 9,
+    title: "LoopBridge (ongoing)",
+    description:
+      "A website development project for a crypto trading community. Project was done in plain HTML, CSS and JavaScript so it is easy for any frontend developer to contribute and maintain regardless of their tech stack. The website is still in development and will be deployed soon.",
+    coverUrl: "./projects/LoopBridge.png",
+    technologies: ["HTML", "CSS", "JavaScript"],
+    liveUrl: "https://nerosiegfried.github.io/LoopBridge/",
+    githubUrl: "https://github.com/NeroSiegfried/LoopBridge",
+  },
+  {
     id: 1,
     title: "Anagrams - Word Puzzle Game",
     description:
       "A cozy word-play challenge with casino-style elegance. Features single-player mode and real-time multiplayer matches. This was an experiment to test the limitations of AI tools in building complex web applications with modern technologies.",
-    coverUrl: "https://opengraph.githubassets.com/1/NeroSiegfried/anagrams2", 
+    coverUrl: "./projects/Anagrams.png", 
     technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "PostgreSQL", "Neon", "Vercel", "Cursor"],
     liveUrl: "https://v0-anagram-game-requirements.vercel.app/",
     githubUrl: "https://github.com/NeroSiegfried/anagrams2", 
@@ -96,6 +106,7 @@ const projects: Project[] = [
     technologies: ["Python", "Linux", "Bash", "FFmpeg"],
     githubUrl: "#", // Not on GitHub
   },
+  
 ]
 
 export default function Projects() {

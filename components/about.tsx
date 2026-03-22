@@ -49,10 +49,16 @@ export default function About() {
               <CardContent className="p-6 md:p-8">
                 <h3 className="text-2xl font-bold mb-4">Hi, I’m Victor</h3>
                 <p className="mb-6 text-base leading-relaxed">
-                  I’m a Full Stack Developer and software engineering student in London, passionate about transforming complex problems into elegant, production-ready code.
+                  I’m a Full Stack Developer and Software Engineer in London, passionate about transforming complex problems into elegant, production-ready code.
+                </p>
+                <p className="mb-6 text-base leading-relaxed">
+                  I’ve worked on projects ranging from satellite modeling to domain‐specific languages (DSML) and AI‐powered web apps. In my free time, I leetcode, play Japanese RPGs, and explore new AI and DevOps technologies.
+                </p>
+                <p className="mb-6 text-base leading-relaxed">
+                  I am currently on a "CS from scratch" quest because my first degree is in Electrical Engineering, and I want to cover my CS fundamentals more deeply. I document it on my X account (<a href="https://x.com/NeroSiegfried" target="_blank" rel="noopener noreferrer">@NeroSiegfried</a>), but expect a blog soon!
                 </p>
                 <p className="text-base leading-relaxed">
-                  I’ve worked on projects ranging from satellite modeling to domain‐specific languages (DSML) and AI‐powered web apps. In my free time, I mentor aspiring developers and explore new AI and DevOps technologies.
+                  I’m currently seeking new opportunities to apply my skills and grow as a developer. If you have an interesting project or role in mind, let’s connect!
                 </p>
               </CardContent>
             </Card>

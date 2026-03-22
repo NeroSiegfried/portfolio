@@ -114,7 +114,7 @@ export default function Contact() {
                     <div>
                       <h4 className="font-medium">Location</h4>
                       <p className="text-muted-foreground">
-                        London, UK (Remote)
+                        London, UK (in-person & Remote)
                       </p>
                     </div>
                   </div>

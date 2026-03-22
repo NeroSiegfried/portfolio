@@ -170,7 +170,7 @@ export default function Hero() {
         >
           <h1 className="text-5xl md:text-6xl font-bold mb-4">Victor Nabasu</h1>
           <p className="text-xl md:text-2xl mb-8 text-muted-foreground">
-            MSc Advanced Software Engineering student & Full Stack Developer
+            Software Engineer & Full Stack Developer
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
