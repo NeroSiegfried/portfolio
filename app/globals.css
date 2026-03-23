@@ -107,6 +107,66 @@
   filter: grayscale(0%);
 }
 
+/* Footer radial pattern */
+.footer-pattern {
+  --s: 150px;
+  --c1: hsl(220 100% 59%);
+  --c2: hsl(220 100% 49%);
+  --_g:
+    var(--c1) 0% 5%, var(--c2) 6% 15%, var(--c1) 16% 25%, var(--c2) 26% 35%, var(--c1) 36% 45%,
+    var(--c2) 46% 55%, var(--c1) 56% 65%, var(--c2) 66% 75%, var(--c1) 76% 85%, var(--c2) 86% 95%,
+    transparent 96%;
+  background:
+    radial-gradient(50% 50% at 100% 0, var(--_g)),
+    radial-gradient(50% 50% at 0 100%, var(--_g)),
+    radial-gradient(50% 50%, var(--_g)),
+    radial-gradient(50% 50%, var(--_g)) calc(var(--s) / 2) calc(var(--s) / 2)
+    var(--c1);
+  background-size: var(--s) var(--s);
+}
+
+.dark .footer-pattern {
+  --c1: hsl(220 60% 20%);
+  --c2: hsl(220 60% 14%);
+}
+
+/* Ripple wave overlay — ~6 waves visible on desktop, fewer on mobile */
+.footer-ripple {
+  position: absolute;
+  inset: 0;
+  /*
+    Each cycle = 240px (wave: 0–120px, gap: 120px–240px).
+    Total width = 2400px = 10 cycles, always more than enough to fill viewport.
+  */
+  width: 2400px;
+  background: repeating-linear-gradient(
+    90deg,
+    hsl(220 100% 85% / 0.00)   0px,
+    hsl(220 100% 85% / 0.05)  60px,
+    hsl(220 100% 85% / 0.07) 120px,
+    hsl(220 100% 85% / 0.05) 180px,
+    hsl(220 100% 85% / 0.00) 240px
+  );
+  animation: footer-ripple-wave 10s linear infinite;
+  pointer-events: none;
+}
+
+.dark .footer-ripple {
+  background: repeating-linear-gradient(
+    90deg,
+    hsl(220 60% 60% / 0.00)   0px,
+    hsl(220 60% 60% / 0.04)  60px,
+    hsl(220 60% 60% / 0.06) 120px,
+    hsl(220 60% 60% / 0.04) 180px,
+    hsl(220 60% 60% / 0.00) 240px
+  );
+}
+
+@keyframes footer-ripple-wave {
+  0%   { transform: translateX(-240px); }
+  100% { transform: translateX(0); }
+}
+
 .project-card {
   perspective: 1000px;
 }

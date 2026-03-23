@@ -72,50 +72,50 @@ export default function Contact() {
             <Card className="h-full border-none shadow-lg">
               <CardContent className="p-6 flex flex-col h-full">
                 <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
-                <div className="space-y-6 flex-grow text-sm">
-                  <div className="flex items-start gap-4">
-                    <Mail className="h-6 w-6 text-primary mt-1" />
+                <div className="space-y-5 flex-grow">
+                  <div className="flex items-center gap-4">
+                    <Mail className="h-5 w-5 text-primary shrink-0" />
                     <div>
-                      <h4 className="font-medium">Email</h4>
+                      <h4 className="text-sm font-semibold">Email</h4>
                       <a
                         href="mailto:victornabasu@yahoo.com"
-                        className="text-muted-foreground hover:text-primary transition-colors"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
                       >
                         victornabasu@yahoo.com
                       </a>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <Phone className="h-6 w-6 text-primary mt-1" />
+                  <div className="flex items-center gap-4">
+                    <Phone className="h-5 w-5 text-primary shrink-0" />
                     <div>
-                      <h4 className="font-medium">Phone (UK)</h4>
+                      <h4 className="text-sm font-semibold">Phone (UK)</h4>
                       <a
                         href="tel:+447881177717"
-                        className="text-muted-foreground hover:text-primary transition-colors"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
                       >
                         +44 7881 177717
                       </a>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <Phone className="h-6 w-6 text-primary mt-1" />
+                  <div className="flex items-center gap-4">
+                    <Phone className="h-5 w-5 text-primary shrink-0" />
                     <div>
-                      <h4 className="font-medium">Phone (Nigeria)</h4>
+                      <h4 className="text-sm font-semibold">Phone (Nigeria)</h4>
                       <a
                         href="tel:+2348099016465"
-                        className="text-muted-foreground hover:text-primary transition-colors"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
                       >
                         +234 8099 016465
                       </a>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <MapPin className="h-6 w-6 text-primary mt-1" />
+                  <div className="flex items-center gap-4">
+                    <MapPin className="h-5 w-5 text-primary shrink-0" />
                     <div>
-                      <h4 className="font-medium">Location</h4>
-                      <p className="text-muted-foreground">
+                      <h4 className="text-sm font-semibold">Location</h4>
+                      <span className="text-sm text-muted-foreground">
                         London, UK (in-person & Remote)
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>

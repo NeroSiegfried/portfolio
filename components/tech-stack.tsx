@@ -131,7 +131,7 @@ export default function TechStack() {
                 key={`${tech.name}-${idx}`}
                 whileHover={{ scale: 1.1, zIndex: 10 }}
               >
-                <Card className="tech-item flex-shrink-0 w-36 h-36 p-6 flex flex-col items-center justify-center transition-all duration-300 hover:shadow-lg hover:border-primary/50 hover:bg-background/80">
+                <Card className="tech-item flex-shrink-0 w-36 h-36 p-6 flex flex-col items-center justify-center transition-all duration-300 hover:shadow-lg hover:border-primary/50 hover:bg-background/80 dark:bg-muted/60 dark:hover:bg-muted">
                   <div className="relative w-20 h-20 mb-2">
                     <Image
                       src={tech.logo}

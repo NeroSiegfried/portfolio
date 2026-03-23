@@ -2,8 +2,7 @@
 "use client"
 
 import { motion, useScroll, useTransform } from "framer-motion"
-import { useRef, useEffect } from "react"
-import { useTheme } from "next-themes"
+import { useRef } from "react"
 
 export default function Footer() {
   const footerRef = useRef<HTMLElement>(null)
@@ -13,136 +12,18 @@ export default function Footer() {
   })
 
   const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1])
-  const { theme } = useTheme()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth
-      canvas.height = canvas.offsetHeight
-    }
-    resizeCanvas()
-    window.addEventListener("resize", resizeCanvas)
-
-    // Circuit board animation
-    const nodes: Array<{ x: number; y: number; connections: number[] }> = []
-    const traces: Array<{ from: number; to: number; progress: number; speed: number }> = []
-    
-    // Create nodes
-    for (let i = 0; i < 15; i++) {
-      nodes.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        connections: []
-      })
-    }
-
-    // Create connections
-    for (let i = 0; i < nodes.length; i++) {
-      const numConnections = Math.floor(Math.random() * 3) + 1
-      for (let j = 0; j < numConnections; j++) {
-        const target = Math.floor(Math.random() * nodes.length)
-        if (target !== i && !nodes[i].connections.includes(target)) {
-          nodes[i].connections.push(target)
-          traces.push({
-            from: i,
-            to: target,
-            progress: Math.random(),
-            speed: 0.005 + Math.random() * 0.01
-          })
-        }
-      }
-    }
-
-    let animationId: number
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      
-      // Set theme-based colors
-      const bgColor = theme === "dark" ? "rgba(0, 0, 0, 0.1)" : "rgba(255, 255, 255, 0.1)"
-      const nodeColor = theme === "dark" ? "#00ff88" : "#0066cc"
-      const traceColor = theme === "dark" ? "#00cc66" : "#0099ff"
-      const pulseColor = theme === "dark" ? "#00ffaa" : "#00aaff"
-
-      // Draw traces
-      traces.forEach(trace => {
-        const fromNode = nodes[trace.from]
-        const toNode = nodes[trace.to]
-        
-        ctx.strokeStyle = traceColor
-        ctx.lineWidth = 2
-        ctx.setLineDash([5, 5])
-        ctx.lineDashOffset = -Date.now() * 0.01
-        
-        ctx.beginPath()
-        ctx.moveTo(fromNode.x, fromNode.y)
-        ctx.lineTo(toNode.x, toNode.y)
-        ctx.stroke()
-        
-        // Animated pulse along trace
-        const pulseX = fromNode.x + (toNode.x - fromNode.x) * trace.progress
-        const pulseY = fromNode.y + (toNode.y - fromNode.y) * trace.progress
-        
-        ctx.fillStyle = pulseColor
-        ctx.beginPath()
-        ctx.arc(pulseX, pulseY, 3, 0, Math.PI * 2)
-        ctx.fill()
-        
-        trace.progress += trace.speed
-        if (trace.progress > 1) {
-          trace.progress = 0
-        }
-      })
-
-      // Draw nodes
-      nodes.forEach(node => {
-        ctx.fillStyle = nodeColor
-        ctx.beginPath()
-        ctx.arc(node.x, node.y, 5, 0, Math.PI * 2)
-        ctx.fill()
-        
-        // Node pulse effect
-        ctx.strokeStyle = pulseColor
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.arc(node.x, node.y, 10 + Math.sin(Date.now() * 0.003) * 5, 0, Math.PI * 2)
-        ctx.stroke()
-      })
-
-      animationId = requestAnimationFrame(animate)
-    }
-
-    animate()
-
-    return () => {
-      window.removeEventListener("resize", resizeCanvas)
-      cancelAnimationFrame(animationId)
-    }
-  }, [theme])
 
   return (
     <motion.footer
       ref={footerRef}
-      className="relative py-12 overflow-hidden bg-primary text-primary-foreground"
+      className="footer-pattern relative py-12 overflow-hidden text-primary-foreground"
       style={{ opacity }}
     >
-      {/* Circuit board background animation */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full opacity-40"
-        style={{ zIndex: 0 }}
-      />
-      
-      {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-primary/10" />
+      {/* Subtle gradient overlay to soften the pattern */}
+      <div className="absolute inset-0 bg-primary/60" />
+
+      {/* Slow left-to-right ripple on the lighter colour */}
+      <div className="footer-ripple" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-center">
