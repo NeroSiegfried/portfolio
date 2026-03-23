@@ -1,23 +1,10 @@
 // components/footer.tsx
 "use client"
 
-import { motion, useScroll, useTransform } from "framer-motion"
-import { useRef } from "react"
-
 export default function Footer() {
-  const footerRef = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: footerRef,
-    offset: ["start end", "end end"],
-  })
-
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1])
-
   return (
-    <motion.footer
-      ref={footerRef}
+    <footer
       className="footer-pattern relative py-12 overflow-hidden text-primary-foreground"
-      style={{ opacity }}
     >
       {/* Subtle gradient overlay to soften the pattern */}
       <div className="absolute inset-0 bg-primary/60" />
@@ -27,7 +14,7 @@ export default function Footer() {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-6 md:mb-0">
+          <div className="mb-6 md:mb-0 text-center md:text-left">
             <h3 className="text-2xl font-bold">Victor Nabasu</h3>
             <p className="text-primary-foreground/80">
               Full Stack Developer & Engineer
@@ -92,6 +79,6 @@ export default function Footer() {
           </p>
         </div>
       </div>
-    </motion.footer>
+    </footer>
   )
 }

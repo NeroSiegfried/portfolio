@@ -150,7 +150,7 @@ export default function Projects() {
                     />
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
-                    <h3 className="text-xl font-bold mb-2">
+                    <h3 className="text-xl font-bold mb-2 text-center md:text-left">
                       {project.title}
                     </h3>
                     <p className="text-muted-foreground mb-4 flex-grow">
@@ -231,7 +231,7 @@ export default function Projects() {
             <Button
               onClick={showMore}
               variant="outline"
-              className="gap-2 border-primary text-primary hover:bg-primary/10"
+              className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             >
               Show More
               <ChevronDown className="h-4 w-4" />
@@ -239,7 +239,7 @@ export default function Projects() {
             <Button
               onClick={showAll}
               variant="outline"
-              className="gap-2 border-secondary text-secondary hover:bg-secondary/10"
+              className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
             >
               Show All
               <LayoutGrid className="h-4 w-4" />

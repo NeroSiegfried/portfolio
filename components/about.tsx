@@ -47,7 +47,7 @@ export default function About() {
           >
             <Card className="shadow-lg border-none">
               <CardContent className="p-6 md:p-8">
-                <h3 className="text-2xl font-bold mb-4">Hi, I’m Victor</h3>
+                <h3 className="text-2xl font-bold mb-4 text-center md:text-left">Hi, I'm Victor</h3>
                 <p className="mb-6 text-base leading-relaxed">
                   I’m a Full Stack Developer and Software Engineer in London, passionate about transforming complex problems into elegant, production-ready code.
                 </p>

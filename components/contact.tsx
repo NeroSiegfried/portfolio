@@ -71,7 +71,7 @@ export default function Contact() {
           >
             <Card className="h-full border-none shadow-lg">
               <CardContent className="p-6 flex flex-col h-full">
-                <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
+                <h3 className="text-2xl font-bold mb-6 text-center lg:text-left">Contact Information</h3>
                 <div className="space-y-5 flex-grow">
                   <div className="flex items-center gap-4">
                     <Mail className="h-5 w-5 text-primary shrink-0" />
@@ -186,7 +186,7 @@ export default function Contact() {
           >
             <Card className="border-none shadow-lg">
               <CardContent className="p-6">
-                <h3 className="text-2xl font-bold mb-6">
+                <h3 className="text-2xl font-bold mb-6 text-center lg:text-left">
                   Send Me a Message
                 </h3>
                 <form onSubmit={handleSubmit} className="space-y-6">

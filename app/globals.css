@@ -16,13 +16,13 @@
     --primary: 220 100% 59%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 12 100% 64%;
+    --secondary: 12 100% 54%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 220 10% 90%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 12 100% 64%;
+    --accent: 12 100% 54%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 100% 50%;
@@ -48,13 +48,13 @@
     --primary: 220 100% 59%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 12 100% 64%;
+    --secondary: 12 100% 54%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 20%;
     --muted-foreground: 0 0% 70%;
 
-    --accent: 12 100% 64%;
+    --accent: 12 100% 54%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 100% 50%;
@@ -126,39 +126,39 @@
 }
 
 .dark .footer-pattern {
-  --c1: hsl(220 60% 20%);
-  --c2: hsl(220 60% 14%);
+  /* c2 stays at the old dark shade (49% lightness mapped to dark palette) */
+  /* c1 drops below c2: the old light shade becomes the dark one */
+  --c1: hsl(220 100% 39%);
+  --c2: hsl(220 100% 49%);
 }
 
-/* Ripple wave overlay — ~6 waves visible on desktop, fewer on mobile */
+/* Ripple wave overlay — targets the constant shade (c2) */
 .footer-ripple {
   position: absolute;
   inset: 0;
-  /*
-    Each cycle = 240px (wave: 0–120px, gap: 120px–240px).
-    Total width = 2400px = 10 cycles, always more than enough to fill viewport.
-  */
   width: 2400px;
+  /* Ripple lightens toward c2 (hsl 220 100% 49%) — the shade that stays constant */
   background: repeating-linear-gradient(
     90deg,
-    hsl(220 100% 85% / 0.00)   0px,
-    hsl(220 100% 85% / 0.05)  60px,
-    hsl(220 100% 85% / 0.07) 120px,
-    hsl(220 100% 85% / 0.05) 180px,
-    hsl(220 100% 85% / 0.00) 240px
+    hsl(220 100% 70% / 0.00)   0px,
+    hsl(220 100% 70% / 0.05)  60px,
+    hsl(220 100% 70% / 0.07) 120px,
+    hsl(220 100% 70% / 0.05) 180px,
+    hsl(220 100% 70% / 0.00) 240px
   );
   animation: footer-ripple-wave 10s linear infinite;
   pointer-events: none;
 }
 
 .dark .footer-ripple {
+  /* In dark mode c2 is the constant (brighter) shade — keep ripple subtle on it */
   background: repeating-linear-gradient(
     90deg,
-    hsl(220 60% 60% / 0.00)   0px,
-    hsl(220 60% 60% / 0.04)  60px,
-    hsl(220 60% 60% / 0.06) 120px,
-    hsl(220 60% 60% / 0.04) 180px,
-    hsl(220 60% 60% / 0.00) 240px
+    hsl(220 100% 70% / 0.00)   0px,
+    hsl(220 100% 70% / 0.04)  60px,
+    hsl(220 100% 70% / 0.06) 120px,
+    hsl(220 100% 70% / 0.04) 180px,
+    hsl(220 100% 70% / 0.00) 240px
   );
 }
 
