@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const configuredEntry = normalize(process.env.NEXT_PUBLIC_ADMIN_ENTRY_PATH ?? "/control")
+  const configuredEntry = normalize(process.env.ADMIN_ENTRY_PATH ?? "/control")
 
   if (configuredEntry === "/control") {
     return NextResponse.next()

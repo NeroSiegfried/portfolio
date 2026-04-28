@@ -157,7 +157,7 @@ export async function ensureAdminAccountOnDemand(email: string, password: string
 }
 
 export function getAdminEntryPath() {
-  const value = process.env.NEXT_PUBLIC_ADMIN_ENTRY_PATH
+  const value = process.env.ADMIN_ENTRY_PATH
   if (!value) return "/control"
   return value.startsWith("/") ? value : `/${value}`
 }
