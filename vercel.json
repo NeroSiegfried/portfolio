@@ -1,1 +1,14 @@
-{}
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "blog.nerosiegfried.com" }],
+      "destination": "/blog"
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "blog.nerosiegfried.com" }],
+      "destination": "/blog/:path*"
+    }
+  ]
+}

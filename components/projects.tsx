@@ -600,32 +600,40 @@ function PicturePreview({ project }: { project: Project }) {
 
 function ProjectActions({ project }: { project: Project }) {
   return (
-    <div className="mt-6 mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-      {project.blogPostSlug ? (
-        <Button asChild size="sm" variant="outline" className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-          <Link href={`/blog/${project.blogPostSlug}`}>
-            <BookOpen className="h-4 w-4" />
-            Read Article
-          </Link>
-        </Button>
-      ) : (
-        <p className="text-sm text-muted-foreground">(coming soon...)</p>
-      )}
+    <div className="mt-6 mb-8 flex flex-col gap-3">
+      {/* Row 1: Repository (left) + Read Article (right) */}
+      <div className="flex gap-3">
+        {project.githubUrl ? (
+          <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+            <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+              <Github className="h-4 w-4" />
+              Repository
+            </a>
+          </Button>
+        ) : (
+          <div className="flex-1" />
+        )}
 
+        {project.blogPostSlug ? (
+          <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            <Link href={`/blog/${project.blogPostSlug}`}>
+              <BookOpen className="h-4 w-4" />
+              Read Article
+            </Link>
+          </Button>
+        ) : (
+          <div className="flex-1">
+            <p className="text-sm text-muted-foreground text-center">(coming soon...)</p>
+          </div>
+        )}
+      </div>
+
+      {/* Row 2: Live Site full width */}
       {project.liveUrl ? (
-        <Button asChild size="sm" className="gap-2">
+        <Button asChild size="default" className="w-full gap-2">
           <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4" />
             Live Site
-          </a>
-        </Button>
-      ) : null}
-
-      {project.githubUrl ? (
-        <Button asChild size="sm" variant="outline" className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-          <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
-            <Github className="h-4 w-4" />
-            Repository
           </a>
         </Button>
       ) : null}
