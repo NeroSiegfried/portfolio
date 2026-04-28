@@ -1,0 +1,114 @@
+export type UserRole = "admin" | "user"
+
+export interface BlogUser {
+  id: string
+  username: string
+  email: string
+  passwordHash: string
+  role: UserRole
+  createdAt: string
+  blocked?: boolean
+}
+
+export interface BlogSession {
+  token: string
+  userId: string
+  createdAt: string
+  expiresAt: string
+}
+
+export interface BlogSeries {
+  id: string
+  slug: string
+  title: string
+  description: string
+  type: string
+  parentId: string | null
+  themeClass: string | null
+  /** Optional format string for entry labels. Use {n}, {roman}, {ROMAN}, {alpha}, {ALPHA}.
+   *  Examples: "Project {n}", "Chapter {roman}", "Part {ROMAN}" */
+  numberFormat?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type BlogPostStatus = "draft" | "published"
+
+export interface BlogPost {
+  id: string
+  slug: string
+  title: string
+  excerpt: string
+  content: string
+  seriesId: string | null
+  status: BlogPostStatus
+  authorId: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string | null
+}
+
+export interface BlogSnippet {
+  id: string
+  slug: string
+  title: string
+  description: string
+  html: string
+  css: string
+  js: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BlogComment {
+  id: string
+  postId: string
+  userId: string
+  parentId: string | null
+  content: string
+  createdAt: string
+  updatedAt: string
+  editedAt?: string
+  hidden?: boolean
+}
+
+export interface BlogCommentVote {
+  id: string
+  commentId: string
+  userId: string
+  value: -1 | 1
+}
+
+export interface BlogPostVote {
+  id: string
+  postId: string
+  userId: string
+  value: 1
+}
+
+export interface BlogDb {
+  users: BlogUser[]
+  sessions: BlogSession[]
+  series: BlogSeries[]
+  posts: BlogPost[]
+  snippets: BlogSnippet[]
+  comments: BlogComment[]
+  commentVotes: BlogCommentVote[]
+  postVotes: BlogPostVote[]
+}
+
+export interface PublicUser {
+  id: string
+  username: string
+  role: UserRole
+}
+
+export interface SeriesNode extends BlogSeries {
+  children: SeriesNode[]
+}
+
+export interface CommentNode extends BlogComment {
+  children: CommentNode[]
+  username: string
+  score: number
+}

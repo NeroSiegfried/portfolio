@@ -19,7 +19,7 @@ export default function About() {
           About Me
         </motion.h2>
 
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left: Headshot */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -27,12 +27,12 @@ export default function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="relative w-full aspect-square max-w-md mx-auto">
+            <div className="relative aspect-square w-full max-w-sm mx-auto">
               <Image
                 src="/victor-nabasu.jpg"
                 alt="Victor Nabasu"
-                width={400}
-                height={400}
+                fill
+                sizes="(max-width: 768px) calc(100vw - 32px), 384px"
                 className="rounded-lg object-cover shadow-lg"
               />
             </div>

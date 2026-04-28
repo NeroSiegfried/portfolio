@@ -6,10 +6,16 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowDown } from "lucide-react"
 import { useTheme } from "next-themes"
+import Link from "next/link"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export default function Hero() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { resolvedTheme } = useTheme()
+  // Keep theme in a ref so the animation loop can read the latest value
+  // without being listed as a dependency (which would restart the whole effect)
+  const themeRef = useRef(resolvedTheme)
+  useEffect(() => { themeRef.current = resolvedTheme }, [resolvedTheme])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -17,6 +23,9 @@ export default function Hero() {
 
     const ctx = canvas.getContext("2d")
     if (!ctx) return
+
+    const renderCanvas = canvas
+    const renderCtx = ctx
 
     // Start the mouse far away; we'll update it when it's over the canvas
     const mouse = { x: -9999, y: -9999 }
@@ -57,8 +66,8 @@ export default function Hero() {
       speedY: number
 
       constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
+        this.x = Math.random() * renderCanvas.width
+        this.y = Math.random() * renderCanvas.height
         this.size = Math.random() * 2 + 1 // radius between 1px and 3px
         this.speedX = Math.random() * 0.5 - 0.25
         this.speedY = Math.random() * 0.5 - 0.25
@@ -70,10 +79,10 @@ export default function Hero() {
         this.y += this.speedY
 
         // 2) Wrap around edges
-        if (this.x > canvas.width) this.x = 0
-        else if (this.x < 0) this.x = canvas.width
-        if (this.y > canvas.height) this.y = 0
-        else if (this.y < 0) this.y = canvas.height
+        if (this.x > renderCanvas.width) this.x = 0
+        else if (this.x < 0) this.x = renderCanvas.width
+        if (this.y > renderCanvas.height) this.y = 0
+        else if (this.y < 0) this.y = renderCanvas.height
 
         // 3) Compute distance to mouse every frame
         const dx = this.x - mouse.x
@@ -95,14 +104,14 @@ export default function Hero() {
       }
 
       draw() {
-        ctx.fillStyle =
-          resolvedTheme === "dark"
+        renderCtx.fillStyle =
+          themeRef.current === "dark"
             ? "rgba(47, 112, 255, 0.3)"
             : "rgba(47, 112, 255, 0.2)"
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx.closePath()
-        ctx.fill()
+        renderCtx.beginPath()
+        renderCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+        renderCtx.closePath()
+        renderCtx.fill()
       }
     }
 
@@ -146,7 +155,7 @@ export default function Hero() {
       window.removeEventListener("mousemove", handleMouseMove)
       cancelAnimationFrame(animationId)
     }
-  }, [resolvedTheme])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id)
@@ -161,6 +170,19 @@ export default function Hero() {
         className="absolute inset-0 w-full h-full -z-10"
         aria-hidden="true"
       />
+
+      <div className="absolute inset-x-0 top-0 z-20">
+        <div className="container mx-auto flex items-center justify-end gap-3 px-4 py-6">
+          <Button
+            asChild
+            variant="outline"
+            className="border-primary text-primary px-4 transition-transform duration-200 hover:scale-[1.03]"
+          >
+            <Link href="/blog">Read Blog</Link>
+          </Button>
+          <ModeToggle />
+        </div>
+      </div>
 
       <div className="container mx-auto px-4 z-10 text-center">
         <motion.div
@@ -182,7 +204,7 @@ export default function Hero() {
             </Button>
             <Button
               variant="outline"
-              className="border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03]"
+              className="border-primary text-primary px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03]"
               onClick={() => scrollToSection("contact")}
             >
               Contact Me

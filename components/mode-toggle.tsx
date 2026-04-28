@@ -2,26 +2,43 @@
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
+/**
+ * Theme toggle — fully CSS-driven, zero hydration flash.
+ *
+ * Both Sun and Moon icons are always in the DOM.
+ * Visibility is controlled by the `.dark` class that next-themes
+ * writes to <html> synchronously from localStorage — the correct
+ * state is painted on the very first frame, no "light flash" ever.
+ *
+ * Animations: sun rotates & scales out, moon rotates & scales in
+ * (and vice versa), all via CSS transitions on `.dark` selector.
+ */
 export function ModeToggle() {
   const { setTheme } = useTheme()
 
+  const toggle = () => {
+    const isDark = document.documentElement.classList.contains("dark")
+    setTheme(isDark ? "light" : "dark")
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="bg-background/80 backdrop-blur-sm">
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <button
+      type="button"
+      className="theme-switch"
+      onClick={toggle}
+      aria-label="Toggle light and dark mode"
+    >
+      <span className="theme-switch-track">
+        {/* Slider translates the thumb left ↔ right */}
+        <span className="theme-switch-thumb-slider">
+          {/* Thumb circle — shows one icon at a time via CSS rotation */}
+          <span className="theme-switch-thumb">
+            <Sun  className="theme-icon theme-icon-sun"  aria-hidden="true" />
+            <Moon className="theme-icon theme-icon-moon" aria-hidden="true" />
+          </span>
+        </span>
+      </span>
+      <span className="sr-only">Toggle theme</span>
+    </button>
   )
 }

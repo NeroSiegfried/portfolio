@@ -1,0 +1,93 @@
+-- PostgreSQL Schema for portfolio_db
+
+CREATE TABLE IF NOT EXISTS "users" (
+  "id" TEXT PRIMARY KEY,
+  "username" VARCHAR(255) NOT NULL UNIQUE,
+  "email" VARCHAR(255) NOT NULL UNIQUE,
+  "password_hash" VARCHAR(512),
+  "role" VARCHAR(50) NOT NULL DEFAULT 'user',
+  "blocked" BOOLEAN NOT NULL DEFAULT FALSE,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "sessions" (
+  "id" TEXT PRIMARY KEY,
+  "user_id" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "token" VARCHAR(255) NOT NULL UNIQUE,
+  "expires_at" TIMESTAMPTZ NOT NULL,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "series" (
+  "id" TEXT PRIMARY KEY,
+  "title" VARCHAR(255) NOT NULL,
+  "slug" VARCHAR(255) NOT NULL,
+  "description" TEXT,
+  "type" VARCHAR(50) NOT NULL DEFAULT 'general',
+  "parent_id" TEXT REFERENCES "series"("id") ON DELETE SET NULL,
+  "theme_class" VARCHAR(255),
+  "number_format" VARCHAR(255),
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "posts" (
+  "id" TEXT PRIMARY KEY,
+  "slug" VARCHAR(255) NOT NULL UNIQUE,
+  "title" VARCHAR(255) NOT NULL,
+  "excerpt" TEXT,
+  "content" TEXT NOT NULL,
+  "series_id" TEXT REFERENCES "series"("id") ON DELETE SET NULL,
+  "status" VARCHAR(50) NOT NULL DEFAULT 'draft',
+  "author_id" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "published_at" TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS "snippets" (
+  "id" TEXT PRIMARY KEY,
+  "slug" VARCHAR(255) NOT NULL UNIQUE,
+  "title" VARCHAR(255) NOT NULL,
+  "description" TEXT,
+  "html" TEXT,
+  "css" TEXT,
+  "js" TEXT,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "comments" (
+  "id" TEXT PRIMARY KEY,
+  "post_id" TEXT NOT NULL REFERENCES "posts"("id") ON DELETE CASCADE,
+  "user_id" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "parent_id" TEXT REFERENCES "comments"("id") ON DELETE CASCADE,
+  "content" TEXT NOT NULL,
+  "hidden" BOOLEAN NOT NULL DEFAULT FALSE,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "edited_at" TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS "comment_votes" (
+  "id" TEXT PRIMARY KEY,
+  "comment_id" TEXT NOT NULL REFERENCES "comments"("id") ON DELETE CASCADE,
+  "user_id" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "value" SMALLINT NOT NULL CHECK (value IN (-1, 1)),
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE("comment_id", "user_id")
+);
+
+CREATE TABLE IF NOT EXISTS "post_votes" (
+  "id" TEXT PRIMARY KEY,
+  "post_id" TEXT NOT NULL REFERENCES "posts"("id") ON DELETE CASCADE,
+  "user_id" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+  "value" SMALLINT NOT NULL DEFAULT 1,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE("post_id", "user_id")
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);

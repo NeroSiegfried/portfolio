@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/blog/:path*",
+      "destination": "https://blog.nerosiegfried.com/:path*",
+      "permanent": true
+    }
+  ]
+}

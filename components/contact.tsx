@@ -49,7 +49,7 @@ export default function Contact() {
   }
 
   return (
-    <section id="contact" className="py-20 bg-muted/30">
+    <section id="contact" className="py-20 bg-muted/30 overflow-hidden">
       <div className="container mx-auto px-4">
         <motion.h2
           className="text-center mb-16 text-4xl font-bold"
@@ -235,7 +235,7 @@ export default function Contact() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-primary hover:bg-primary/90 text-white"
+                    className="w-full h-12 bg-primary text-white transition-transform duration-200 hover:scale-[1.03]"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (

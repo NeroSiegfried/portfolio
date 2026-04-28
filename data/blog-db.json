@@ -1,0 +1,442 @@
+{
+  "users": [
+    {
+      "id": "u_author",
+      "username": "Nero",
+      "email": "demo.author@nerosiegfried.dev",
+      "passwordHash": "seed_only:not_for_login",
+      "role": "user",
+      "createdAt": "2026-03-01T08:00:00.000Z"
+    },
+    {
+      "id": "u_reader_1",
+      "username": "Kairo",
+      "email": "kairo.reader@example.com",
+      "passwordHash": "seed_only:not_for_login",
+      "role": "user",
+      "createdAt": "2026-03-05T10:00:00.000Z"
+    },
+    {
+      "id": "u_reader_2",
+      "username": "Mina",
+      "email": "mina.reader@example.com",
+      "passwordHash": "seed_only:not_for_login",
+      "role": "user",
+      "createdAt": "2026-03-06T10:00:00.000Z"
+    },
+    {
+      "id": "e840a905-46a8-443e-8942-a0035f826b64",
+      "username": "NeroSiegfried",
+      "email": "victornabasu@yahoo.com",
+      "passwordHash": "d5c78f134befa93d3f5932ec6da10159:02f7842c611f7f0a6ccbc51bc4fd4ebcf37d7bfe03442906641121e1bfa2d9e7",
+      "role": "user",
+      "createdAt": "2026-04-28T02:50:35.735Z"
+    },
+    {
+      "id": "fa1e0324-4d75-476c-92f1-7f1acbfd61fa",
+      "username": "admin",
+      "email": "admin@example.com",
+      "passwordHash": "34fc49dfc782b643e9337f1d270f637f:92ef73906c5cbbb53db59503bc537abb764adb33ede00ef3134efd6d1d6265bb",
+      "role": "admin",
+      "createdAt": "2026-04-28T05:32:02.701Z"
+    }
+  ],
+  "sessions": [
+    {
+      "token": "9c229bdfa7caa01052fe8a329c3c9c03782c6f556a6b3accd790894b8d2df441",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "createdAt": "2026-04-28T02:50:35.735Z",
+      "expiresAt": "2026-05-12T02:50:35.735Z"
+    },
+    {
+      "token": "0094a9ffc6358fc2fa5b44c7d29a55fd11ca3611f32d14e5a01744ccec264447",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "createdAt": "2026-04-28T05:26:16.907Z",
+      "expiresAt": "2026-05-12T05:26:16.907Z"
+    },
+    {
+      "token": "1bc2a68f42b0f93e90f2c6dc258d31378235d117bb1708f8537da0fb66d3b8a2",
+      "userId": "fa1e0324-4d75-476c-92f1-7f1acbfd61fa",
+      "createdAt": "2026-04-28T05:32:02.719Z",
+      "expiresAt": "2026-05-12T05:32:02.719Z"
+    },
+    {
+      "token": "d689608a8e2b143c1b3b3cb2f116f2b9db1dd5c6c9922cbe53650b33c892247b",
+      "userId": "fa1e0324-4d75-476c-92f1-7f1acbfd61fa",
+      "createdAt": "2026-04-28T13:39:55.974Z",
+      "expiresAt": "2026-05-12T13:39:55.975Z"
+    },
+    {
+      "token": "caff6afe15ae38a289bae285ba775b74b7fc139a70c863c99dde92c31776cb9f",
+      "userId": "fa1e0324-4d75-476c-92f1-7f1acbfd61fa",
+      "createdAt": "2026-04-28T14:13:35.488Z",
+      "expiresAt": "2026-05-12T14:13:35.488Z"
+    },
+    {
+      "token": "f41e8ea3d4574b04dbd24e041c3494a42e361596bdecce2cc0bb6d7253c1185e",
+      "userId": "fa1e0324-4d75-476c-92f1-7f1acbfd61fa",
+      "createdAt": "2026-04-28T14:20:26.011Z",
+      "expiresAt": "2026-05-12T14:20:26.011Z"
+    },
+    {
+      "token": "b3241ff240e133e1820c9f1930d6e2ee41e4ec7c8aaad4e80539018127f7dd6f",
+      "userId": "fa1e0324-4d75-476c-92f1-7f1acbfd61fa",
+      "createdAt": "2026-04-28T14:26:32.754Z",
+      "expiresAt": "2026-05-12T14:26:32.754Z"
+    }
+  ],
+  "series": [
+    {
+      "id": "s_cs",
+      "slug": "cs-journey",
+      "title": "CS Journey",
+      "description": "Long-form notes on coursework, engineering experiments, and architecture decisions.",
+      "type": "track",
+      "parentId": null,
+      "themeClass": "bg-primary/5",
+      "createdAt": "2026-03-08T12:00:00.000Z",
+      "updatedAt": "2026-03-08T12:00:00.000Z"
+    },
+    {
+      "id": "s_msc",
+      "slug": "kcl-msc",
+      "title": "KCL MSc",
+      "description": "Course logs, implementation notes, and project retrospectives.",
+      "type": "degree",
+      "parentId": "s_cs",
+      "themeClass": "bg-primary/10",
+      "createdAt": "2026-03-08T12:05:00.000Z",
+      "updatedAt": "2026-03-08T12:05:00.000Z"
+    },
+    {
+      "id": "s_ase",
+      "slug": "advanced-software-engineering",
+      "title": "Advanced Software Engineering",
+      "description": "Architecture, quality, and scaling workflows.",
+      "type": "course",
+      "parentId": "s_msc",
+      "themeClass": "bg-primary/15",
+      "createdAt": "2026-03-08T12:10:00.000Z",
+      "updatedAt": "2026-03-08T12:10:00.000Z"
+    },
+    {
+      "id": "s_systems",
+      "slug": "systems-notes",
+      "title": "Systems Notes",
+      "description": "Databases, low-level tooling, and performance logs.",
+      "type": "course",
+      "parentId": "s_msc",
+      "themeClass": "bg-secondary/10",
+      "createdAt": "2026-03-08T12:15:00.000Z",
+      "updatedAt": "2026-03-08T12:15:00.000Z"
+    },
+    {
+      "id": "s_portfolio",
+      "slug": "portfolio-projects",
+      "title": "Portfolio Projects",
+      "description": "Deep-dives into the projects in my portfolio — architecture, build logs, and lessons learned.",
+      "type": "projects",
+      "parentId": null,
+      "themeClass": null,
+      "numberFormat": "Project {n}",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T14:14:06.529Z"
+    }
+  ],
+  "posts": [
+    {
+      "id": "p_features_demo",
+      "slug": "features-demo",
+      "title": "Blog Platform — Features Demo",
+      "excerpt": "A walkthrough of everything this blog system supports, written as a real article.",
+      "content": "# Blog Platform — Features Demo\n\nThis article is a live demonstration of the blog platform's capabilities.\n\n---\n\n## Markdown\n\nPosts are written in standard Markdown. Headings, **bold**, *italic*, `inline code`, blockquotes, and fenced code blocks all render as expected.\n\n```typescript\nconst greet = (name: string): string => `Hello, ${name}!`\nconsole.log(greet(\"World\")) // → Hello, World!\n```\n\n---\n\n## Inline Snippets\n\nA snippet tag renders as a live iframe constrained to the prose column. The iframe auto-sizes to its content height.\n\n{{snippet:color-palette-demo}}\n\n---\n\n## Theme-Aware Snippets\n\nSnippets that use `var(--sn-*)` adapt to the site theme automatically. Every snippet receives a `data-theme` attribute and a live `postMessage` when the theme is toggled. **Toggle the theme button in the nav and watch the card below update without reloading.**\n\n{{snippet:theme-aware-demo}}\n\n---\n\n## User Context in Snippets\n\nEvery snippet also receives the current viewer's identity as `window.__sn_user`. If you are logged in it contains `{ id, username, role }`; if not, it is `null`. The value is set before the snippet's own JS runs, and any subsequent login or logout on the same page fires an `sn:userchange` DOM event so snippets can react live.\n\nLog in or register using the comment section at the bottom of this article, then scroll back up and watch the card below update.\n\n{{snippet:user-greeting}}\n\nThis is useful for personalised demos, gated content previews, role-based UI examples, or any interactive snippet that needs to know who it is talking to.\n\n---\n\n## Multi-Tab Snippets\n\nGroup related demos into tabs. Each tab is a fully isolated iframe.\n\n{{snippet:sort-visualizer|theme-aware-demo|user-greeting}}\n\nTabs are always hidden for single-snippet embeds. Use the `notabs` flag to suppress the tab bar explicitly:\n\n{{snippet:sort-visualizer notabs}}\n\n---\n\n## Full-Bleed Snippets\n\nAdd `wide` to let a snippet span the full viewport width, breaking out of the prose column.\n\n{{snippet:sort-visualizer wide}}\n\n---\n\n## Multi-Tab + Full-Bleed\n\n{{snippet:sort-visualizer|theme-aware-demo|user-greeting wide}}\n\n---\n\n## Series & Theming\n\nEvery post belongs to a series. Series nest arbitrarily, each carrying a `themeClass` applied to its page header. The tree supports expand/collapse and ascending/descending sort.\n\n---\n\n## Post Voting & Threaded Comments\n\nAuthenticated readers can upvote posts and leave threaded comments. Votes are de-duplicated per user. Scroll down to try it — logging in here will update the User Context snippet above in real time.\n\n---\n\n## Admin Workflow\n\nThere is no visible admin link on the public site. The entry path is a configurable environment variable and can also be triggered via a keyboard shortcut. The dashboard has full CRUD for posts, series, and snippets.",
+      "seriesId": null,
+      "status": "published",
+      "authorId": "u_author",
+      "createdAt": "2026-04-24T10:00:00.000Z",
+      "updatedAt": "2026-04-27T22:52:06.335Z",
+      "publishedAt": "2026-04-24T10:00:00.000Z"
+    },
+    {
+      "id": "p_loopbridge",
+      "slug": "loopbridge-build-log",
+      "title": "LoopBridge Build Log",
+      "excerpt": "Coming soon...",
+      "content": "# Coming Soon\n\nThis post is coming soon.",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "u_author",
+      "createdAt": "2026-03-10T08:30:00.000Z",
+      "updatedAt": "2026-04-10T08:30:00.000Z",
+      "publishedAt": "2026-04-10T08:30:00.000Z"
+    },
+    {
+      "id": "p_anagrams_arch",
+      "slug": "anagrams-architecture-notes",
+      "title": "Anagrams Architecture Notes",
+      "excerpt": "Coming soon...",
+      "content": "# Coming Soon\n\nThis post is coming soon.",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "u_author",
+      "createdAt": "2026-03-12T08:30:00.000Z",
+      "updatedAt": "2026-04-11T08:30:00.000Z",
+      "publishedAt": "2026-04-11T08:30:00.000Z"
+    },
+    {
+      "id": "p_39920eac",
+      "slug": "c-database-from-scratch",
+      "title": "Building a SQL Database Engine in C",
+      "excerpt": "A walkthrough of building a lightweight SQLite-style database from scratch in C, covering page management, B-tree storage, and a command-line REPL.",
+      "content": "# Building a SQL Database Engine in C\n\nThis project is a lightweight SQLite-style database engine written from scratch in C.\n\n## Motivation\n\nI wanted to deeply understand how databases actually work under the hood — not just how to use them, but how they persist data, manage memory, and parse commands.\n\n## Architecture\n\nThe engine is built around three core components:\n\n**1. The REPL**  \nA read-eval-print loop that accepts SQL-like commands and routes them to the appropriate handler.\n\n**2. The Pager**  \nManages reading and writing fixed-size pages (4KB) to disk. Pages are cached in memory using a simple LRU strategy.\n\n**3. B-Tree Storage**  \nData rows are stored in a B-tree structure for O(log n) lookups. The implementation supports leaf and internal nodes with proper splitting.\n\n## Key Lessons\n\n- Memory layout matters enormously in C. Careful struct packing saved ~30% storage per row.\n- Persistence is harder than it looks — write ordering and fsync are critical for durability.\n- The gap between \"works\" and \"correct\" is wide when managing raw disk I/O.\n\n## Current State\n\nThe engine supports basic `INSERT` and `SELECT` with single-table persistence. Work is ongoing to add `UPDATE`, `DELETE`, and multi-table joins.\n\n> Source: [GitHub](https://github.com/NeroSiegfried/C-Database)\n",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T07:18:03Z",
+      "publishedAt": "2026-04-28T07:18:03Z"
+    },
+    {
+      "id": "p_8ea61a59",
+      "slug": "easychess-dsl",
+      "title": "EasyChess: A Domain-Specific Language for Chess Notation",
+      "excerpt": "Building a chess DSML with syntax highlighting, validation, and code generation using Java, Xtext, and Xtend.",
+      "content": "# EasyChess: A Domain-Specific Language for Chess Notation\n\nEasyChess is a domain-specific modeling language (DSML) for chess notation, built with Xtext and Xtend inside the Eclipse IDE ecosystem.\n\n## What is a DSML?\n\nA domain-specific modeling language lets domain experts express ideas in their own vocabulary rather than a general-purpose programming language. For chess, that means writing game notation in a form that can be validated, highlighted, and transformed automatically.\n\n## The Language\n\nEasyChess allows you to write annotated chess games like:\n\n```\ngame KasparovVsDeepBlue1997 {\n  white: \"Kasparov\"\n  black: \"Deep Blue\"\n  \n  1. e4 e5\n  2. Nf3 Nc6\n  3. Bb5 a6\n}\n```\n\nThe toolchain validates move legality, highlights syntax, and can generate PGN output.\n\n## Technical Stack\n\n- **Xtext** for grammar definition and parser generation\n- **Xtend** for code generation (PGN export)\n- **JUnit** for grammar validation tests\n- **Eclipse IDE** as the host platform\n\n## Lessons Learned\n\nXtext's grammar DSL is powerful but has a steep learning curve. The most interesting challenge was implementing move validation — chess rules are deceptively complex once you account for en passant, castling rights, and check detection.\n\n> Source: [GitHub](https://github.com/NeroSiegfried/EasyChess-DSL)\n",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T07:18:03Z",
+      "publishedAt": "2026-04-28T07:18:03Z"
+    },
+    {
+      "id": "p_d98d5c75",
+      "slug": "fitness-tracker-ai",
+      "title": "AI-Powered Fitness Tracker",
+      "excerpt": "A fitness app that suggests personalised workouts and meals using AI APIs, with progression tracking and history.",
+      "content": "# AI-Powered Fitness Tracker\n\nA React-based fitness application that uses OpenAI's API to generate personalised workout and meal suggestions for beginners.\n\n## Features\n\n- **AI workout generator** — tells you exactly what to do based on your fitness level, available equipment, and goals\n- **Meal suggestions** — generates meal plans that align with your calorie and macro targets\n- **Progression tracking** — logs your workout history and visualises progress over time\n- **Adaptive difficulty** — suggestions get harder as you improve\n\n## Tech Stack\n\n- **React** for the UI\n- **Node.js + Express** for the backend API proxy\n- **OpenAI API** for workout/meal generation\n- **LocalStorage** for persistent history (no auth required)\n\n## Architecture Note\n\nAll AI calls go through a Node.js proxy to protect the API key. The frontend never touches the raw OpenAI endpoint.\n\n## What I Learned\n\nPrompt engineering is a real skill. The difference between a generic \"suggest a workout\" prompt and a structured prompt with user context, equipment constraints, and output format specifications is dramatic. Getting consistent, parseable JSON back from the model required significant iteration.\n\n> Source: [GitHub](https://github.com/NeroSiegfried/fitness-tracker)\n",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T07:18:03Z",
+      "publishedAt": "2026-04-28T07:18:03Z"
+    },
+    {
+      "id": "p_5048a0cd",
+      "slug": "anagrams-legacy",
+      "title": "Anagrams Game (Original Browser Version)",
+      "excerpt": "The original browser-based single-player Anagrams clone — where this whole project started.",
+      "content": "# Anagrams Game (Original Browser Version)\n\nBefore the multiplayer React version, there was this: a clean single-player Anagrams clone built entirely in vanilla JavaScript, HTML, and CSS.\n\n## Background\n\nI wanted to recreate the Game Pigeon Anagrams game from my phone — the kind you play with friends over iMessage. The goal was to ship something playable quickly while focusing on clean UX.\n\n## How It Works\n\nYou're given a set of scrambled letters. Type as many words as you can before the timer runs out. Longer words score more points.\n\nKey mechanics:\n- Letter pool resets on each use\n- Real dictionary validation (no made-up words)\n- Score multipliers for longer words\n- Smooth animations for accepted/rejected guesses\n\n## What Made It Interesting\n\nBuilding a dictionary validation system without a backend was the main challenge. I ended up using a pre-compiled word list bundled with the JavaScript, which made the app fully offline-capable.\n\nThe UI animation work — making letter tiles feel responsive and satisfying — took longer than the actual game logic.\n\n## Legacy\n\nThis project directly led to the full-stack multiplayer version (Anagrams v2) which replaced it. If you want the real experience, see that project.\n\n> Source: [GitHub](https://github.com/NeroSiegfried/anagrams-game)\n",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T07:18:03Z",
+      "publishedAt": "2026-04-28T07:18:03Z"
+    },
+    {
+      "id": "p_adf9a7f1",
+      "slug": "blog-platform-ejs",
+      "title": "Full-Stack Blog Platform with EJS and PostgreSQL",
+      "excerpt": "A multi-role blog with owner, author, and reader access levels, built with server-side EJS templates and a PostgreSQL backend.",
+      "content": "# Full-Stack Blog Platform with EJS and PostgreSQL\n\nA traditional server-rendered blog with multi-role access control — owner, author, and reader — built before I moved to Next.js.\n\n## Stack\n\n- **Node.js + Express** for routing and server logic\n- **EJS** for server-side HTML templating\n- **PostgreSQL** for persistent storage\n- **bcrypt** for password hashing\n- **express-session** for session management\n\n## Roles\n\n| Role   | Can do |\n|--------|--------|\n| Owner  | Manage users, delete any post, full admin |\n| Author | Create, edit, and delete their own posts |\n| Reader | Browse and read posts |\n\n## Database Schema\n\nThree main tables: `users`, `posts`, and `sessions`. Posts link to users via foreign key. Sessions use a server-side store backed by PostgreSQL.\n\n## What I Learned\n\nSession management is trickier than it looks. Race conditions between session creation and database writes caused intermittent auth bugs early on. Moving to a proper session store fixed this.\n\nEJS is simple and explicit — great for learning, but I quickly hit its limits for interactive UIs. This project was the reason I moved to React + Next.js.\n\n> Source: [GitHub](https://github.com/NeroSiegfried/blog-project)\n",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T07:18:03Z",
+      "publishedAt": "2026-04-28T07:18:03Z"
+    },
+    {
+      "id": "p_b20b6c3c",
+      "slug": "report-generator-ai",
+      "title": "Automated Departmental Report Generator",
+      "excerpt": "A Flask app that scrapes external data sources and composes structured reports with AI-assisted insight generation.",
+      "content": "# Automated Departmental Report Generator\n\nA Python Flask application that automates the tedious process of pulling together departmental reports from multiple data sources.\n\n## Problem\n\nReport compilation was manual: someone would spend hours pulling data from various web dashboards, copy-pasting into a template, then writing a summary. This project cuts that to minutes.\n\n## How It Works\n\n1. **Scraping** — BeautifulSoup spiders pull structured data from internal and external web sources\n2. **Assembly** — Collected data is normalised and inserted into a report template\n3. **AI insights** — The AI API analyses the data and suggests key takeaways for the reader\n4. **Output** — A structured PDF or HTML report is generated and available for download\n\n## Tech Stack\n\n- **Python + Flask** for the web app\n- **BeautifulSoup** for scraping\n- **Jinja2** for report templating\n- **AI API** (GPT family) for insight generation\n- **WeasyPrint** for PDF export\n\n## Edge Cases That Bit Me\n\nWeb scraping breaks whenever the source site updates its layout. I ended up building a monitoring system that alerts when a scraper returns an unexpected result count, which catches layout changes before they silently corrupt reports.\n\n> Source: [GitHub](https://github.com/NeroSiegfried/report-generator)\n",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T07:18:03Z",
+      "publishedAt": "2026-04-28T07:18:03Z"
+    },
+    {
+      "id": "p_f08ae071",
+      "slug": "model-surveillance-satellite",
+      "title": "Model Surveillance Satellite — Team Project",
+      "excerpt": "A team-built satellite prototype with networking, live video streaming, and systems-level Python running on Linux.",
+      "content": "# Model Surveillance Satellite — Team Project\n\nA physical model satellite prototype built as a team project, featuring live video streaming, remote control over a network, and an onboard Linux system.\n\n## What We Built\n\nA working model satellite the size of a shoebox that:\n- Streams live video feed over a local network\n- Accepts remote pan/tilt commands\n- Runs autonomously if the connection drops (safe mode)\n- Logs telemetry (orientation, temperature, uptime) to an onboard file\n\n## My Role\n\nI was responsible for the networking layer and the video streaming pipeline. This involved setting up the FFmpeg stream, handling reconnection logic, and building the ground station interface that displayed the live feed alongside telemetry data.\n\n## Tech Stack\n\n- **Raspberry Pi** running Debian Linux as the satellite's onboard computer\n- **Python** for control software and telemetry collection\n- **FFmpeg** for video capture and streaming\n- **Bash** for startup scripts and watchdog processes\n- **Socket programming** for the command channel\n\n## What Made It Hard\n\nReal-time video over an unreliable Wi-Fi connection is brutal. Latency spikes would cause the FFmpeg pipe to stall, hanging the entire Python process. We ended up using a separate thread for the video stream with a watchdog that restarts FFmpeg if it goes silent for more than 3 seconds.\n\nPhysical testing also revealed that our antenna placement caused significant interference. We solved it by shielding the Pi with copper tape and repositioning the antenna to the exterior of the model.\n",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-04-28T07:18:03Z",
+      "updatedAt": "2026-04-28T07:18:03Z",
+      "publishedAt": "2026-04-28T07:18:03Z"
+    }
+  ],
+  "snippets": [
+    {
+      "id": "snip_sort",
+      "slug": "sort-visualizer",
+      "title": "Bubble Sort Visualizer",
+      "description": "Simple sorting animation snippet for interactive posts.",
+      "html": "<div id=\"bars\" style=\"display:flex;gap:6px;align-items:flex-end;height:180px;padding:12px;\"></div><button id=\"run\" style=\"margin:12px;padding:8px 12px;border-radius:8px;border:1px solid #ddd;\">Run</button>",
+      "css": "body{margin:0;font-family:Inter,system-ui;background:#0b1020;color:#e8ecff}#bars div{width:18px;background:linear-gradient(180deg,#4f8cff,#2f70ff);border-radius:6px 6px 0 0;transition:height .2s ease}",
+      "js": "const root=document.getElementById('bars');const values=[32,110,58,150,94,42,76,128];const draw=()=>{root.innerHTML='';values.forEach(v=>{const b=document.createElement('div');b.style.height=`${v}px`;root.appendChild(b)})};draw();document.getElementById('run').onclick=async()=>{for(let i=0;i<values.length;i++){for(let j=0;j<values.length-i-1;j++){if(values[j]>values[j+1]){[values[j],values[j+1]]=[values[j+1],values[j]];draw();await new Promise(r=>setTimeout(r,90));}}}}",
+      "createdAt": "2026-03-10T07:00:00.000Z",
+      "updatedAt": "2026-03-10T07:00:00.000Z"
+    },
+    {
+      "id": "snip_layout",
+      "slug": "responsive-layout-lab",
+      "title": "Responsive Layout Lab",
+      "description": "Live CSS grid/flex sandbox.",
+      "html": "<main><h3>Resize to test</h3><section class=\"cards\"><article>A</article><article>B</article><article>C</article><article>D</article></section></main>",
+      "css": "body{margin:0;padding:20px;font-family:Inter,system-ui;background:#111;color:#fff}h3{margin:0 0 14px}.cards{display:grid;gap:12px;grid-template-columns:repeat(1,minmax(0,1fr))}article{background:#2f70ff;padding:20px;border-radius:10px}@media(min-width:640px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(min-width:1024px){.cards{grid-template-columns:repeat(4,minmax(0,1fr))}}",
+      "js": "console.log('responsive layout lab loaded')",
+      "createdAt": "2026-03-11T07:00:00.000Z",
+      "updatedAt": "2026-03-11T07:00:00.000Z"
+    },
+    {
+      "id": "snip_palette",
+      "slug": "color-palette-demo",
+      "title": "Colour Palette Demo",
+      "description": "Light-themed colour swatches — demonstrates snippet style isolation.",
+      "html": "<div class=\"grid\"><div class=\"swatch primary\">Primary</div><div class=\"swatch accent\">Accent</div><div class=\"swatch muted\">Muted</div><div class=\"swatch success\">Success</div><div class=\"swatch warning\">Warning</div><div class=\"swatch danger\">Danger</div></div>",
+      "css": "body{margin:0;font-family:system-ui,sans-serif;background:#f0f4ff;padding:24px;min-height:100vh;box-sizing:border-box}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.swatch{padding:28px 16px;border-radius:12px;font-size:.82rem;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;justify-content:center}.primary{background:#4f8cff;color:#fff}.accent{background:#ff6b2b;color:#fff}.muted{background:#94a3b8;color:#1e293b}.success{background:#22c55e;color:#fff}.warning{background:#f59e0b;color:#1e293b}.danger{background:#ef4444;color:#fff}",
+      "js": "",
+      "createdAt": "2026-04-24T03:20:38.999Z",
+      "updatedAt": "2026-04-24T03:20:38.999Z"
+    },
+    {
+      "id": "snip-theme-aware-demo",
+      "slug": "theme-aware-demo",
+      "title": "Theme-Aware Card",
+      "description": "A card component that responds to the site theme in real time using --sn-* CSS variables and data-theme.",
+      "html": "<div class=\"card\">\n  <div class=\"avatar\">⚡</div>\n  <h2 class=\"name\">Theme-Aware Card</h2>\n  <p class=\"bio\">Toggle the theme button in the nav — this card adapts in real time using CSS variables passed in from the host page. No reload, no flash.</p>\n  <div class=\"tags\">\n    <span class=\"tag\">--sn-primary</span>\n    <span class=\"tag\">--sn-muted</span>\n    <span class=\"tag\">data-theme</span>\n  </div>\n  <button class=\"cta\">Follow</button>\n</div>",
+      "css": "body {\n  display: flex;\n  align-items: flex-start;\n  justify-content: center;\n  padding: 32px 16px;\n  font-family: system-ui, sans-serif;\n}\n.card {\n  background: var(--sn-muted);\n  border: 1px solid var(--sn-border);\n  border-radius: 16px;\n  padding: 32px 24px;\n  max-width: 340px;\n  width: 100%;\n  text-align: center;\n}\n.avatar {\n  font-size: 2.5rem;\n  margin-bottom: 12px;\n}\n.name {\n  margin: 0 0 8px;\n  font-size: 1.2rem;\n  font-weight: 700;\n}\n.bio {\n  margin: 0 0 16px;\n  font-size: 0.85rem;\n  color: var(--sn-muted-fg);\n  line-height: 1.5;\n}\n.tags {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  justify-content: center;\n  margin-bottom: 20px;\n}\n.tag {\n  background: var(--sn-bg);\n  border: 1px solid var(--sn-border);\n  border-radius: 99px;\n  font-size: 0.72rem;\n  padding: 3px 10px;\n  font-family: monospace;\n}\n.cta {\n  background: var(--sn-primary);\n  color: var(--sn-primary-fg);\n  border: none;\n  border-radius: var(--sn-radius);\n  padding: 10px 28px;\n  font-size: 0.9rem;\n  font-weight: 600;\n  cursor: pointer;\n  transition: opacity 0.15s;\n}\n.cta:hover { opacity: 0.85; }",
+      "js": "",
+      "createdAt": "2026-04-27T21:51:28.920Z",
+      "updatedAt": "2026-04-27T21:51:28.920Z"
+    },
+    {
+      "id": "snip-user-greeting",
+      "slug": "user-greeting",
+      "title": "User Greeting",
+      "description": "Reads window.__sn_user to greet the current visitor by name, or shows a guest message if not logged in.",
+      "html": "<div class=\"card\">\n  <div class=\"avatar\" id=\"avatar\">?</div>\n  <p class=\"greeting\" id=\"greeting\">Loading…</p>\n  <p class=\"sub\" id=\"sub\"></p>\n</div>",
+      "css": "body{display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;font-family:system-ui,sans-serif;}\n.card{text-align:center;padding:32px 24px;border-radius:16px;background:var(--sn-muted);border:1px solid var(--sn-border);max-width:300px;width:100%;}\n.avatar{font-size:3rem;margin-bottom:12px;}\n.greeting{margin:0 0 6px;font-size:1.15rem;font-weight:700;}\n.sub{margin:0;font-size:0.82rem;color:var(--sn-muted-fg);}",
+      "js": "function render(){\n  var u=window.__sn_user;\n  if(u&&u.username){\n    document.getElementById('avatar').textContent='👋';\n    document.getElementById('greeting').textContent='Hello, '+u.username+'!';\n    document.getElementById('sub').textContent='Role: '+u.role+' · You are signed in.';\n  } else {\n    document.getElementById('avatar').textContent='👤';\n    document.getElementById('greeting').textContent='Hello, Guest!';\n    document.getElementById('sub').textContent='Log in or register to get a personalised greeting.';\n  }\n}\nrender();\n// Re-render if user changes without page reload\ndocument.addEventListener('sn:userchange', render);",
+      "createdAt": "2026-04-27T22:52:06.335Z",
+      "updatedAt": "2026-04-27T22:52:06.335Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "c1",
+      "postId": "p_anagrams_arch",
+      "userId": "u_reader_1",
+      "parentId": null,
+      "content": "Looking forward to this one.",
+      "createdAt": "2026-04-11T12:00:00.000Z",
+      "updatedAt": "2026-04-11T12:00:00.000Z"
+    },
+    {
+      "id": "c2",
+      "postId": "p_features_demo",
+      "userId": "u_reader_2",
+      "parentId": null,
+      "content": "The snippet embed is a really clean touch.",
+      "createdAt": "2026-04-24T11:00:00.000Z",
+      "updatedAt": "2026-04-28T14:29:56.669Z",
+      "hidden": false
+    },
+    {
+      "id": "740d180f-7983-4770-842f-75f1bd9610c8",
+      "postId": "p_features_demo",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "parentId": null,
+      "content": "Testing comment",
+      "createdAt": "2026-04-28T02:50:52.109Z",
+      "updatedAt": "2026-04-28T14:29:58.126Z",
+      "hidden": false
+    },
+    {
+      "id": "b236935c-8d74-4c3a-a7fb-1abd98201287",
+      "postId": "p_features_demo",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "parentId": "c2",
+      "content": "Testing replies",
+      "createdAt": "2026-04-28T03:02:10.829Z",
+      "updatedAt": "2026-04-28T14:30:11.126Z",
+      "hidden": false
+    },
+    {
+      "id": "37758b02-e154-44b4-b92d-78d612e141a2",
+      "postId": "p_features_demo",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "parentId": "b236935c-8d74-4c3a-a7fb-1abd98201287",
+      "content": "Testing edits\n\nEdit: This rocks?",
+      "createdAt": "2026-04-28T03:29:16.348Z",
+      "updatedAt": "2026-04-28T14:30:19.025Z",
+      "editedAt": "2026-04-28T03:29:32.326Z",
+      "hidden": false
+    },
+    {
+      "id": "675cf8f1-de31-4ac1-925d-955883091cdc",
+      "postId": "p_features_demo",
+      "userId": "fa1e0324-4d75-476c-92f1-7f1acbfd61fa",
+      "parentId": null,
+      "content": "testing admin comments",
+      "createdAt": "2026-04-28T05:51:39.417Z",
+      "updatedAt": "2026-04-28T05:51:39.417Z"
+    }
+  ],
+  "commentVotes": [
+    {
+      "id": "cv1",
+      "commentId": "c2",
+      "userId": "u_reader_1",
+      "value": 1
+    },
+    {
+      "id": "af796204-b035-4710-b6fe-211f74d816c3",
+      "commentId": "740d180f-7983-4770-842f-75f1bd9610c8",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "value": 1
+    },
+    {
+      "id": "da87916a-ccfb-40a9-b6c7-a2a8f7e4a7bd",
+      "commentId": "37758b02-e154-44b4-b92d-78d612e141a2",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "value": 1
+    },
+    {
+      "id": "d9c8ef4f-e2df-4974-a52a-8921e50961b4",
+      "commentId": "c2",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "value": 1
+    }
+  ],
+  "postVotes": [
+    {
+      "id": "pv1",
+      "postId": "p_features_demo",
+      "userId": "u_reader_1",
+      "value": 1
+    },
+    {
+      "id": "pv2",
+      "postId": "p_features_demo",
+      "userId": "u_reader_2",
+      "value": 1
+    },
+    {
+      "id": "ac957b46-16bc-4bb7-994e-d5cf9d1e70b9",
+      "postId": "p_features_demo",
+      "userId": "e840a905-46a8-443e-8942-a0035f826b64",
+      "value": 1
+    }
+  ]
+}
