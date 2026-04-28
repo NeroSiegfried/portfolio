@@ -176,7 +176,7 @@ export default function Hero() {
           <Button
             asChild
             variant="outline"
-            className="border-primary text-primary px-4 transition-transform duration-200 hover:scale-[1.03]"
+            className="border-primary text-primary px-4 transition-transform duration-200 hover:scale-[1.03] hover:bg-primary hover:text-primary-foreground"
           >
             <Link href="/blog">Read Blog</Link>
           </Button>
@@ -204,7 +204,7 @@ export default function Hero() {
             </Button>
             <Button
               variant="outline"
-              className="border-primary text-primary px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03]"
+              className="border-primary text-primary px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03] hover:bg-primary hover:text-primary-foreground"
               onClick={() => scrollToSection("contact")}
             >
               Contact Me
