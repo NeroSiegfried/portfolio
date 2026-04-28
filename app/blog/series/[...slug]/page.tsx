@@ -20,7 +20,7 @@ function truncate(s: string, maxLen = 20) {
 
 export default async function SeriesPage({ params }: SeriesPageProps) {
   const { slug } = await params
-  const db = readDb()
+  const db = await readDb()
 
   const series = findSeriesByPath(db, slug)
   if (!series) {

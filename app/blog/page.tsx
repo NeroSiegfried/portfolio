@@ -12,7 +12,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 export const dynamic = "force-dynamic"
 
 export default async function BlogHomePage() {
-  const db = readDb()
+  const db = await readDb()
   const posts = listPublishedPosts(db)
   const chronoPosts = listPostsChronological(db)
   const seriesTree = listSeriesTree(db)

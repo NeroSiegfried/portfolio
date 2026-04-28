@@ -11,7 +11,7 @@ import BlogTopNav from "@/components/blog-top-nav"
 export const dynamic = "force-dynamic"
 
 export default async function BlogFeaturesDemoPage() {
-  const db = readDb()
+  const db = await readDb()
   const post = findPublishedPostBySlug(db, "features-demo")
   if (!post) {
     notFound()

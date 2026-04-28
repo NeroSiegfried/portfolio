@@ -11,7 +11,7 @@ export default async function AdminDashboardPage() {
     redirect("/control")
   }
 
-  const db = readDb()
+  const db = await readDb()
 
   return (
     <main className="container mx-auto px-4 py-10">

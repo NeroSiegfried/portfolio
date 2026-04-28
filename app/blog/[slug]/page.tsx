@@ -26,7 +26,7 @@ function truncate(s: string, maxLen = 20) {
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params
 
-  const db = readDb()
+  const db = await readDb()
   const post = findPublishedPostBySlug(db, slug)
   if (!post) {
     notFound()
