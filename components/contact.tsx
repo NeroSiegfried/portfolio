@@ -202,6 +202,7 @@ export default function Contact() {
                       placeholder="Your name"
                       required
                       className="h-12"
+                      suppressHydrationWarning
                     />
                   </div>
                   <div className="space-y-2">
@@ -217,6 +218,7 @@ export default function Contact() {
                       placeholder="Your email address"
                       required
                       className="h-12"
+                      suppressHydrationWarning
                     />
                   </div>
                   <div className="space-y-2">
@@ -231,6 +233,7 @@ export default function Contact() {
                       placeholder="Your message"
                       required
                       className="min-h-[150px] resize-none"
+                      suppressHydrationWarning
                     />
                   </div>
                   <Button

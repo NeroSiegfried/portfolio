@@ -600,9 +600,9 @@ function PicturePreview({ project }: { project: Project }) {
 
 function ProjectActions({ project }: { project: Project }) {
   return (
-    <div className="mt-6 mb-8 flex flex-col gap-3">
-      {/* Row 1: Repository (left) + Read Article (right) */}
-      <div className="flex gap-3">
+    <div className="mt-6 mb-8 flex flex-col gap-3 sm:flex-row">
+      {/* Repo + Read Article: side-by-side below sm, become direct flex children at sm+ */}
+      <div className="flex gap-3 max-[380px]:flex-col sm:contents">
         {project.githubUrl ? (
           <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
             <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
@@ -628,9 +628,9 @@ function ProjectActions({ project }: { project: Project }) {
         )}
       </div>
 
-      {/* Row 2: Live Site full width */}
+      {/* Live Site: full-width below sm, flex-1 at sm+ */}
       {project.liveUrl ? (
-        <Button asChild size="default" className="w-full gap-2">
+        <Button asChild size="default" className="w-full gap-2 sm:flex-1">
           <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4" />
             Live Site
@@ -645,6 +645,7 @@ export default function Projects() {
   const [visible, setVisible] = useState(3)
   const [activeId, setActiveId] = useState<number | null>(projects[0]?.id ?? null)
   const [closingId, setClosingId] = useState<number | null>(null)
+  const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   const visibleProjects = projects.slice(0, visible)
 
@@ -677,6 +678,9 @@ export default function Projects() {
     }
 
     setActiveId(projectId)
+    setTimeout(() => {
+      itemRefs.current.get(projectId)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 50)
   }
 
   const showMore = () => setVisible((current) => Math.min(current + 3, projects.length))
@@ -707,6 +711,7 @@ export default function Projects() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.35, delay: idx * 0.04 }}
+                ref={(el) => { if (el) itemRefs.current.set(project.id, el as HTMLDivElement); else itemRefs.current.delete(project.id) }}
                 className={`relative w-full border-t border-b border-border/60 transition-colors duration-300 cursor-pointer ${isOpen ? "bg-primary/[0.03]" : "bg-card/40"}`}
                 onClick={() => toggleItem(project.id)}
               >
@@ -744,7 +749,7 @@ export default function Projects() {
                   <AnimatePresence initial={false}>
                     {shouldRenderExpanded ? (
                       <motion.div
-                        key={`expanded-${project.id}-${isOpen ? "open" : "close"}`}
+                        key={`expanded-${project.id}`}
                         initial={{ height: 0, opacity: 0 }}
                         animate={{
                           height: isOpen ? "auto" : 0,
