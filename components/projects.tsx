@@ -655,8 +655,9 @@ export default function Projects() {
   const [visible, setVisible] = useState(3)
   const [activeId, setActiveId] = useState<number | null>(projects[0]?.id ?? null)
   // Track which items have been opened at least once (so content stays mounted for smooth transitions)
+  // Start with the initially visible items mounted so their previews begin loading immediately.
   const [mountedIds, setMountedIds] = useState<Set<number>>(() =>
-    projects[0] ? new Set([projects[0].id]) : new Set()
+    new Set(projects.slice(0, 3).map((p) => p.id))
   )
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
@@ -676,6 +677,43 @@ export default function Projects() {
 
   const showMore = () => setVisible((current) => Math.min(current + 3, projects.length))
   const showAll = () => setVisible(projects.length)
+
+  // Preload preview images and mount visible project previews as soon as the component mounts.
+  useEffect(() => {
+    // Ensure the initially visible projects are mounted (in case visible default changes)
+    setMountedIds((prev) => {
+      const next = new Set(prev)
+      projects.slice(0, visible).forEach((p) => next.add(p.id))
+      return next
+    })
+
+    // Collect preview image URLs for warming the browser cache.
+    const urls: string[] = []
+    projects.forEach((p) => {
+      if (p.desktopPreviewUrl) urls.push(p.desktopPreviewUrl)
+      if (p.mobilePreviewUrl) urls.push(p.mobilePreviewUrl)
+      if (p.ipadUrl) urls.push(p.ipadUrl)
+      if (p.studioDisplayUrl) urls.push(p.studioDisplayUrl)
+      if (p.pictureSlides?.length) urls.push(...p.pictureSlides)
+    })
+
+    // Start low-priority image preloads (do not block rendering). We'll space them out
+    // a bit to avoid spiking network on load.
+    const timers: number[] = []
+    urls.forEach((u, i) => {
+      const t = window.setTimeout(() => {
+        try {
+          const img = document.createElement("img") as HTMLImageElement
+          img.src = u
+        } catch {
+          // ignore
+        }
+      }, i * 150) // stagger by 150ms
+      timers.push(t)
+    })
+
+    return () => timers.forEach((t) => window.clearTimeout(t))
+  }, [visible])
 
   return (
     <section id="projects" className="py-20">
