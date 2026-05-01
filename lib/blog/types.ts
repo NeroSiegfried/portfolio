@@ -40,6 +40,8 @@ export interface BlogPost {
   title: string
   excerpt: string
   content: string
+  /** Optional per-post CSS injected into a <style> tag on the post page. */
+  customCss?: string | null
   seriesId: string | null
   status: BlogPostStatus
   authorId: string

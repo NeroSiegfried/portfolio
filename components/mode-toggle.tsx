@@ -3,15 +3,9 @@ import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
 /**
- * Theme toggle — fully CSS-driven, zero hydration flash.
- *
- * Both Sun and Moon icons are always in the DOM.
- * Visibility is controlled by the `.dark` class that next-themes
- * writes to <html> synchronously from localStorage — the correct
- * state is painted on the very first frame, no "light flash" ever.
- *
- * Animations: sun rotates & scales out, moon rotates & scales in
- * (and vice versa), all via CSS transitions on `.dark` selector.
+ * Theme toggle — circular border+icon button.
+ * Light mode: orange border, sun icon, orange glow on hover.
+ * Dark mode: blue border, moon icon, blue glow on hover.
  */
 export function ModeToggle() {
   const { setTheme } = useTheme()
@@ -24,20 +18,12 @@ export function ModeToggle() {
   return (
     <button
       type="button"
-      className="theme-switch"
+      className="theme-toggle-btn"
       onClick={toggle}
       aria-label="Toggle light and dark mode"
     >
-      <span className="theme-switch-track">
-        {/* Slider translates the thumb left ↔ right */}
-        <span className="theme-switch-thumb-slider">
-          {/* Thumb circle — shows one icon at a time via CSS rotation */}
-          <span className="theme-switch-thumb">
-            <Sun  className="theme-icon theme-icon-sun"  aria-hidden="true" />
-            <Moon className="theme-icon theme-icon-moon" aria-hidden="true" />
-          </span>
-        </span>
-      </span>
+      <Sun  className="theme-icon theme-icon-sun"  aria-hidden="true" />
+      <Moon className="theme-icon theme-icon-moon" aria-hidden="true" />
       <span className="sr-only">Toggle theme</span>
     </button>
   )

@@ -167,6 +167,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
   const [title, setTitle] = useState("")
   const [slug, setSlug] = useState("")
   const [excerpt, setExcerpt] = useState("")
+  const [customCss, setCustomCss] = useState("")
   const [isDraft, setIsDraft] = useState(true)
   const [postSeriesId, setPostSeriesId] = useState("")
   const [cells, setCells] = useState<string[]>([""])
@@ -184,6 +185,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
     setTitle(next?.title ?? "")
     setSlug(next?.slug ?? "")
     setExcerpt(next?.excerpt ?? "")
+    setCustomCss(next?.customCss ?? "")
     setIsDraft((next?.status ?? "draft") === "draft")
     setPostSeriesId(next?.seriesId ?? "")
     const blocks = (next?.content ?? "").split(/\n\n+/)
@@ -200,6 +202,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
       body: JSON.stringify({
         id: postId || undefined,
         title, slug, excerpt, content,
+        customCss: customCss || null,
         status: isDraft ? "draft" : "published",
         seriesId: postSeriesId || null,
       }),
@@ -357,6 +360,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
+    router.refresh()
     router.push("/control")
   }
 
@@ -445,6 +449,13 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
                 placeholder="Excerpt (shown in listings)"
                 value={excerpt}
                 onChange={(e) => setExcerpt(e.target.value)}
+              />
+              <textarea
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono resize-y"
+                placeholder="Custom CSS for this post (optional — scoped to the post page)"
+                rows={3}
+                value={customCss}
+                onChange={(e) => setCustomCss(e.target.value)}
               />
 
               <div className="flex items-center gap-6 text-sm flex-wrap">

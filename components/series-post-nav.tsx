@@ -1,9 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { BlogPostSummary } from "@/lib/blog/queries"
 import { formatSeriesEntry } from "@/lib/blog/format"
+import BlogLink from "@/components/blog-link"
+import { useBlogSubdomain } from "@/lib/blog/subdomain-context"
+import { toBlogRelativePath } from "@/components/blog-link"
 
 interface SeriesPostNavProps {
   /** All posts in the same series (ordered by publishedAt asc, oldest first). */
@@ -19,6 +23,7 @@ interface SeriesPostNavProps {
 export default function SeriesPostNav({ posts, currentSlug, seriesTitle, numberFormat }: SeriesPostNavProps) {
   if (posts.length < 2) return null
 
+  const isBlogSubdomain = useBlogSubdomain()
   const idx = posts.findIndex((p) => p.slug === currentSlug)
   const prev = idx > 0 ? posts[idx - 1] : null
   const next = idx < posts.length - 1 ? posts[idx + 1] : null
@@ -41,7 +46,10 @@ export default function SeriesPostNav({ posts, currentSlug, seriesTitle, numberF
         className="mb-4 w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         value={currentSlug}
         onChange={(e) => {
-          window.location.href = `/blog/${e.target.value}`
+          const path = isBlogSubdomain
+            ? toBlogRelativePath(`/blog/${e.target.value}`)
+            : `/blog/${e.target.value}`
+          window.location.href = path
         }}
       >
         {posts.map((p, i) => (
@@ -54,7 +62,7 @@ export default function SeriesPostNav({ posts, currentSlug, seriesTitle, numberF
       {/* Prev / Next — always equal 50/50 columns, text truncates */}
       <div className="grid grid-cols-2 gap-2">
         {prev ? (
-          <Link
+          <BlogLink
             href={`/blog/${prev.slug}`}
             className="flex items-center gap-1.5 overflow-hidden rounded-md border border-border/40 px-3 py-2.5 text-sm transition-colors hover:border-primary/50 hover:bg-primary/5 min-w-0"
           >
@@ -65,13 +73,13 @@ export default function SeriesPostNav({ posts, currentSlug, seriesTitle, numberF
               </span>
               <span className="block truncate font-medium">{prev.title}</span>
             </span>
-          </Link>
+          </BlogLink>
         ) : (
           <div />
         )}
 
         {next ? (
-          <Link
+          <BlogLink
             href={`/blog/${next.slug}`}
             className="flex items-center justify-end gap-1.5 overflow-hidden rounded-md border border-border/40 px-3 py-2.5 text-sm transition-colors hover:border-primary/50 hover:bg-primary/5 min-w-0 text-right"
           >
@@ -82,7 +90,7 @@ export default function SeriesPostNav({ posts, currentSlug, seriesTitle, numberF
               <span className="block truncate font-medium">{next.title}</span>
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </Link>
+          </BlogLink>
         ) : (
           <div />
         )}

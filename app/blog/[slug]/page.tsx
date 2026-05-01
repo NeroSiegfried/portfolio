@@ -1,16 +1,21 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { readDb, getPostVote } from "@/lib/blog/store"
+import { readBlogPostDb, getPostVote } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import { getSessionUser } from "@/lib/blog/auth"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
-import BlogComments from "@/components/blog-comments"
+import LazyComments from "@/components/lazy-comments"
 import SeriesPostNav from "@/components/series-post-nav"
 import Footer from "@/components/footer"
 import { ModeToggle } from "@/components/mode-toggle"
+import PortfolioLink from "@/components/portfolio-link"
+import BlogLink from "@/components/blog-link"
 
 export const dynamic = "force-dynamic"
+// Revalidate cached pages every 60 seconds so published/updated posts
+// appear quickly without a full re-render on every request.
+export const revalidate = 60
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -26,7 +31,10 @@ function truncate(s: string, maxLen = 20) {
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params
 
-  const db = await readDb()
+  const db = await readBlogPostDb(slug)
+  if (!db) {
+    notFound()
+  }
   const post = findPublishedPostBySlug(db, slug)
   if (!post) {
     notFound()
@@ -36,45 +44,49 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const user = await getSessionUser()
   const userVoted = user ? getPostVote(db.postVotes, post.id, user.id) !== null : false
 
-  // Series sibling posts (sorted by publishedAt asc) — used for prev/next nav
+  // Series sibling posts (sorted by publishedAt asc) — used for prev/next nav.
+  // Filter to EXACT seriesId match only (not recursive sub-series) so that
+  // prev/next always refers to adjacent posts in the same series level.
   const seriesPosts = post.seriesId
-    ? listPublishedPostsForSeries(db, post.seriesId).sort((a, b) => {
-        const at = a.publishedAt ? new Date(a.publishedAt).getTime() : 0
-        const bt = b.publishedAt ? new Date(b.publishedAt).getTime() : 0
-        return at - bt
-      })
+    ? listPublishedPostsForSeries(db, post.seriesId)
+        .filter((p) => p.seriesId === post.seriesId)
+        .sort((a, b) => {
+          const at = new Date(a.publishedAt ?? a.createdAt).getTime()
+          const bt = new Date(b.publishedAt ?? b.createdAt).getTime()
+          return at - bt
+        })
     : []
   const immediateSeriesTitle = post.seriesPath.at(-1)?.title ?? ""
   const immediateSeriesNumberFormat = post.seriesPath.at(-1)?.numberFormat ?? null
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex flex-col min-h-screen overflow-x-hidden bg-background">
+      {post.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: post.customCss }} />
+      )}
       {/* Non-sticky top bar — same style as Hero */}
       <div className="absolute inset-x-0 top-0 z-20">
         <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-6">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-primary"
-          >
+          <PortfolioLink className="text-sm text-muted-foreground transition-colors hover:text-primary">
             ← Portfolio
-          </Link>
+          </PortfolioLink>
           <ModeToggle />
         </div>
       </div>
 
-      <main className="container mx-auto px-4 pb-20 pt-28">
+      <main className="container mx-auto px-4 pb-20 pt-28 flex-1">
         <div className="mx-auto max-w-3xl">
         {/*
           Breadcrumb: Blog › [Series₁ (truncated)] › … › Post Title (not truncated, no link)
           When the post has no series, it's just: Blog › Post Title
         */}
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-          <Link
+          <BlogLink
             href="/blog"
             className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
           >
             Blog
-          </Link>
+          </BlogLink>
 
           {post.seriesPath.map((series, i) => {
             const href = `/blog/series/${post.seriesPath
@@ -87,21 +99,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <span className="text-border select-none">›</span>
                 {isLast ? (
                   // Last series segment before the post title: still a link but truncated
-                  <Link
+                  <BlogLink
                     href={href}
                     className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
                     title={series.title}
                   >
                     {truncate(series.title)}
-                  </Link>
+                  </BlogLink>
                 ) : (
-                  <Link
+                  <BlogLink
                     href={href}
                     className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
                     title={series.title}
                   >
                     {truncate(series.title)}
-                  </Link>
+                  </BlogLink>
                 )}
               </span>
             )
@@ -145,8 +157,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           )}
         </article>
 
-        <div className="mt-12 border-t border-border/40 pt-10">
-          <BlogComments postId={post.id} comments={post.comments} currentUser={user} />
+        <div id="comments" className="mt-12 border-t border-border/40 pt-10">
+          <LazyComments postId={post.id} postSlug={slug} currentUser={user} />
         </div>
         </div>{/* end max-w-3xl inner column */}
       </main>

@@ -15,6 +15,7 @@ interface BlogSnippetEmbedProps {
   tabs: SnippetTab[]
   wide?: boolean
   showTabs?: boolean
+  minHeight?: number
   user?: PublicUser | null
 }
 
@@ -103,10 +104,11 @@ export default function BlogSnippetEmbed({
   tabs,
   wide = false,
   showTabs,
+  minHeight,
   user = null,
 }: BlogSnippetEmbedProps) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [height, setHeight] = useState(DEFAULT_HEIGHT)
+  const [height, setHeight] = useState(minHeight ?? DEFAULT_HEIGHT)
   const [mounted, setMounted] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { resolvedTheme } = useTheme()
@@ -118,7 +120,7 @@ export default function BlogSnippetEmbed({
   // Auto-size: listen for height reports from this specific iframe
   useEffect(() => {
     if (!mounted) return
-    setHeight(DEFAULT_HEIGHT)
+    setHeight(minHeight ?? DEFAULT_HEIGHT)
 
     function onMessage(event: MessageEvent) {
       if (
@@ -127,7 +129,7 @@ export default function BlogSnippetEmbed({
         event.source === iframeRef.current.contentWindow
       ) {
         const h = Number(event.data.height)
-        if (h > 0) setHeight(h)
+        if (h > 0) setHeight(Math.max(h, minHeight ?? 0))
       }
     }
 

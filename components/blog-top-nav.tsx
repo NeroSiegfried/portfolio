@@ -5,6 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
+import BlogLink from "@/components/blog-link"
+import PortfolioLink from "@/components/portfolio-link"
 
 export default function BlogTopNav() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -20,20 +22,18 @@ export default function BlogTopNav() {
       <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         {/* Left: back to portfolio + nav links */}
         <div className="flex items-center gap-1 text-sm">
-          <Link
-            href="/"
-            className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:text-primary"
-          >
+          <PortfolioLink className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:text-primary">
             ← Portfolio
-          </Link>
+          </PortfolioLink>
 
           <span className="text-border/60 select-none px-1">/</span>
 
+
           <nav className="hidden items-center gap-1 sm:flex">
             {navLinks.map((link) => {
-              const active = pathname === link.href
+              const active = pathname === link.href || pathname === link.href.replace(/^\/blog/, "") || pathname === "/"  && link.href === "/blog"
               return (
-                <Link
+                <BlogLink
                   key={link.href}
                   href={link.href}
                   className={`rounded-md px-3 py-1.5 font-medium transition-colors hover:text-primary ${
@@ -41,7 +41,7 @@ export default function BlogTopNav() {
                   }`}
                 >
                   {link.label}
-                </Link>
+                </BlogLink>
               )
             })}
           </nav>
@@ -66,9 +66,9 @@ export default function BlogTopNav() {
         <div className="border-t border-border/50 bg-background/95 pb-3 pt-1 sm:hidden">
           <nav className="container mx-auto flex max-w-5xl flex-col px-4">
             {navLinks.map((link) => {
-              const active = pathname === link.href
+              const active = pathname === link.href || pathname === link.href.replace(/^\/blog/, "") || pathname === "/" && link.href === "/blog"
               return (
-                <Link
+                <BlogLink
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
@@ -77,7 +77,7 @@ export default function BlogTopNav() {
                   }`}
                 >
                   {link.label}
-                </Link>
+                </BlogLink>
               )
             })}
           </nav>

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { BlogPostSummary } from "@/lib/blog/queries"
+import BlogLink from "@/components/blog-link"
 
 interface BlogArchiveSidebarProps {
   posts: BlogPostSummary[]
@@ -118,7 +119,7 @@ export default function BlogArchiveSidebar({ posts }: BlogArchiveSidebarProps) {
             <ul className="space-y-1.5">
               {section.posts.map((post) => (
                 <li key={post.id}>
-                  <Link
+                  <BlogLink
                     href={`/blog/${post.slug}`}
                     className="flex items-start gap-2 rounded-sm text-sm text-muted-foreground transition-colors hover:text-primary"
                   >
@@ -134,7 +135,7 @@ export default function BlogArchiveSidebar({ posts }: BlogArchiveSidebarProps) {
                       </time>
                     )}
                     <span className="leading-snug">{post.title}</span>
-                  </Link>
+                  </BlogLink>
                 </li>
               ))}
             </ul>

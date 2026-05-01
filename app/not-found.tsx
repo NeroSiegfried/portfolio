@@ -119,9 +119,9 @@ export default function NotFound() {
         </div>
       </div>
 
-      {/* Centred content */}
+      {/* Centred content — flex-1 so it takes remaining height */}
       <div className="flex-1 flex items-center justify-center">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center mb-12 mt-12">
           <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-4">
             Error 404
           </p>
@@ -135,7 +135,7 @@ export default function NotFound() {
             Maybe it was refactored out of existence, or never existed to begin with.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 sm:mt-12">
             <Button
               asChild
               className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03]"
@@ -145,7 +145,7 @@ export default function NotFound() {
             <Button
               asChild
               variant="outline"
-              className="border-primary text-primary px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03]"
+              className="border-primary text-primary px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03] hover:bg-primary hover:text-primary-foreground"
             >
               <Link href="/blog">Read the Blog</Link>
             </Button>

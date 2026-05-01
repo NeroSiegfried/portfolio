@@ -55,7 +55,7 @@ export default function About() {
                   I’ve worked on projects ranging from satellite modeling to domain‐specific languages (DSML) and AI‐powered web apps. In my free time, I leetcode, play Japanese RPGs, and explore new AI and DevOps technologies.
                 </p>
                 <p className="mb-6 text-base leading-relaxed">
-                  I am currently on a "CS from scratch" quest because my first degree is in Electrical Engineering, and I want to cover my CS fundamentals more deeply. I document it on my X account (<a href="https://x.com/NeroSiegfried" target="_blank" rel="noopener noreferrer">@NeroSiegfried</a>), but expect a blog soon!
+                  I am currently on a "CS from scratch" quest because my first degree is in Electrical Engineering, and I want to cover my CS fundamentals more deeply. You can check out my journey on my <a href="/blog" className="text-primary font-semibold hover:underline">blog</a> or follow along on my X account (<a href="https://x.com/NeroSiegfried" target="_blank" rel="noopener noreferrer">@NeroSiegfried</a>).
                 </p>
                 <p className="text-base leading-relaxed">
                   I’m currently seeking new opportunities to apply my skills and grow as a developer. If you have an interesting project or role in mind, let’s connect!

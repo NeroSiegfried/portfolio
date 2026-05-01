@@ -16,18 +16,35 @@ import type {
 
 // ─── Connection Pool ──────────────────────────────────────────────────────────
 
-let _pool: Pool | null = null
+// Store the pool on `global` so Next.js HMR hot-reloads don't create a new
+// pool on every module evaluation (which leaks connections and causes
+// "Connection terminated unexpectedly" errors in development).
+declare global {
+  // eslint-disable-next-line no-var
+  var _pgPool: Pool | undefined
+  // eslint-disable-next-line no-var
+  var _commentsCache: Map<string, { data: { comments: BlogComment[]; commentVotes: BlogCommentVote[]; users: BlogUser[] }; expires: number }> | undefined
+  // eslint-disable-next-line no-var
+  var _homeDbCache: { data: BlogDb; expires: number } | undefined
+  // eslint-disable-next-line no-var
+  var _seriesDbCache: { data: BlogDb; expires: number } | undefined
+  // eslint-disable-next-line no-var
+  var _postDbCache: Map<string, { data: BlogDb | null; expires: number }> | undefined
+}
 
-function getPool(): Pool {
-  if (!_pool) {
+export function getPool(): Pool {
+  if (!global._pgPool) {
     if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set")
-    _pool = new Pool({
+    global._pgPool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
       max: 10,
+      min: 2,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
     })
   }
-  return _pool
+  return global._pgPool
 }
 
 // ─── Row → Domain mappers ─────────────────────────────────────────────────────
@@ -81,6 +98,7 @@ function rowToPost(r: Record<string, unknown>): BlogPost {
     createdAt: (r.created_at as Date).toISOString(),
     updatedAt: (r.updated_at as Date).toISOString(),
     publishedAt: r.published_at ? (r.published_at as Date).toISOString() : null,
+    customCss: (r.custom_css as string) ?? null,
   }
 }
 
@@ -158,6 +176,180 @@ export async function readDb(): Promise<BlogDb> {
   }
 }
 
+// ─── Targeted reads (avoid fetching all 8 tables for read-only pages) ─────────
+
+/** Blog home: only posts + series + post_votes (no content, no comments, no users). */
+const HOME_TTL_MS = 60_000
+
+export async function readBlogHomeDb(): Promise<BlogDb> {
+  if (global._homeDbCache && global._homeDbCache.expires > Date.now()) {
+    return global._homeDbCache.data
+  }
+  const pool = getPool()
+  const [series, posts, postVotes] = await Promise.all([
+    pool.query("SELECT * FROM series ORDER BY title"),
+    pool.query(
+      `SELECT id, slug, title, excerpt, series_id, status, author_id,
+              published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+       FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
+    ),
+    pool.query("SELECT * FROM post_votes"),
+  ])
+  const data: BlogDb = {
+    users: [],
+    sessions: [],
+    series: series.rows.map(rowToSeries),
+    posts: posts.rows.map(rowToPost),
+    snippets: [],
+    comments: [],
+    commentVotes: [],
+    postVotes: postVotes.rows.map(rowToPostVote),
+  }
+  global._homeDbCache = { data, expires: Date.now() + HOME_TTL_MS }
+  return data
+}
+
+const SERIES_TTL_MS = 60_000
+
+export async function readSeriesDb(): Promise<BlogDb> {
+  if (global._seriesDbCache && global._seriesDbCache.expires > Date.now()) {
+    return global._seriesDbCache.data
+  }
+  const pool = getPool()
+  const [series, posts, postVotes] = await Promise.all([
+    pool.query("SELECT * FROM series ORDER BY title"),
+    pool.query(
+      `SELECT id, slug, title, excerpt, series_id, status, author_id,
+              published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+       FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
+    ),
+    pool.query("SELECT * FROM post_votes"),
+  ])
+  const data: BlogDb = {
+    users: [],
+    sessions: [],
+    series: series.rows.map(rowToSeries),
+    posts: posts.rows.map(rowToPost),
+    snippets: [],
+    comments: [],
+    commentVotes: [],
+    postVotes: postVotes.rows.map(rowToPostVote),
+  }
+  global._seriesDbCache = { data, expires: Date.now() + SERIES_TTL_MS }
+  return data
+}
+
+const POST_TTL_MS = 60_000
+
+function getPostDbCache() {
+  if (!global._postDbCache) global._postDbCache = new Map()
+  return global._postDbCache
+}
+
+/**
+ * Blog post page: the specific post (full content) + series + snippets +
+ * post_votes for that post + sibling posts (no content) for series-nav.
+ * Comments are intentionally omitted — they are lazy-loaded client-side
+ * via /api/blog/posts/[slug]/comments so they don't block initial paint.
+ */
+export async function readBlogPostDb(slug: string): Promise<BlogDb | null> {
+  const cache = getPostDbCache()
+  const cached = cache.get(slug)
+  if (cached && cached.expires > Date.now()) return cached.data
+
+  const pool = getPool()
+  const postRow = await pool.query(
+    "SELECT * FROM posts WHERE slug=$1 AND status='published' LIMIT 1",
+    [slug]
+  )
+  if (!postRow.rows.length) {
+    cache.set(slug, { data: null, expires: Date.now() + POST_TTL_MS })
+    return null
+  }
+  const post = rowToPost(postRow.rows[0])
+  const postId = post.id
+
+  const [series, siblingPosts, snippets, postVotes] = await Promise.all([
+    pool.query("SELECT * FROM series ORDER BY title"),
+    pool.query(
+      `SELECT id, slug, title, excerpt, series_id, status, author_id,
+              published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+       FROM posts WHERE status='published' AND id != $1
+       ORDER BY COALESCE(published_at, created_at) ASC`,
+      [postId]
+    ),
+    pool.query("SELECT * FROM snippets ORDER BY created_at DESC"),
+    pool.query("SELECT * FROM post_votes WHERE post_id=$1", [postId]),
+  ])
+
+  const data: BlogDb = {
+    users: [],
+    sessions: [],
+    series: series.rows.map(rowToSeries),
+    posts: [post, ...siblingPosts.rows.map(rowToPost)],
+    snippets: snippets.rows.map(rowToSnippet),
+    comments: [],
+    commentVotes: [],
+    postVotes: postVotes.rows.map(rowToPostVote),
+  }
+  cache.set(slug, { data, expires: Date.now() + POST_TTL_MS })
+  return data
+}
+
+const COMMENTS_TTL_MS = 120_000 // 2 minutes
+
+function getCommentsCache() {
+  if (!global._commentsCache) {
+    global._commentsCache = new Map()
+  }
+  return global._commentsCache
+}
+
+/** Fetch comments + votes + users for a single post (used by the lazy-load API route). */
+export async function readPostCommentsDb(postSlug: string) {
+  const cache = getCommentsCache()
+  const cached = cache.get(postSlug)
+  if (cached && cached.expires > Date.now()) {
+    return cached.data
+  }
+
+  const pool = getPool()
+  const postRow = await pool.query(
+    "SELECT id FROM posts WHERE slug=$1 AND status='published' LIMIT 1",
+    [postSlug]
+  )
+  if (!postRow.rows.length) {
+    const empty = { comments: [] as BlogComment[], commentVotes: [] as BlogCommentVote[], users: [] as BlogUser[] }
+    cache.set(postSlug, { data: empty, expires: Date.now() + COMMENTS_TTL_MS })
+    return empty
+  }
+  const postId = postRow.rows[0].id as string
+
+  const [comments, commentVotes, commentUsers] = await Promise.all([
+    pool.query("SELECT * FROM comments WHERE post_id=$1 ORDER BY created_at ASC", [postId]),
+    pool.query(
+      `SELECT cv.* FROM comment_votes cv
+       JOIN comments c ON c.id = cv.comment_id WHERE c.post_id=$1`,
+      [postId]
+    ),
+    pool.query(
+      `SELECT DISTINCT u.* FROM users u
+       JOIN comments c ON c.user_id = u.id WHERE c.post_id=$1`,
+      [postId]
+    ),
+  ])
+
+  const data = {
+    comments: comments.rows.map(rowToComment),
+    commentVotes: commentVotes.rows.map(rowToCommentVote),
+    users: commentUsers.rows.map(rowToUser),
+  }
+  cache.set(postSlug, { data, expires: Date.now() + COMMENTS_TTL_MS })
+  return data
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 /** Reads the full DB, runs the synchronous updater, then persists all deltas. */
 export async function updateDb<T>(updater: (db: BlogDb) => T): Promise<T> {
   const db = await readDb()
@@ -228,11 +420,11 @@ export async function updateDb<T>(updater: (db: BlogDb) => T): Promise<T> {
     // Upsert / delete posts
     for (const p of db.posts) {
       await client.query(
-        `INSERT INTO posts (id,slug,title,excerpt,content,series_id,status,author_id,created_at,updated_at,published_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10)
+        `INSERT INTO posts (id,slug,title,excerpt,content,series_id,status,author_id,created_at,updated_at,published_at,custom_css)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10,$11)
          ON CONFLICT (id) DO UPDATE SET
-           slug=$2,title=$3,excerpt=$4,content=$5,series_id=$6,status=$7,author_id=$8,updated_at=NOW(),published_at=$10`,
-        [p.id, p.slug, p.title, p.excerpt, p.content, p.seriesId, p.status, p.authorId, p.createdAt, p.publishedAt]
+           slug=$2,title=$3,excerpt=$4,content=$5,series_id=$6,status=$7,author_id=$8,updated_at=NOW(),published_at=$10,custom_css=$11`,
+        [p.id, p.slug, p.title, p.excerpt, p.content, p.seriesId, p.status, p.authorId, p.createdAt, p.publishedAt, p.customCss ?? null]
       )
     }
     const keptPosts = new Set(db.posts.map((p) => p.id))
@@ -501,5 +693,93 @@ export function upsertSession(db: BlogDb, session: BlogSession) {
     db.sessions.push(session)
   } else {
     db.sessions[index] = session
+  }
+}
+
+// ─── Direct SQL helpers (bypass full readDb/updateDb cycle) ──────────────────
+
+/**
+ * Toggle a post upvote for a user.
+ * Returns the new net score for the post.
+ */
+export async function directTogglePostVote(postId: string, userId: string): Promise<number> {
+  const pool = getPool()
+  const client = await pool.connect()
+  try {
+    await client.query("BEGIN")
+
+    const existing = await client.query(
+      "SELECT id FROM post_votes WHERE post_id=$1 AND user_id=$2",
+      [postId, userId]
+    )
+
+    if (existing.rows.length > 0) {
+      await client.query("DELETE FROM post_votes WHERE post_id=$1 AND user_id=$2", [postId, userId])
+    } else {
+      await client.query(
+        "INSERT INTO post_votes (id,post_id,user_id,value,created_at) VALUES (gen_random_uuid(),$1,$2,1,NOW()) ON CONFLICT (post_id,user_id) DO UPDATE SET value=1",
+        [postId, userId]
+      )
+    }
+
+    await client.query("COMMIT")
+
+    const scoreRow = await client.query(
+      "SELECT COALESCE(SUM(value),0) AS score FROM post_votes WHERE post_id=$1",
+      [postId]
+    )
+    return Number(scoreRow.rows[0].score)
+  } catch (err) {
+    await client.query("ROLLBACK")
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+/**
+ * Toggle a comment vote (1 = up, -1 = down) for a user.
+ * Same value = toggle off; different value = switch vote.
+ * Returns the new net score for the comment.
+ */
+export async function directToggleCommentVote(
+  commentId: string,
+  userId: string,
+  value: 1 | -1
+): Promise<number> {
+  const pool = getPool()
+  const client = await pool.connect()
+  try {
+    await client.query("BEGIN")
+
+    const existing = await client.query(
+      "SELECT id, value FROM comment_votes WHERE comment_id=$1 AND user_id=$2",
+      [commentId, userId]
+    )
+
+    if (existing.rows.length > 0 && existing.rows[0].value === value) {
+      // Same vote → remove (toggle off)
+      await client.query("DELETE FROM comment_votes WHERE comment_id=$1 AND user_id=$2", [commentId, userId])
+    } else {
+      await client.query(
+        `INSERT INTO comment_votes (id,comment_id,user_id,value,created_at)
+         VALUES (gen_random_uuid(),$1,$2,$3,NOW())
+         ON CONFLICT (comment_id,user_id) DO UPDATE SET value=$3`,
+        [commentId, userId, value]
+      )
+    }
+
+    await client.query("COMMIT")
+
+    const scoreRow = await client.query(
+      "SELECT COALESCE(SUM(value),0) AS score FROM comment_votes WHERE comment_id=$1",
+      [commentId]
+    )
+    return Number(scoreRow.rows[0].score)
+  } catch (err) {
+    await client.query("ROLLBACK")
+    throw err
+  } finally {
+    client.release()
   }
 }

@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { SeriesNode } from "@/lib/blog/types"
+import BlogLink from "@/components/blog-link"
 
 interface BlogSeriesNavProps {
   tree: SeriesNode[]
@@ -41,7 +42,7 @@ function SeriesItem({
 
   return (
     <li>
-      <Link
+      <BlogLink
         href={href}
         className="group flex items-center justify-between rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-muted/60 hover:text-primary"
       >
@@ -61,7 +62,7 @@ function SeriesItem({
             {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           </button>
         )}
-      </Link>
+      </BlogLink>
 
       {hasChildren && open && (
         <ul className="ml-3 mt-0.5 space-y-0.5 border-l border-border/40 pl-2.5">

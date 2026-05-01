@@ -22,6 +22,7 @@ export default function PostVoteButton({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [voted, setVoted] = useState(initialVoted)
+  const [score, setScore] = useState(initialScore)
 
   const vote = async () => {
     if (!isLoggedIn) {
@@ -30,7 +31,10 @@ export default function PostVoteButton({
     }
 
     // Optimistic toggle
-    setVoted((prev) => !prev)
+    const prevVoted = voted
+    const prevScore = score
+    setVoted(!prevVoted)
+    setScore(prevVoted ? score - 1 : score + 1)
     setError(null)
 
     const response = await fetch("/api/blog/posts/vote", {
@@ -41,11 +45,16 @@ export default function PostVoteButton({
 
     if (!response.ok) {
       // Revert on failure
-      setVoted((prev) => !prev)
+      setVoted(prevVoted)
+      setScore(prevScore)
       const payload = (await response.json()) as { error?: string }
       setError(payload.error ?? "Unable to update vote.")
       return
     }
+
+    // Sync to authoritative score from server
+    const payload = (await response.json()) as { score?: number }
+    if (typeof payload.score === "number") setScore(payload.score)
 
     startTransition(() => {
       router.refresh()
@@ -69,7 +78,7 @@ export default function PostVoteButton({
           <ThumbsUp className="h-3.5 w-3.5" />
           {voted ? "Upvoted" : "Upvote"}
         </button>
-        <span className="text-sm tabular-nums text-muted-foreground">{initialScore}</span>
+        <span className="text-sm tabular-nums text-muted-foreground">{score}</span>
       </div>
       {/* Fixed height to prevent layout shift */}
       <div className="mt-1.5 h-4">

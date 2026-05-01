@@ -1,12 +1,15 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { readDb } from "@/lib/blog/store"
+import { readSeriesDb } from "@/lib/blog/store"
 import { findSeriesByPath, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import SeriesTreeBrowser from "@/components/series-tree-browser"
 import Footer from "@/components/footer"
 import { ModeToggle } from "@/components/mode-toggle"
+import PortfolioLink from "@/components/portfolio-link"
+import BlogLink from "@/components/blog-link"
 
 export const dynamic = "force-dynamic"
+export const revalidate = 60
 
 interface SeriesPageProps {
   params: Promise<{
@@ -20,7 +23,7 @@ function truncate(s: string, maxLen = 20) {
 
 export default async function SeriesPage({ params }: SeriesPageProps) {
   const { slug } = await params
-  const db = await readDb()
+  const db = await readSeriesDb()
 
   const series = findSeriesByPath(db, slug)
   if (!series) {
@@ -30,29 +33,26 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
   const posts = listPublishedPostsForSeries(db, series.id)
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative flex flex-col min-h-screen bg-background">
       {/* Non-sticky top bar — same style as Hero */}
       <div className="absolute inset-x-0 top-0 z-20">
         <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-6">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-primary"
-          >
+          <PortfolioLink className="text-sm text-muted-foreground transition-colors hover:text-primary">
             ← Portfolio
-          </Link>
+          </PortfolioLink>
           <ModeToggle />
         </div>
       </div>
 
-      <main className="container mx-auto px-4 pb-20 pt-28">
+      <main className="container mx-auto px-4 pb-20 pt-28 flex-1">
         {/* Breadcrumb: Blog › [Parent series…] › Current Series */}
         <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-          <Link
+          <BlogLink
             href="/blog"
             className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
           >
             Blog
-          </Link>
+          </BlogLink>
           {slug.slice(0, -1).map((segment, i) => {
             const href = `/blog/series/${slug.slice(0, i + 1).join("/")}`
             const segSeries = db.series.find((s) => s.slug === segment)
@@ -60,13 +60,13 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
             return (
               <span key={segment} className="flex items-center gap-1.5">
                 <span className="text-border select-none">›</span>
-                <Link
+                <BlogLink
                   href={href}
                   className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
                   title={segSeries?.title}
                 >
                   {label}
-                </Link>
+                </BlogLink>
               </span>
             )
           })}

@@ -1,7 +1,37 @@
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import rehypeRaw from "rehype-raw"
 import type { BlogSnippet, PublicUser } from "@/lib/blog/types"
 import BlogSnippetEmbed from "@/components/blog-snippet-embed"
+
+/**
+ * Converts isolated single newlines (soft breaks) to double newlines so
+ * each line the author writes becomes its own paragraph in React Markdown.
+ * Code blocks (fenced and inline) are preserved verbatim.
+ */
+function normalizeMarkdownNewlines(raw: string): string {
+  const preserved: string[] = []
+
+  // Preserve fenced code blocks
+  let text = raw.replace(/```[\s\S]*?```/g, (match) => {
+    preserved.push(match)
+    return `\x00P${preserved.length - 1}\x00`
+  })
+
+  // Preserve inline code
+  text = text.replace(/`[^`\n]+`/g, (match) => {
+    preserved.push(match)
+    return `\x00P${preserved.length - 1}\x00`
+  })
+
+  // Convert every isolated single newline to a paragraph break
+  text = text.replace(/(?<!\n)\n(?!\n)/g, "\n\n")
+
+  // Restore preserved segments
+  text = text.replace(/\x00P(\d+)\x00/g, (_, i) => preserved[parseInt(i)])
+
+  return text
+}
 
 interface BlogMarkdownProps {
   markdown: string
@@ -11,7 +41,7 @@ interface BlogMarkdownProps {
 
 type Block =
   | { type: "markdown"; value: string }
-  | { type: "snippet"; slugs: string[]; wide: boolean; notabs: boolean }
+  | { type: "snippet"; slugs: string[]; wide: boolean; notabs: boolean; minHeight?: number }
 
 function codeRanges(markdown: string): Array<[number, number]> {
   const ranges: Array<[number, number]> = []
@@ -34,7 +64,7 @@ function isInsideCode(pos: number, ranges: Array<[number, number]>) {
 function parseBlocks(markdown: string): Block[] {
   const ranges = codeRanges(markdown)
   const snippetRegex =
-    /\{\{\s*snippet:([\w-]+(?:\|[\w-]+)*)((?:\s+(?:wide|notabs))*)\s*\}\}/g
+    /\{\{\s*snippet:([\w-]+(?:\|[\w-]+)*)((?:\s+(?:wide|notabs|height:\d+))*)\s*\}\}/g
   const blocks: Block[] = []
 
   let lastIndex = 0
@@ -49,11 +79,13 @@ function parseBlocks(markdown: string): Block[] {
     }
 
     const flags = match[2] ?? ""
+    const heightMatch = flags.match(/height:(\d+)/)
     blocks.push({
       type: "snippet",
       slugs: match[1].split("|"),
       wide: flags.includes("wide"),
       notabs: flags.includes("notabs"),
+      minHeight: heightMatch ? parseInt(heightMatch[1], 10) : undefined,
     })
 
     lastIndex = snippetRegex.lastIndex
@@ -98,14 +130,19 @@ export default function BlogMarkdown({ markdown, snippetsBySlug, user }: BlogMar
               tabs={tabs}
               wide={block.wide}
               showTabs={block.notabs ? false : undefined}
+              minHeight={block.minHeight}
               user={user ?? null}
             />
           )
         }
 
         return (
-          <ReactMarkdown key={`md-${index}`} remarkPlugins={[remarkGfm]}>
-            {block.value}
+          <ReactMarkdown
+            key={`md-${index}`}
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+          >
+            {normalizeMarkdownNewlines(block.value)}
           </ReactMarkdown>
         )
       })}

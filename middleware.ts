@@ -19,6 +19,16 @@ export function middleware(request: NextRequest) {
       pathname.startsWith("/control")
 
     if (!isSystemPath) {
+      // If a link accidentally includes the /blog prefix on the subdomain,
+      // redirect to the clean URL so the address bar always looks right.
+      if (pathname === "/blog") {
+        return NextResponse.redirect(new URL("/", request.url))
+      }
+      if (pathname.startsWith("/blog/")) {
+        return NextResponse.redirect(new URL(pathname.slice(5), request.url))
+      }
+
+      // Rewrite clean subdomain paths → Next.js /blog/* file-system routes.
       if (pathname === "/") {
         return NextResponse.rewrite(new URL("/blog", request.url))
       }

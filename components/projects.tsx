@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -425,10 +425,10 @@ function WebPreview({ project }: { project: Project }) {
   const outerRef  = useRef<HTMLDivElement>(null)
   const [containerW, setContainerW] = useState(0)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = outerRef.current
     if (!el) return
-    // Measure immediately so we don't flash the wrong layout
+    // Measure synchronously before first paint to avoid mid-animation re-render
     setContainerW(el.getBoundingClientRect().width)
     const obs = new ResizeObserver(([entry]) => setContainerW(entry.contentRect.width))
     obs.observe(el)
@@ -600,11 +600,34 @@ function PicturePreview({ project }: { project: Project }) {
 
 function ProjectActions({ project }: { project: Project }) {
   return (
-    <div className="mt-6 mb-8 flex flex-col gap-3 sm:flex-row">
+    <div className="mt-6 mb-8 flex flex-col gap-3 sm:flex-row justify-center">
       {/* Repo + Read Article: side-by-side below sm, become direct flex children at sm+ */}
       <div className="flex gap-3 max-[380px]:flex-col sm:contents">
+        {project.blogPostSlug ? (
+          <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground sm:max-w-[190px]">
+            <a
+              href={`/blog/${project.blogPostSlug}`}
+              onClick={(e) => {
+                const host = window.location.hostname
+                if (host !== "localhost" && host !== "127.0.0.1") {
+                  const apex = host.replace(/^www\./, "")
+                  e.preventDefault()
+                  window.location.href = `${window.location.protocol}//blog.${apex}/${project.blogPostSlug}`
+                }
+              }}
+            >
+              <BookOpen className="h-4 w-4" />
+              Read Article
+            </a>
+          </Button>
+        ) : (
+          <div className="flex-1">
+            <p className="text-sm text-muted-foreground text-center">(coming soon...)</p>
+          </div>
+        )}
+
         {project.githubUrl ? (
-          <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
+          <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground sm:max-w-[190px]">
             <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
               <Github className="h-4 w-4" />
               Repository
@@ -613,24 +636,11 @@ function ProjectActions({ project }: { project: Project }) {
         ) : (
           <div className="flex-1" />
         )}
-
-        {project.blogPostSlug ? (
-          <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            <Link href={`/blog/${project.blogPostSlug}`}>
-              <BookOpen className="h-4 w-4" />
-              Read Article
-            </Link>
-          </Button>
-        ) : (
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground text-center">(coming soon...)</p>
-          </div>
-        )}
       </div>
 
       {/* Live Site: full-width below sm, flex-1 at sm+ */}
       {project.liveUrl ? (
-        <Button asChild size="default" className="w-full gap-2 sm:flex-1">
+        <Button asChild size="default" className="w-full gap-2 sm:flex-1 sm:max-w-[190px]">
           <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4" />
             Live Site
@@ -644,43 +654,24 @@ function ProjectActions({ project }: { project: Project }) {
 export default function Projects() {
   const [visible, setVisible] = useState(3)
   const [activeId, setActiveId] = useState<number | null>(projects[0]?.id ?? null)
-  const [closingId, setClosingId] = useState<number | null>(null)
+  // Track which items have been opened at least once (so content stays mounted for smooth transitions)
+  const [mountedIds, setMountedIds] = useState<Set<number>>(() =>
+    projects[0] ? new Set([projects[0].id]) : new Set()
+  )
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   const visibleProjects = projects.slice(0, visible)
 
-  const visibleExpandedIds = useMemo(() => {
-    const ids = new Set<number>()
-    if (activeId !== null) ids.add(activeId)
-    if (closingId !== null) ids.add(closingId)
-    return ids
-  }, [activeId, closingId])
-
-  useEffect(() => {
-    if (closingId === null) return
-
-    const timer = window.setTimeout(() => {
-      setClosingId((current) => (current === closingId ? null : current))
-    }, CLOSE_ANIMATION_MS)
-
-    return () => window.clearTimeout(timer)
-  }, [closingId])
-
   const toggleItem = (projectId: number) => {
     if (projectId === activeId) {
-      setClosingId(projectId)
       setActiveId(null)
       return
     }
-
-    if (activeId !== null) {
-      setClosingId(activeId)
-    }
-
     setActiveId(projectId)
+    setMountedIds((prev) => new Set([...prev, projectId]))
     setTimeout(() => {
       itemRefs.current.get(projectId)?.scrollIntoView({ behavior: "smooth", block: "start" })
-    }, 50)
+    }, 380)
   }
 
   const showMore = () => setVisible((current) => Math.min(current + 3, projects.length))
@@ -702,7 +693,6 @@ export default function Projects() {
         <div className="w-full">
           {visibleProjects.map((project, idx) => {
             const isOpen = activeId === project.id
-            const shouldRenderExpanded = visibleExpandedIds.has(project.id)
 
             return (
               <motion.div
@@ -711,31 +701,36 @@ export default function Projects() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.35, delay: idx * 0.04 }}
-                ref={(el) => { if (el) itemRefs.current.set(project.id, el as HTMLDivElement); else itemRefs.current.delete(project.id) }}
+                ref={(el) => {
+                  if (el) itemRefs.current.set(project.id, el as HTMLDivElement)
+                  else itemRefs.current.delete(project.id)
+                }}
                 className={`relative w-full border-t border-b border-border/60 transition-colors duration-300 cursor-pointer ${isOpen ? "bg-primary/[0.03]" : "bg-card/40"}`}
                 onClick={() => toggleItem(project.id)}
               >
                 <div className="px-4 pt-4 md:px-8">
                   <div className="container mx-auto">
-                  <div
-                    className="w-full text-left"
-                  >
-                    <div className="mb-3">
-                      <h3 className="text-left text-2xl font-semibold tracking-tight">{project.title}</h3>
+                    <div className="w-full text-left">
+                      <div className="mb-3">
+                        <h3 className="text-left text-2xl font-semibold tracking-tight">
+                          {project.title}
+                        </h3>
+                      </div>
+                      <p className="mb-3 text-justify text-base text-muted-foreground">
+                        {project.description}
+                      </p>
+                      <div className="mb-2">
+                        {isOpen ? (
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {project.technologies.map((tech) => (
+                              <BlueBubble key={tech}>{tech}</BlueBubble>
+                            ))}
+                          </div>
+                        ) : (
+                          <CompactTech stack={project.technologies} />
+                        )}
+                      </div>
                     </div>
-                    <p className="mb-3 text-justify text-base text-muted-foreground">{project.description}</p>
-                    <div className="mb-2">
-                      {isOpen ? (
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {project.technologies.map((tech) => (
-                            <BlueBubble key={tech}>{tech}</BlueBubble>
-                          ))}
-                        </div>
-                      ) : (
-                        <CompactTech stack={project.technologies} />
-                      )}
-                    </div>
-                  </div>
                   </div>
                 </div>
 
@@ -746,28 +741,28 @@ export default function Projects() {
 
                 <div className="px-4 md:px-8">
                   <div className="container mx-auto">
-                  <AnimatePresence initial={false}>
-                    {shouldRenderExpanded ? (
-                      <motion.div
-                        key={`expanded-${project.id}`}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{
-                          height: isOpen ? "auto" : 0,
-                          opacity: isOpen ? 1 : 0,
-                        }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.35, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        {project.showcaseMode === "web" ? (
-                          <WebPreview project={project} />
-                        ) : (
-                          <PicturePreview project={project} />
+                    {/* CSS grid-rows accordion: 0fr → 1fr transition avoids layout reflow jank */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateRows: isOpen ? "1fr" : "0fr",
+                        transition: "grid-template-rows 0.35s ease, opacity 0.35s ease",
+                        opacity: isOpen ? 1 : 0,
+                      }}
+                    >
+                      <div style={{ overflow: "hidden", minHeight: 0 }}>
+                        {mountedIds.has(project.id) && (
+                          <>
+                            {project.showcaseMode === "web" ? (
+                              <WebPreview project={project} />
+                            ) : (
+                              <PicturePreview project={project} />
+                            )}
+                            <ProjectActions project={project} />
+                          </>
                         )}
-                        <ProjectActions project={project} />
-                      </motion.div>
-                    ) : null}
-                  </AnimatePresence>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -777,7 +772,7 @@ export default function Projects() {
 
         {visible < projects.length ? (
           <motion.div
-            className="mt-12 flex justify-center gap-4"
+            className="mt-12 flex flex-row gap-4 justify-center max-[380px]:flex-col max-[380px]:gap-3 px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
@@ -785,7 +780,7 @@ export default function Projects() {
             <Button
               onClick={showMore}
               variant="outline"
-              className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground w-auto max-[380px]:w-full"
             >
               Show More
               <ChevronDown className="h-4 w-4" />
@@ -793,7 +788,7 @@ export default function Projects() {
             <Button
               onClick={showAll}
               variant="outline"
-              className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+              className="gap-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground w-auto max-[380px]:w-full"
             >
               Show All
               <LayoutGrid className="h-4 w-4" />

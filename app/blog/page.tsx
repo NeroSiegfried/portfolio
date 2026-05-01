@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { readDb } from "@/lib/blog/store"
+import { readBlogHomeDb } from "@/lib/blog/store"
 import { listPublishedPosts, listSeriesTree, listPostsChronological } from "@/lib/blog/queries"
 import { getSessionUser, getAdminEntryPath } from "@/lib/blog/auth"
 import AdminEntryHotkey from "@/components/admin-entry-hotkey"
@@ -8,11 +8,12 @@ import BlogSeriesNav from "@/components/blog-series-nav"
 import BlogArchiveSidebar from "@/components/blog-archive-sidebar"
 import Footer from "@/components/footer"
 import { ModeToggle } from "@/components/mode-toggle"
+import PortfolioLink from "@/components/portfolio-link"
 
 export const dynamic = "force-dynamic"
 
 export default async function BlogHomePage() {
-  const db = await readDb()
+  const db = await readBlogHomeDb()
   const posts = listPublishedPosts(db)
   const chronoPosts = listPostsChronological(db)
   const seriesTree = listSeriesTree(db)
@@ -20,21 +21,18 @@ export default async function BlogHomePage() {
   const adminPath = getAdminEntryPath()
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative flex flex-col min-h-screen bg-background">
       {/* Non-sticky top bar: portfolio link + theme toggle — same style as Hero */}
       <div className="absolute inset-x-0 top-0 z-20">
         <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-6">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-primary"
-          >
+          <PortfolioLink className="text-sm text-muted-foreground transition-colors hover:text-primary">
             ← Portfolio
-          </Link>
+          </PortfolioLink>
           <ModeToggle />
         </div>
       </div>
 
-      <main className="container mx-auto px-4 pb-20 pt-28">
+      <main className="container mx-auto px-4 pb-20 pt-28 flex-1">
         {/* Page header */}
         <header className="mb-12">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">Blog</h1>

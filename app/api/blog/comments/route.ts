@@ -1,7 +1,7 @@
+import { randomUUID } from "crypto"
 import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/blog/auth"
-import { createId, nowIso, updateDb } from "@/lib/blog/store"
-import type { BlogComment } from "@/lib/blog/types"
+import { getPool } from "@/lib/blog/store"
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -23,41 +23,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Post and content are required." }, { status: 400 })
   }
 
-  const comment: BlogComment = {
-    id: createId(),
-    postId,
-    userId: user.id,
-    parentId,
-    content,
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
+  const pool = getPool()
+
+  // Validate post exists
+  const postRow = await pool.query(
+    "SELECT id FROM posts WHERE id=$1 AND status='published' LIMIT 1",
+    [postId]
+  )
+  if (!postRow.rows.length) {
+    return NextResponse.json({ error: "Post not found." }, { status: 404 })
   }
 
-  const result = await updateDb((db) => {
-    const postExists = db.posts.some((post) => post.id === postId && post.status === "published")
-    if (!postExists) {
-      return { error: "Post not found." }
-    }
-
-    const author = db.users.find((u) => u.id === user.id)
-    if (author?.blocked) {
-      return { error: "Your account has been suspended." }
-    }
-
-    if (parentId) {
-      const parent = db.comments.find((entry) => entry.id === parentId && entry.postId === postId)
-      if (!parent) {
-        return { error: "Parent comment not found." }
-      }
-    }
-
-    db.comments.push(comment)
-    return { comment }
-  })
-
-  if ("error" in result) {
-    return NextResponse.json({ error: result.error }, { status: 404 })
+  // Check not blocked
+  const userRow = await pool.query("SELECT blocked FROM users WHERE id=$1 LIMIT 1", [user.id])
+  if (userRow.rows[0]?.blocked) {
+    return NextResponse.json({ error: "Your account has been suspended." }, { status: 403 })
   }
 
-  return NextResponse.json(result)
+  // Validate parent comment if replying
+  if (parentId) {
+    const parentRow = await pool.query(
+      "SELECT id FROM comments WHERE id=$1 AND post_id=$2 LIMIT 1",
+      [parentId, postId]
+    )
+    if (!parentRow.rows.length) {
+      return NextResponse.json({ error: "Parent comment not found." }, { status: 404 })
+    }
+  }
+
+  const id = randomUUID()
+  const now = new Date().toISOString()
+  await pool.query(
+    `INSERT INTO comments (id, post_id, user_id, parent_id, content, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $6)`,
+    [id, postId, user.id, parentId, content, now]
+  )
+
+  const comment = { id, postId, userId: user.id, parentId, content, createdAt: now, updatedAt: now }
+  return NextResponse.json({ comment })
 }

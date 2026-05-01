@@ -1,17 +1,20 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { readDb } from "@/lib/blog/store"
+import { readBlogPostDb } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug } from "@/lib/blog/queries"
 import { getSessionUser } from "@/lib/blog/auth"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
-import BlogComments from "@/components/blog-comments"
+import LazyComments from "@/components/lazy-comments"
 import BlogTopNav from "@/components/blog-top-nav"
 
 export const dynamic = "force-dynamic"
 
 export default async function BlogFeaturesDemoPage() {
-  const db = await readDb()
+  const db = await readBlogPostDb("features-demo")
+  if (!db) {
+    notFound()
+  }
   const post = findPublishedPostBySlug(db, "features-demo")
   if (!post) {
     notFound()
@@ -72,7 +75,7 @@ export default async function BlogFeaturesDemoPage() {
         </article>
 
         <div className="mt-12 border-t border-border/40 pt-10">
-          <BlogComments postId={post.id} comments={post.comments} currentUser={user} />
+          <LazyComments postId={post.id} postSlug="features-demo" currentUser={user} />
         </div>
 
         <div className="mt-10">

@@ -84,6 +84,8 @@
   }
 }
 
+
+
 .animate-wave {
   animation: wave 8s ease-in-out infinite;
 }
@@ -341,98 +343,70 @@
      Light mode → orange track  hsl(43 96% 62%) / hsl(46 100% 78%)
      Dark  mode → blue  track   hsl(225 46% 18%) / hsl(223 40% 28%)
 ═══════════════════════════════════════════════════════════════ */
-.theme-switch {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  display: inline-block;
-  /* Reserve space so layout never shifts */
-  width: 64px;
-  height: 34px;
-}
-
-.theme-switch-track {
-  display: flex;
-  align-items: center;
-  width: 64px;
-  height: 34px;
-  border-radius: 9999px;
-  padding: 4px;
-  border: 1px solid hsl(var(--border));
-  /* Light-mode default: orange gradient */
-  background: linear-gradient(180deg, hsl(46 100% 78%), hsl(43 96% 62%));
-  transition: background 300ms ease, border-color 300ms ease;
-}
-
-/* Dark mode: blue gradient */
-.dark .theme-switch-track {
-  background: linear-gradient(180deg, hsl(223 40% 28%), hsl(225 46% 18%));
-}
-
-/* Slider — the element that physically translates */
-.theme-switch-thumb-slider {
-  /* Light-mode: thumb sits 2px from left edge — gives sun visible left breathing room */
-  transform: translateX(2px);
-  transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.dark .theme-switch-thumb-slider {
-  /* Dark-mode: thumb at 30px — exactly what the user confirmed looked perfect */
-  transform: translateX(30px);
-}
-
-/* Thumb circle — wraps both icons */
-.theme-switch-thumb {
+/* ── Theme toggle: pill button with left/right icons ────────────────────── */
+.theme-toggle-btn {
   position: relative;
-  width: 24px;
-  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 80px;
+  height: 40px;
   border-radius: 9999px;
-  /* Light-mode: white circle, orange tint */
-  background: hsl(0 0% 100% / 0.92);
-  transition: background 300ms ease;
-  overflow: hidden;
-}
-
-.dark .theme-switch-thumb {
-  background: hsl(223 35% 14% / 0.95);
-}
-
-/* Both icons share the same position — CSS transitions handle visibility */
-.theme-icon {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 14px;
-  height: 14px;
+  border: 2px solid #FF6B4A;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 12px;
   transition:
-    transform  300ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity    220ms ease;
+    border-color 200ms ease,
+    background 200ms ease;
 }
 
-/* ── Sun: visible in light mode, spins & shrinks away in dark mode ── */
+.theme-toggle-btn:hover {
+  background: rgb(255 107 74 / 0.1);
+}
+
+.dark .theme-toggle-btn {
+  border-color: #2F70FF;
+}
+
+.dark .theme-toggle-btn:hover {
+  background: rgb(47 112 255 / 0.1);
+}
+
+/* Both icons — positioned left or right */
+.theme-toggle-btn .theme-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  transition:
+    transform  200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity    200ms ease;
+}
+
+/* ── Sun: visible and left-positioned in light mode ── */
 .theme-icon-sun {
-  color: hsl(32 100% 28%);
+  color: #FF6B4A;
   opacity: 1;
-  transform: rotate(0deg) scale(1);
+  transform: scale(1) rotate(0deg);
 }
-
 .dark .theme-icon-sun {
   opacity: 0;
-  transform: rotate(90deg) scale(0.4);
+  transform: scale(0) rotate(-180deg);
 }
 
-/* ── Moon: hidden in light mode, spins in from below in dark mode ── */
+/* ── Moon: hidden in light mode, visible and right-positioned in dark ── */
 .theme-icon-moon {
-  color: hsl(217 100% 80%);
+  color: #2F70FF;
   opacity: 0;
-  transform: rotate(-90deg) scale(0.4);
+  transform: scale(0) rotate(180deg);
 }
-
 .dark .theme-icon-moon {
   opacity: 1;
-  transform: rotate(0deg) scale(1);
+  transform: scale(1) rotate(0deg);
 }
+
+
 
 
 

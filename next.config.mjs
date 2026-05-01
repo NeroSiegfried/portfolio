@@ -32,13 +32,29 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    unoptimized: false,
+    domains: ["nerosiegfried.com", "www.nerosiegfried.com", "blog.nerosiegfried.com"],
   },
   async headers() {
     return [
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+    ]
+  },
+  async redirects() {
+    return [
+      {
+        source: "/blog",
+        has: [
+          {
+            type: "host",
+            value: "www.nerosiegfried.com",
+          },
+        ],
+        destination: "https://blog.nerosiegfried.com",
+        permanent: true,
       },
     ]
   },

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react"
 import type { BlogSeries } from "@/lib/blog/types"
 import type { BlogPostSummary } from "@/lib/blog/queries"
+import BlogLink from "@/components/blog-link"
 
 interface SeriesTreeBrowserProps {
   rootSeriesId: string
@@ -121,7 +122,7 @@ export default function SeriesTreeBrowser({ rootSeriesId, allSeries, posts }: Se
           if (item.type === "post") {
             return (
               <li key={item.id}>
-                <Link
+                <BlogLink
                   href={`/blog/${item.slug}`}
                   className="group flex items-center justify-between rounded-md border border-border/40 bg-card/30 px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-muted/40"
                 >
@@ -129,7 +130,7 @@ export default function SeriesTreeBrowser({ rootSeriesId, allSeries, posts }: Se
                     {item.title}
                   </span>
                   <time className="shrink-0 text-xs text-muted-foreground">{formatDate(item.date)}</time>
-                </Link>
+                </BlogLink>
               </li>
             )
           }
@@ -151,7 +152,7 @@ export default function SeriesTreeBrowser({ rootSeriesId, allSeries, posts }: Se
                 </button>
 
                 {/* Series row — click goes to series page */}
-                <Link
+                <BlogLink
                   href={seriesHref}
                   className="group flex flex-1 items-center justify-between rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 transition-colors hover:border-primary/50 hover:bg-primary/10"
                 >
@@ -159,7 +160,7 @@ export default function SeriesTreeBrowser({ rootSeriesId, allSeries, posts }: Se
                     {item.title}
                   </span>
                   <time className="shrink-0 text-xs text-muted-foreground">{formatDate(item.date)}</time>
-                </Link>
+                </BlogLink>
               </div>
 
               {open && (

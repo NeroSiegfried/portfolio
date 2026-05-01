@@ -2,7 +2,7 @@ import { pbkdf2Sync, randomBytes, timingSafeEqual } from "crypto"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { BlogDb, BlogSession, BlogUser, PublicUser } from "@/lib/blog/types"
-import { createId, nowIso, readDb, updateDb, upsertSession, upsertUser } from "@/lib/blog/store"
+import { createId, nowIso, upsertSession, getPool } from "@/lib/blog/store"
 
 const SESSION_COOKIE_NAME = "portfolio_blog_session"
 const SESSION_DURATION_DAYS = 14
@@ -57,10 +57,8 @@ export function createSession(db: BlogDb, userId: string): BlogSession {
 
 export async function removeSession(token: string | null) {
   if (!token) return
-
-  await updateDb((db) => {
-    db.sessions = db.sessions.filter((session) => session.token !== token)
-  })
+  const pool = getPool()
+  await pool.query("DELETE FROM sessions WHERE token = $1", [token])
 }
 
 export function setSessionCookie(response: NextResponse, token: string) {
@@ -93,20 +91,23 @@ function pruneExpiredSessions(db: BlogDb) {
   db.sessions = db.sessions.filter((session) => new Date(session.expiresAt).getTime() > now)
 }
 
-export async function getSessionUser() {
+export async function getSessionUser(): Promise<PublicUser | null> {
   const token = await getCookieSessionToken()
   if (!token) return null
 
-  const db = await readDb()
-  pruneExpiredSessions(db)
+  const pool = getPool()
+  const result = await pool.query<{ id: string; username: string; role: string }>(
+    `SELECT u.id, u.username, u.role
+     FROM sessions s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.token = $1 AND s.expires_at > NOW()
+     LIMIT 1`,
+    [token]
+  )
 
-  const session = db.sessions.find((entry) => entry.token === token)
-  if (!session) return null
-
-  const user = db.users.find((entry) => entry.id === session.userId)
-  if (!user) return null
-
-  return toPublicUser(user)
+  if (!result.rows.length) return null
+  const row = result.rows[0]
+  return { id: row.id, username: row.username, role: row.role as "admin" | "user" }
 }
 
 export async function requireAdminUser() {
@@ -134,26 +135,54 @@ export async function ensureAdminAccountOnDemand(email: string, password: string
   const credentials = getAdminCredentials()
 
   if (!credentials) return null
-  if (normalizedEmail !== credentials.email || password !== credentials.password) {
-    return null
+  if (normalizedEmail !== credentials.email || password !== credentials.password) return null
+
+  const pool = getPool()
+
+  // Check if an admin already exists
+  const existing = await pool.query("SELECT * FROM users WHERE role='admin' LIMIT 1")
+  if (existing.rows.length > 0) {
+    const r = existing.rows[0]
+    // Always keep the stored hash in sync with the current env credentials so that
+    // changing BLOG_ADMIN_PASSWORD in the environment takes effect on next login.
+    const freshHash = hashPassword(credentials.password)
+    await pool.query(
+      "UPDATE users SET password_hash=$1, updated_at=NOW() WHERE id=$2",
+      [freshHash, r.id as string]
+    )
+    return {
+      id: r.id as string,
+      username: r.username as string,
+      email: r.email as string,
+      passwordHash: freshHash,
+      role: r.role as "admin" | "user",
+      createdAt: (r.created_at as Date).toISOString(),
+      blocked: (r.blocked as boolean) ?? false,
+    } as BlogUser
   }
 
-  return await updateDb((db) => {
-    const existingAdmin = db.users.find((user) => user.role === "admin")
-    if (existingAdmin) return existingAdmin
+  // Create admin account via direct INSERT
+  const id = createId()
+  const passwordHash = hashPassword(credentials.password)
+  await pool.query(
+    `INSERT INTO users (id, username, email, password_hash, role, blocked, created_at, updated_at)
+     VALUES ($1, 'admin', $2, $3, 'admin', false, NOW(), NOW())
+     ON CONFLICT (email) DO NOTHING`,
+    [id, credentials.email, passwordHash]
+  )
 
-    const admin: BlogUser = {
-      id: createId(),
-      username: "admin",
-      email: credentials.email,
-      passwordHash: hashPassword(credentials.password),
-      role: "admin",
-      createdAt: nowIso(),
-    }
-
-    upsertUser(db, admin)
-    return admin
-  })
+  const newAdmin = await pool.query("SELECT * FROM users WHERE email=$1 LIMIT 1", [credentials.email])
+  if (!newAdmin.rows.length) return null
+  const r = newAdmin.rows[0]
+  return {
+    id: r.id as string,
+    username: r.username as string,
+    email: r.email as string,
+    passwordHash: r.password_hash as string,
+    role: r.role as "admin" | "user",
+    createdAt: (r.created_at as Date).toISOString(),
+    blocked: (r.blocked as boolean) ?? false,
+  } as BlogUser
 }
 
 export function getAdminEntryPath() {

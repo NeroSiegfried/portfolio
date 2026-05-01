@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowUpDown } from "lucide-react"
 import type { BlogPostSummary } from "@/lib/blog/queries"
+import BlogLink from "@/components/blog-link"
 
 interface BlogPostListProps {
   posts: BlogPostSummary[]
@@ -47,12 +48,13 @@ export default function BlogPostList({ posts }: BlogPostListProps) {
           {sorted.map((post) => (
             <article key={post.id} className="group py-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <Link
+                <BlogLink
                   href={`/blog/${post.slug}`}
+                  prefetch={true}
                   className="text-base font-semibold leading-snug transition-colors group-hover:text-primary sm:text-lg"
                 >
                   {post.title}
-                </Link>
+                </BlogLink>
                 <time className="shrink-0 text-xs text-muted-foreground">
                   {post.publishedAt ? formatDate(post.publishedAt) : "Draft"}
                 </time>
@@ -68,13 +70,13 @@ export default function BlogPostList({ posts }: BlogPostListProps) {
                       .map((s) => s.slug)
                       .join("/")}`
                     return (
-                      <Link
+                      <BlogLink
                         key={series.id}
                         href={href}
                         className="rounded-full border border-primary/30 bg-primary/8 px-2.5 py-0.5 text-xs font-medium text-primary/75 transition-all hover:border-primary hover:bg-primary/15 hover:text-primary"
                       >
                         {series.title}
-                      </Link>
+                      </BlogLink>
                     )
                   })}
                 </div>
