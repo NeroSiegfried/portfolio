@@ -4,8 +4,8 @@ import { makeS3Client } from "@/lib/aws-clients"
 
 const s3 = makeS3Client()
 
-const CF_DOMAIN = () => process.env.AWS_CLOUDFRONT_DOMAIN ?? ""
-const BUCKET    = () => process.env.AWS_S3_BUCKET ?? ""
+const CF_DOMAIN = () => process.env.AWS_CLOUDFRONT_DOMAIN ?? process.env.CLOUDFRONT_DOMAIN ?? ""
+const BUCKET    = () => process.env.AWS_S3_BUCKET ?? process.env.S3_BUCKET ?? ""
 
 function extractKey(url: string): string | null {
   const prefix = `https://${CF_DOMAIN()}/`

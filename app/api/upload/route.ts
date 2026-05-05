@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     uploadUrl = await getSignedUrl(
       s3,
       new PutObjectCommand({
-        Bucket:       process.env.AWS_S3_BUCKET!,
+        Bucket:       (process.env.AWS_S3_BUCKET ?? process.env.S3_BUCKET)!,
         Key:          key,
         ContentType:  contentType,
         CacheControl: "public, max-age=31536000, immutable",
@@ -80,6 +80,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Could not generate upload URL." }, { status: 500 })
   }
 
-  const cfUrl = `https://${process.env.AWS_CLOUDFRONT_DOMAIN}/${key}`
+  const cfUrl = `https://${process.env.AWS_CLOUDFRONT_DOMAIN ?? process.env.CLOUDFRONT_DOMAIN}/${key}`
   return NextResponse.json({ uploadUrl, key, cfUrl })
 }

@@ -55,7 +55,7 @@ function resolveCredentials(): any {
  *  is read at request time, not at cold-start / module initialisation. */
 export function makeS3Client(): S3Client {
   return new S3Client({
-    region:   process.env.AWS_S3_REGION ?? "us-east-1",
+    region:   process.env.AWS_S3_REGION ?? process.env.S3_REGION ?? "us-east-1",
     credentials: resolveCredentials(),
     // Suppress x-amz-checksum-* from presigned URLs — they trigger CORS
     // preflight failures in the browser when PUT-ing directly to S3.
