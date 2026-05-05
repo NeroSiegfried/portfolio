@@ -1,22 +1,11 @@
 import { NextResponse } from "next/server"
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { PutObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { randomUUID } from "crypto"
 import { getSessionUser } from "@/lib/blog/auth"
+import { makeS3Client } from "@/lib/aws-clients"
 
 export const runtime = "nodejs"
-
-const s3 = new S3Client({
-  region: process.env.AWS_S3_REGION ?? "us-east-1",
-  credentials: {
-    accessKeyId:     process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-  // Disable automatic checksum headers — they end up in the presigned URL
-  // query string and are rejected by the browser CORS preflight against S3.
-  requestChecksumCalculation: "WHEN_REQUIRED",
-  responseChecksumValidation: "WHEN_REQUIRED",
-})
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -38,6 +27,7 @@ const MAX_COMMENT_BYTES = 8 * 1024 * 1024   //  8 MB
  * Size and type are enforced here before the presigned URL is issued.
  */
 export async function POST(req: Request) {
+  const s3   = makeS3Client()
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: "Login required." }, { status: 401 })
 

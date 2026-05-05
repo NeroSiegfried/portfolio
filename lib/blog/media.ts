@@ -1,13 +1,8 @@
-import { S3Client, CopyObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
+import { CopyObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
 import { randomUUID } from "crypto"
+import { makeS3Client } from "@/lib/aws-clients"
 
-const s3 = new S3Client({
-  region: process.env.AWS_S3_REGION ?? "us-east-1",
-  credentials: {
-    accessKeyId:     process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+const s3 = makeS3Client()
 
 const CF_DOMAIN = () => process.env.AWS_CLOUDFRONT_DOMAIN ?? ""
 const BUCKET    = () => process.env.AWS_S3_BUCKET ?? ""

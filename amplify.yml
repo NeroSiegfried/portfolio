@@ -1,14 +1,48 @@
 version: 1
 # ─── Required environment variables (set in Amplify Console → App settings → Environment variables) ───
+#
+# ── Database ──────────────────────────────────────────────────────────────────
 # DATABASE_URL           postgres://user:pass@host:5432/db?sslmode=require
-# NEXT_PUBLIC_SITE_URL   https://nerosiegfried.com   ← CRITICAL: used for OAuth callback URLs
+#
+# ── Auth ──────────────────────────────────────────────────────────────────────
+# NEXT_PUBLIC_SITE_URL   https://nerosiegfried.com   ← used for OAuth callback URLs
 # BLOG_ADMIN_EMAIL       admin email for auto-seed
 # BLOG_ADMIN_PASSWORD    admin password for auto-seed
-# GITHUB_CLIENT_ID       GitHub OAuth App client ID (prod)
-# GITHUB_CLIENT_SECRET   GitHub OAuth App client secret (prod)
+# NEXTAUTH_SECRET        random secret for JWT signing  (openssl rand -base64 32)
+# NEXTAUTH_URL           https://nerosiegfried.com
+# GITHUB_CLIENT_ID       GitHub OAuth App client ID
+# GITHUB_CLIENT_SECRET   GitHub OAuth App client secret
 # GOOGLE_CLIENT_ID       Google OAuth client ID
 # GOOGLE_CLIENT_SECRET   Google OAuth client secret
-# ────────────────────────────────────────────────────────────────────────────────────────────────────
+#
+# ── S3 / CloudFront ───────────────────────────────────────────────────────────
+# AWS_S3_BUCKET          portfolio-images-1777388561
+# AWS_S3_REGION          us-east-1
+# AWS_CLOUDFRONT_DOMAIN  <your-distribution>.cloudfront.net
+#
+# ── AWS credentials (choose ONE strategy) ─────────────────────────────────────
+#
+#   Strategy A — Amplify execution role (RECOMMENDED, zero keys)
+#     Leave all three vars below UNSET.  Attach this inline policy to the
+#     Amplify service role in IAM → Roles → <AmplifyServiceRole>:
+#
+#       {
+#         "Version": "2012-10-17",
+#         "Statement": [{
+#           "Effect": "Allow",
+#           "Action": ["s3:PutObject","s3:CopyObject","s3:DeleteObject","s3:GetObject"],
+#           "Resource": "arn:aws:s3:::portfolio-images-1777388561/*"
+#         }]
+#       }
+#
+#   Strategy B — Vercel OIDC (use this on Vercel, not Amplify)
+#     AWS_ROLE_ARN         arn:aws:iam::ACCOUNT_ID:role/portfolio-vercel
+#     (VERCEL_OIDC_TOKEN is injected automatically by Vercel — do NOT set it)
+#
+#   Strategy C — Scoped IAM user (last resort, local dev only)
+#     AWS_ACCESS_KEY_ID       <key-id>
+#     AWS_SECRET_ACCESS_KEY   <secret>
+# ─────────────────────────────────────────────────────────────────────────────
 frontend:
   phases:
     preBuild:
