@@ -28,7 +28,13 @@ function truncate(s: string, maxLen = 20) {
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params
 
-  const db = await readBlogPostDb(slug)
+  let db: Awaited<ReturnType<typeof readBlogPostDb>>
+  try {
+    db = await readBlogPostDb(slug)
+  } catch (err) {
+    console.error(`[blog/${slug}] DB unavailable during render:`, err)
+    notFound()
+  }
   if (!db) {
     notFound()
   }

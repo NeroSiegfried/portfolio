@@ -61,7 +61,13 @@ export function listPublishedPostsForSeries(db: BlogDb, seriesId: string): BlogP
 
   collect(seriesId)
 
-  return listPublishedPosts(db).filter((post) => post.seriesId && includeIds.has(post.seriesId))
+  return listPublishedPosts(db)
+    .filter((post) => post.seriesId && includeIds.has(post.seriesId))
+    .sort((a, b) => {
+      const at = new Date(a.publishedAt ?? a.createdAt).getTime()
+      const bt = new Date(b.publishedAt ?? b.createdAt).getTime()
+      return at - bt  // ascending: oldest published = Project 1
+    })
 }
 
 export function listSnippetsBySlug(db: BlogDb) {

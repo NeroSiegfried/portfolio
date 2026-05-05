@@ -15,7 +15,18 @@ import PortfolioLink from "@/components/portfolio-link"
 export const revalidate = 60
 
 export default async function BlogHomePage() {
-  const db = await readBlogHomeDb()
+  let db: Awaited<ReturnType<typeof readBlogHomeDb>>
+  try {
+    db = await readBlogHomeDb()
+  } catch (err) {
+    console.error("[blog/page] DB unavailable during render:", err)
+    // Return a minimal fallback rather than crashing the whole page
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Blog is temporarily unavailable. Please try again in a moment.</p>
+      </div>
+    )
+  }
   const posts = listPublishedPosts(db)
   const chronoPosts = listPostsChronological(db)
   const seriesTree = listSeriesTree(db)

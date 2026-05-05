@@ -68,11 +68,15 @@ export async function removeSession(token: string | null) {
   await pool.query("DELETE FROM sessions WHERE token = $1", [token])
 }
 
+// Use secure cookies only when the canonical site URL is https (i.e. real production).
+// This means http://localhost:3000 in `pnpm start` mode will still accept cookies.
+const USE_SECURE_COOKIE = !!(process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https"))
+
 export function setSessionCookie(response: NextResponse, token: string) {
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: USE_SECURE_COOKIE,
     path: "/",
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
   })
@@ -82,7 +86,7 @@ export function clearSessionCookie(response: NextResponse) {
   response.cookies.set(SESSION_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: USE_SECURE_COOKIE,
     path: "/",
     maxAge: 0,
   })

@@ -8,7 +8,6 @@ import { ModeToggle } from "@/components/mode-toggle"
 import PortfolioLink from "@/components/portfolio-link"
 import BlogLink from "@/components/blog-link"
 
-export const dynamic = "force-dynamic"
 export const revalidate = 60
 
 interface SeriesPageProps {
