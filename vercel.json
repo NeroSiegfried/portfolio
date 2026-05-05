@@ -1,14 +1,16 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
       "has": [{ "type": "host", "value": "blog.nerosiegfried.com" }],
-      "destination": "/blog"
+      "destination": "https://nerosiegfried.com/blog",
+      "permanent": true
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "blog.nerosiegfried.com" }],
-      "destination": "/blog/:path*"
+      "destination": "https://nerosiegfried.com/blog/:path*",
+      "permanent": true
     }
   ]
 }

@@ -18,7 +18,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
-      "connect-src 'self'",
+      "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com",
       "frame-ancestors 'self'",
     ].join("; "),
   },
@@ -44,19 +44,7 @@ const nextConfig = {
     ]
   },
   async redirects() {
-    return [
-      {
-        source: "/blog",
-        has: [
-          {
-            type: "host",
-            value: "www.nerosiegfried.com",
-          },
-        ],
-        destination: "https://blog.nerosiegfried.com",
-        permanent: true,
-      },
-    ]
+    return []
   },
 }
 
