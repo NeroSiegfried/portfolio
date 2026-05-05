@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { Suspense, useEffect, useState, useCallback } from "react"
 import BlogComments from "@/components/blog-comments"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import type { CommentNode } from "@/lib/blog/types"
@@ -48,7 +48,9 @@ export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
       )}
 
       {comments !== null && (
-        <BlogComments postId={postId} comments={comments} currentUser={currentUser} />
+        <Suspense fallback={null}>
+          <BlogComments postId={postId} comments={comments} currentUser={currentUser} />
+        </Suspense>
       )}
     </div>
   )

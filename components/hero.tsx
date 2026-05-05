@@ -9,18 +9,6 @@ import { useTheme } from "next-themes"
 import Link from "next/link"
 import { ModeToggle } from "@/components/mode-toggle"
 
-// Detect the blog URL dynamically so it works on any domain/env.
-// In production: blog.nerosiegfried.com
-// In development: localhost /blog
-function getBlogUrl() {
-  if (typeof window === "undefined") return "/blog"
-  const { hostname, protocol } = window.location
-  if (hostname === "localhost" || hostname === "127.0.0.1") return "/blog"
-  // Replace leading www. or bare apex with blog. subdomain
-  const apex = hostname.replace(/^www\./, "")
-  return `${protocol}//blog.${apex}`
-}
-
 export default function Hero() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { resolvedTheme } = useTheme()

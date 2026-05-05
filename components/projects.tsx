@@ -605,17 +605,7 @@ function ProjectActions({ project }: { project: Project }) {
       <div className="flex gap-3 max-[380px]:flex-col sm:contents">
         {project.blogPostSlug ? (
           <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground sm:max-w-[190px]">
-            <a
-              href={`/blog/${project.blogPostSlug}`}
-              onClick={(e) => {
-                const host = window.location.hostname
-                if (host !== "localhost" && host !== "127.0.0.1") {
-                  const apex = host.replace(/^www\./, "")
-                  e.preventDefault()
-                  window.location.href = `${window.location.protocol}//blog.${apex}/${project.blogPostSlug}`
-                }
-              }}
-            >
+            <a href={`/blog/${project.blogPostSlug}`}>
               <BookOpen className="h-4 w-4" />
               Read Article
             </a>
