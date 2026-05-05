@@ -113,4 +113,5 @@ export interface CommentNode extends BlogComment {
   children: CommentNode[]
   username: string
   score: number
+  currentUserVote: 1 | -1 | 0
 }

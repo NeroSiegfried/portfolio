@@ -571,13 +571,18 @@ export function getSeriesBySlugPath(series: BlogSeries[], slugPath: string[]): B
 export function getCommentTree(
   comments: BlogComment[],
   users: BlogUser[],
-  votes: BlogCommentVote[]
+  votes: BlogCommentVote[],
+  currentUserId?: string | null
 ): CommentNode[] {
   const userNameById = new Map(users.map((user) => [user.id, user.username]))
   const scoreByCommentId = new Map<string, number>()
+  const userVoteByCommentId = new Map<string, 1 | -1>()
 
   votes.forEach((vote) => {
     scoreByCommentId.set(vote.commentId, (scoreByCommentId.get(vote.commentId) ?? 0) + vote.value)
+    if (currentUserId && vote.userId === currentUserId) {
+      userVoteByCommentId.set(vote.commentId, vote.value as 1 | -1)
+    }
   })
 
   const nodeMap = new Map<string, CommentNode>()
@@ -588,6 +593,7 @@ export function getCommentTree(
       children: [],
       username: userNameById.get(comment.userId) ?? "Unknown",
       score: scoreByCommentId.get(comment.id) ?? 0,
+      currentUserVote: userVoteByCommentId.get(comment.id) ?? 0,
     })
   })
 

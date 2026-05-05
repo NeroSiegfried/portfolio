@@ -8,14 +8,8 @@ import type { CommentNode } from "@/lib/blog/types"
 interface LazyCommentsProps {
   postId: string
   postSlug: string
-  // currentUser is now resolved client-side so this page can be ISR-cached
 }
 
-/**
- * Fetches comments immediately when the component mounts (no scroll-triggered delay).
- * The component itself is rendered below the fold via the article layout, so the
- * initial page paint is not blocked — we just kick off the fetch right away.
- */
 export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
   const { user: currentUser } = useCurrentUser()
   const [comments, setComments] = useState<CommentNode[] | null>(null)
@@ -23,7 +17,9 @@ export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/blog/posts/${postSlug}/comments`)
+      const res = await fetch(`/api/blog/posts/${postSlug}/comments`, {
+        cache: "no-store",
+      })
       if (res.ok) {
         const data = (await res.json()) as { comments: CommentNode[] }
         setComments(data.comments)
@@ -49,7 +45,12 @@ export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
 
       {comments !== null && (
         <Suspense fallback={null}>
-          <BlogComments postId={postId} comments={comments} currentUser={currentUser} />
+          <BlogComments
+            postId={postId}
+            comments={comments}
+            currentUser={currentUser}
+            onRefresh={load}
+          />
         </Suspense>
       )}
     </div>

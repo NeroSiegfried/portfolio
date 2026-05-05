@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState, useTransition } from "react"
 import { ThumbsUp } from "lucide-react"
 import { useCurrentUser } from "@/hooks/use-current-user"
 
@@ -19,11 +18,25 @@ export default function PostVoteButton({
 }: PostVoteButtonProps) {
   const { user } = useCurrentUser()
   const isLoggedIn = Boolean(user)
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [voted, setVoted] = useState(initialVoted)
   const [score, setScore] = useState(initialScore)
+
+  // Fetch current user's actual vote state on mount (ISR page can't do this server-side)
+  useEffect(() => {
+    fetch(`/api/blog/posts/vote/status?postId=${encodeURIComponent(postId)}`, {
+      cache: "no-store",
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { voted: boolean; score: number } | null) => {
+        if (data) {
+          setVoted(data.voted)
+          setScore(data.score)
+        }
+      })
+      .catch(() => {/* non-critical */})
+  }, [postId])
 
   const vote = async () => {
     if (!isLoggedIn) {
@@ -57,9 +70,8 @@ export default function PostVoteButton({
     const payload = (await response.json()) as { score?: number }
     if (typeof payload.score === "number") setScore(payload.score)
 
-    startTransition(() => {
-      router.refresh()
-    })
+    // No router.refresh() needed — score is synced directly from server response
+    startTransition(() => {/* state already updated */})
   }
 
   return (

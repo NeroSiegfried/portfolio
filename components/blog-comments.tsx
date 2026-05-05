@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import type { CommentNode, PublicUser } from "@/lib/blog/types"
@@ -12,26 +12,28 @@ interface BlogCommentsProps {
   postId: string
   comments: CommentNode[]
   currentUser: PublicUser | null
+  onRefresh: () => Promise<void>
 }
 
 function CommentItem({
   node,
   postId,
   currentUser,
+  onRefresh,
 }: {
   node: CommentNode
   postId: string
   currentUser: PublicUser | null
+  onRefresh: () => Promise<void>
 }) {
-  const router = useRouter()
   const [reply, setReply] = useState("")
   const [showReply, setShowReply] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState(node.content)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  // Optimistic vote tracking: 1 = upvoted, -1 = downvoted, 0 = no vote
-  const [userVote, setUserVote] = useState<1 | -1 | 0>(0)
+  // Optimistic vote tracking — seeded from server so persists across refreshes
+  const [userVote, setUserVote] = useState<1 | -1 | 0>(node.currentUserVote)
 
   const isOwner = currentUser?.id === node.userId
   const isAdmin = currentUser?.role === "admin"
@@ -41,7 +43,7 @@ function CommentItem({
     Date.now() - new Date(node.createdAt).getTime() < EDIT_WINDOW_MS
   const canDelete = isOwner || isAdmin
 
-  const refresh = () => startTransition(() => router.refresh())
+  const refresh = () => startTransition(() => { void onRefresh() })
 
   const sendReply = async () => {
     if (!reply.trim()) return
@@ -107,7 +109,7 @@ function CommentItem({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ hidden: false }),
               })
-              refresh()
+              void onRefresh()
             }}
             disabled={isPending}
             className="text-xs text-primary hover:underline disabled:opacity-40"
@@ -230,7 +232,7 @@ function CommentItem({
       {node.children.length > 0 && (
         <div className="mt-3 space-y-0 border-l border-border/40 pl-4">
           {node.children.map((child) => (
-            <CommentItem key={child.id} node={child} postId={postId} currentUser={currentUser} />
+            <CommentItem key={child.id} node={child} postId={postId} currentUser={currentUser} onRefresh={onRefresh} />
           ))}
         </div>
       )}
@@ -238,8 +240,7 @@ function CommentItem({
   )
 }
 
-export default function BlogComments({ postId, comments, currentUser }: BlogCommentsProps) {
-  const router = useRouter()
+export default function BlogComments({ postId, comments, currentUser, onRefresh }: BlogCommentsProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const authError = searchParams.get("auth_error")
@@ -272,7 +273,7 @@ export default function BlogComments({ postId, comments, currentUser }: BlogComm
 
     setContent("")
     setError(null)
-    startTransition(() => router.refresh())
+    startTransition(() => { void onRefresh() })
   }
 
   const submitAuth = async () => {
@@ -292,12 +293,12 @@ export default function BlogComments({ postId, comments, currentUser }: BlogComm
     }
 
     setError(null)
-    startTransition(() => router.refresh())
+    startTransition(() => { void onRefresh() })
   }
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
-    startTransition(() => router.refresh())
+    startTransition(() => { void onRefresh() })
   }
 
   return (
@@ -439,7 +440,7 @@ export default function BlogComments({ postId, comments, currentUser }: BlogComm
       {hasComments ? (
         <div className="divide-y divide-border/30">
           {comments.map((comment) => (
-            <CommentItem key={comment.id} node={comment} postId={postId} currentUser={currentUser} />
+            <CommentItem key={comment.id} node={comment} postId={postId} currentUser={currentUser} onRefresh={onRefresh} />
           ))}
         </div>
       ) : (

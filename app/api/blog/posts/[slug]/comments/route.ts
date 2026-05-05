@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getSessionUser } from "@/lib/blog/auth"
 import { readPostCommentsDb } from "@/lib/blog/store"
 import { getCommentTree } from "@/lib/blog/store"
 
@@ -10,14 +11,18 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params
 
-    const { comments, commentVotes, users } = await readPostCommentsDb(slug)
-    const tree = getCommentTree(comments, users, commentVotes)
+    const [{ comments, commentVotes, users }, currentUser] = await Promise.all([
+      readPostCommentsDb(slug),
+      getSessionUser(),
+    ])
+    const tree = getCommentTree(comments, users, commentVotes, currentUser?.id)
 
     return NextResponse.json(
       { comments: tree },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+          // Never cache — mutations must be immediately visible
+          "Cache-Control": "no-store",
         },
       }
     )
