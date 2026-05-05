@@ -160,13 +160,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </header>
 
           {seriesPosts.length > 1 && (
-            <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} />
+            <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />
           )}
 
           <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} />
 
           {seriesPosts.length > 1 && (
-            <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} />
+            <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />
           )}
         </article>
 

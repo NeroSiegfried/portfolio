@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import BlogLink from "@/components/blog-link"
 import PortfolioLink from "@/components/portfolio-link"
+import InboxButton from "@/components/blog-inbox"
 
 export default function BlogTopNav() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -47,8 +48,9 @@ export default function BlogTopNav() {
           </nav>
         </div>
 
-        {/* Right: theme toggle + hamburger */}
-        <div className="flex items-center gap-2">
+        {/* Right: inbox + theme toggle + hamburger */}
+        <div className="flex items-center gap-1">
+          <InboxButton />
           <ModeToggle />
           <button
             type="button"

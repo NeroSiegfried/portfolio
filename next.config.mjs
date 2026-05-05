@@ -33,7 +33,12 @@ const nextConfig = {
   },
   images: {
     unoptimized: false,
-    domains: ["nerosiegfried.com", "www.nerosiegfried.com", "blog.nerosiegfried.com"],
+    remotePatterns: [
+      { protocol: "https", hostname: "nerosiegfried.com" },
+      { protocol: "https", hostname: "www.nerosiegfried.com" },
+      { protocol: "https", hostname: "blog.nerosiegfried.com" },
+      { protocol: "https", hostname: "d2ukq6p6guyuw1.cloudfront.net" },
+    ],
   },
   async headers() {
     return [

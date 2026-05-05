@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/blog/auth"
-import { readPostCommentsDb } from "@/lib/blog/store"
+import { readPostCommentsDb, getPool } from "@/lib/blog/store"
 import { getCommentTree } from "@/lib/blog/store"
 
 interface RouteContext {
@@ -17,8 +17,19 @@ export async function GET(_request: Request, context: RouteContext) {
     ])
     const tree = getCommentTree(comments, users, commentVotes, currentUser?.id)
 
+    // Return which comment threads the current user has muted
+    let mutedCommentIds: string[] = []
+    if (currentUser) {
+      const pool = getPool()
+      const muteRes = await pool.query<{ comment_id: string }>(
+        `SELECT comment_id FROM comment_mutes WHERE user_id = $1`,
+        [currentUser.id]
+      )
+      mutedCommentIds = muteRes.rows.map((r) => r.comment_id)
+    }
+
     return NextResponse.json(
-      { comments: tree },
+      { comments: tree, mutedCommentIds },
       {
         headers: {
           // Never cache — mutations must be immediately visible

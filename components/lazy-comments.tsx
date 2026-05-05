@@ -12,6 +12,7 @@ interface LazyCommentsProps {
 export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
   const [comments, setComments] = useState<CommentNode[]>([])
   const [currentUser, setCurrentUser] = useState<PublicUser | null>(null)
+  const [mutedCommentIds, setMutedCommentIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,8 +28,9 @@ export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
           fetch("/api/auth/me", { cache: "no-store" }),
         ])
         if (!commentsRes.ok) throw new Error("Failed to load comments")
-        const data = (await commentsRes.json()) as { comments: CommentNode[] }
+        const data = (await commentsRes.json()) as { comments: CommentNode[]; mutedCommentIds?: string[] }
         setComments(data.comments)
+        setMutedCommentIds(data.mutedCommentIds ?? [])
         if (userRes.ok) {
           const userData = (await userRes.json()) as { user: PublicUser | null }
           setCurrentUser(userData.user ?? null)
@@ -89,6 +91,7 @@ export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
         postId={postId}
         comments={comments}
         currentUser={currentUser}
+        mutedCommentIds={mutedCommentIds}
         onRefresh={onRefresh}
         onUserChange={setCurrentUser}
       />

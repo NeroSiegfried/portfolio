@@ -123,3 +123,21 @@ export interface CommentNode extends BlogComment {
   score: number
   currentUserVote: 1 | -1 | 0
 }
+
+export interface AppNotification {
+  id: string
+  type: "series_post" | "comment_reply"
+  read_at: string | null
+  created_at: string
+  post_id: string | null
+  comment_id: string | null
+  actor_id: string | null
+  data: {
+    actorName?: string
+    actorAvatarUrl?: string | null
+    postSlug?: string
+    postTitle?: string
+    seriesTitle?: string
+    seriesId?: string
+  }
+}

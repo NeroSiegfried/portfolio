@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { requireAdminUser } from "@/lib/blog/auth"
-import { createId, nowIso, slugify, updateDb, upsertPost } from "@/lib/blog/store"
+import { createId, nowIso, slugify, updateDb, upsertPost, getPool } from "@/lib/blog/store"
 import type { BlogPost, BlogPostStatus } from "@/lib/blog/types"
+import { notifySeriesPost } from "@/lib/blog/notifications"
 
 export async function POST(request: Request) {
   const admin = await requireAdminUser()
@@ -59,13 +60,39 @@ export async function POST(request: Request) {
       publishedAt,
     }
 
+    // Pass previous status so we can detect a fresh publish event
+    const prevStatus = current?.status ?? null
+
     upsertPost(db, post)
-    return { post }
+    return { post, prevStatus }
   })
 
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 409 })
   }
 
-  return NextResponse.json(result)
+  // Notify series followers when a post is freshly published into a series
+  const { post: savedPost, prevStatus } = result as { post: BlogPost; prevStatus: string | null }
+  if (
+    savedPost.status === "published" &&
+    prevStatus !== "published" &&
+    savedPost.seriesId
+  ) {
+    const pool = getPool()
+    const seriesRow = await pool.query<{ title: string }>(
+      `SELECT title FROM series WHERE id = $1 LIMIT 1`,
+      [savedPost.seriesId]
+    )
+    const seriesTitle = seriesRow.rows[0]?.title ?? ""
+    void notifySeriesPost(pool, {
+      postId: savedPost.id,
+      postSlug: savedPost.slug,
+      postTitle: savedPost.title,
+      seriesId: savedPost.seriesId,
+      seriesTitle,
+      actorId: admin.id,
+    }).catch(() => {})
+  }
+
+  return NextResponse.json({ post: savedPost })
 }

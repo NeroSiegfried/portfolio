@@ -1,10 +1,13 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound } from "lucide-react"
+import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound, ImageIcon, BellOff, Bell } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Textarea } from "@/components/ui/textarea"
 import type { CommentNode, PublicUser } from "@/lib/blog/types"
+import { compressImage } from "@/lib/compress-image"
 
 // ─── Avatar helper ─────────────────────────────────────────────────────────────
 
@@ -62,19 +65,76 @@ interface BlogCommentsProps {
   postId: string
   comments: CommentNode[]
   currentUser: PublicUser | null
+  mutedCommentIds?: string[]
   onRefresh: () => Promise<void>
   onUserChange?: (user: PublicUser | null) => void
+}
+
+// ─── Image upload helper ──────────────────────────────────────────────────────
+
+async function uploadImage(
+  file: File,
+  purpose: "avatar" | "comment"
+): Promise<string> {
+  const compressed = await compressImage(file, {
+    maxWidth: purpose === "avatar" ? 400 : 1200,
+    maxHeight: purpose === "avatar" ? 400 : 1200,
+    quality: purpose === "avatar" ? 0.88 : 0.82,
+    skipBelowBytes: purpose === "avatar" ? 100 * 1024 : 300 * 1024,
+  })
+
+  const form = new FormData()
+  form.append("file", compressed)
+  form.append("purpose", purpose)
+
+  const res = await fetch("/api/upload", { method: "POST", body: form })
+  if (!res.ok) {
+    const err = (await res.json()) as { error?: string }
+    throw new Error(err.error ?? "Upload failed.")
+  }
+  const { url } = (await res.json()) as { url: string }
+  return url
+}
+
+// ─── Comment content renderer ─────────────────────────────────────────────────
+
+function CommentContent({ content }: { content: string }) {
+  return (
+    <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none
+      [&_p]:my-0.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0
+      [&_img]:max-h-64 [&_img]:max-w-full [&_img]:rounded-md [&_img]:object-contain [&_img]:my-1
+      [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2
+      [&_code]:text-xs [&_code]:bg-muted [&_code]:rounded [&_code]:px-1
+      [&_pre]:bg-muted [&_pre]:rounded [&_pre]:p-2 [&_pre]:overflow-x-auto
+      [&_h1]:text-base [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-sm [&_h6]:text-sm"
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+          ),
+          img: ({ src, alt }) =>
+            src ? <img src={src} alt={alt ?? ""} className="max-h-64 max-w-full rounded-md object-contain my-1" /> : null,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  )
 }
 
 function CommentItem({
   node,
   postId,
   currentUser,
+  mutedIds,
   onRefresh,
 }: {
   node: CommentNode
   postId: string
   currentUser: PublicUser | null
+  mutedIds: Set<string>
   onRefresh: () => Promise<void>
 }) {
   const [reply, setReply] = useState("")
@@ -83,6 +143,13 @@ function CommentItem({
   const [editContent, setEditContent] = useState(node.content)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [uploadingImg, setUploadingImg] = useState(false)
+  const replyImgRef = useRef<HTMLInputElement>(null)
+  const editImgRef = useRef<HTMLInputElement>(null)
+
+  // Mute state — seeded from server, toggled locally
+  const [muted, setMuted] = useState(() => mutedIds.has(node.id))
+  const [muteBusy, setMuteBusy] = useState(false)
 
   // Optimistic vote state — seeded from server
   const [userVote, setUserVote] = useState<1 | -1 | 0>(node.currentUserVote)
@@ -95,6 +162,38 @@ function CommentItem({
     !node.hidden &&
     Date.now() - new Date(node.createdAt).getTime() < EDIT_WINDOW_MS
   const canDelete = isOwner || isAdmin
+
+  const insertImageInto = async (
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    fileRef: React.RefObject<HTMLInputElement | null>,
+    purpose: "comment"
+  ) => {
+    const file = fileRef.current?.files?.[0]
+    if (!file) return
+    if (fileRef.current) fileRef.current.value = ""
+    setUploadingImg(true)
+    setError(null)
+    try {
+      const url = await uploadImage(file, purpose)
+      setter((prev) => prev + (prev ? "\n" : "") + `![image](${url})`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Image upload failed.")
+    } finally {
+      setUploadingImg(false)
+    }
+  }
+
+  const toggleMute = async () => {
+    if (muteBusy) return
+    setMuteBusy(true)
+    try {
+      const res = await fetch(`/api/blog/comments/${node.id}/mute`, { method: "POST" })
+      const d = (await res.json()) as { muted?: boolean }
+      setMuted(d.muted ?? !muted)
+    } finally {
+      setMuteBusy(false)
+    }
+  }
 
   const sendReply = async () => {
     if (!reply.trim() || busy) return
@@ -120,7 +219,6 @@ function CommentItem({
 
   const vote = async (value: 1 | -1) => {
     if (!currentUser || busy) return
-    // Optimistic update
     const prevVote = userVote
     const prevScore = score
     const newVote = prevVote === value ? 0 : value
@@ -134,13 +232,11 @@ function CommentItem({
       body: JSON.stringify({ commentId: node.id, value }),
     })
     if (!res.ok) {
-      // Revert on error
       setUserVote(prevVote)
       setScore(prevScore)
       setError(((await res.json()) as { error?: string }).error ?? "Unable to vote.")
       return
     }
-    // Optionally sync server score
     const data = (await res.json()) as { score?: number }
     if (typeof data.score === "number") setScore(data.score)
     setError(null)
@@ -201,33 +297,13 @@ function CommentItem({
       <div className="py-4 opacity-50">
         <p className="text-xs text-muted-foreground italic">[Comment hidden by moderator]</p>
         <div className="mt-1 flex gap-3">
-          <button
-            type="button"
-            onClick={unhide}
-            disabled={busy}
-            className="text-xs text-primary hover:underline disabled:opacity-40"
-          >
-            Unhide
-          </button>
-          <button
-            type="button"
-            onClick={() => deleteComment(true)}
-            disabled={busy}
-            className="text-xs text-destructive hover:underline disabled:opacity-40"
-          >
-            Hard delete
-          </button>
+          <button type="button" onClick={unhide} disabled={busy} className="text-xs text-primary hover:underline disabled:opacity-40">Unhide</button>
+          <button type="button" onClick={() => deleteComment(true)} disabled={busy} className="text-xs text-destructive hover:underline disabled:opacity-40">Hard delete</button>
         </div>
         {node.children.length > 0 && (
           <div className="mt-3 border-l border-border/40 pl-4">
             {node.children.map((child) => (
-              <CommentItem
-                key={child.id}
-                node={child}
-                postId={postId}
-                currentUser={currentUser}
-                onRefresh={onRefresh}
-              />
+              <CommentItem key={child.id} node={child} postId={postId} currentUser={currentUser} mutedIds={mutedIds} onRefresh={onRefresh} />
             ))}
           </div>
         )}
@@ -236,163 +312,108 @@ function CommentItem({
   }
 
   return (
-    <div className="py-4">
+    <div id={`comment-${node.id}`} className="py-4">
       <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-        <CommentAvatar
-          userId={node.userId}
-          displayName={node.displayName}
-          username={node.username}
-          avatarUrl={node.avatarUrl}
-          size="sm"
-        />
+        <CommentAvatar userId={node.userId} displayName={node.displayName} username={node.username} avatarUrl={node.avatarUrl} size="sm" />
         <span className="font-semibold text-foreground/70">{node.displayName ?? node.username}</span>
-        {node.displayName && (
-          <span className="text-muted-foreground/50">@{node.username}</span>
-        )}
+        {node.displayName && <span className="text-muted-foreground/50">@{node.username}</span>}
         <span>·</span>
         <span>
-          {new Date(node.createdAt).toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
+          {new Date(node.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
         </span>
-        {node.editedAt && (
-          <span className="rounded bg-muted px-1 py-0.5 text-[10px]">edited</span>
-        )}
+        {node.editedAt && <span className="rounded bg-muted px-1 py-0.5 text-[10px]">edited</span>}
       </div>
 
       {editing ? (
         <div className="space-y-2">
-          <Textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            disabled={busy}
-            className="text-sm"
-            rows={3}
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={saveEdit}
-              disabled={busy}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
+          <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} disabled={busy || uploadingImg} className="text-sm" rows={3} />
+          {/* Hidden file input for edit image upload */}
+          <input ref={editImgRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
+            onChange={() => insertImageInto(setEditContent, editImgRef, "comment")} />
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={saveEdit} disabled={busy || uploadingImg} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
               {busy ? "Saving…" : "Save"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(false)
-                setEditContent(node.content)
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Cancel
+            <button type="button" onClick={() => editImgRef.current?.click()} disabled={uploadingImg}
+              className="rounded-md border border-border/60 p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40" title="Attach image">
+              <ImageIcon className="h-3.5 w-3.5" />
             </button>
+            {uploadingImg && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
+            <button type="button" onClick={() => { setEditing(false); setEditContent(node.content) }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
           </div>
         </div>
       ) : (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{node.content}</p>
+        <CommentContent content={node.content} />
       )}
 
-      <div className="mt-2.5 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => vote(1)}
-          disabled={!currentUser || busy}
-          className={[
-            "flex items-center gap-1 text-xs transition-colors disabled:opacity-40",
-            userVote === 1 ? "text-secondary" : "text-muted-foreground hover:text-secondary",
-          ].join(" ")}
-        >
+      <div className="mt-2.5 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={() => vote(1)} disabled={!currentUser || busy}
+          className={["flex items-center gap-1 text-xs transition-colors disabled:opacity-40", userVote === 1 ? "text-secondary" : "text-muted-foreground hover:text-secondary"].join(" ")}>
           <ThumbsUp className="h-3 w-3" />
         </button>
         <span className="text-xs tabular-nums text-muted-foreground">{score}</span>
-        <button
-          type="button"
-          onClick={() => vote(-1)}
-          disabled={!currentUser || busy}
-          className={[
-            "flex items-center gap-1 text-xs transition-colors disabled:opacity-40",
-            userVote === -1 ? "text-primary" : "text-muted-foreground hover:text-primary",
-          ].join(" ")}
-        >
+        <button type="button" onClick={() => vote(-1)} disabled={!currentUser || busy}
+          className={["flex items-center gap-1 text-xs transition-colors disabled:opacity-40", userVote === -1 ? "text-primary" : "text-muted-foreground hover:text-primary"].join(" ")}>
           <ThumbsDown className="h-3 w-3" />
         </button>
 
         {currentUser && (
-          <button
-            type="button"
-            onClick={() => setShowReply((v) => !v)}
-            className="ml-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <button type="button" onClick={() => setShowReply((v) => !v)}
+            className="ml-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
             Reply
           </button>
         )}
 
         {canEdit && !editing && (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Pencil className="h-3 w-3" />
-            Edit
+          <button type="button" onClick={() => setEditing(true)}
+            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+            <Pencil className="h-3 w-3" /> Edit
           </button>
         )}
 
         {canDelete && (
-          <button
-            type="button"
-            onClick={() => (isAdmin ? deleteComment(false) : deleteComment())}
-            disabled={busy}
-            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
-          >
-            <EyeOff className="h-3 w-3" />
-            {isAdmin ? "Hide" : "Delete"}
+          <button type="button" onClick={() => (isAdmin ? deleteComment(false) : deleteComment())} disabled={busy}
+            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40">
+            <EyeOff className="h-3 w-3" /> {isAdmin ? "Hide" : "Delete"}
           </button>
         )}
 
         {isAdmin && (
-          <button
-            type="button"
-            onClick={() => deleteComment(true)}
-            disabled={busy}
-            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
-          >
-            <Trash2 className="h-3 w-3" />
-            Hard delete
+          <button type="button" onClick={() => deleteComment(true)} disabled={busy}
+            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40">
+            <Trash2 className="h-3 w-3" /> Hard delete
+          </button>
+        )}
+
+        {currentUser && (
+          <button type="button" onClick={toggleMute} disabled={muteBusy}
+            title={muted ? "Unmute thread — you'll receive notifications again" : "Mute thread — stop notifications for this comment and replies"}
+            className={[
+              "flex items-center gap-1 text-xs transition-colors disabled:opacity-40",
+              muted ? "text-primary hover:text-muted-foreground" : "text-muted-foreground hover:text-foreground",
+            ].join(" ")}>
+            {muted ? <><BellOff className="h-3 w-3" /> Muted</> : <><Bell className="h-3 w-3" /> Mute</>}
           </button>
         )}
       </div>
 
       {showReply && currentUser && (
         <div className="mt-3 space-y-2">
-          <Textarea
-            placeholder="Write a reply…"
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            disabled={busy}
-            className="text-sm"
-            rows={2}
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={sendReply}
-              disabled={busy || !reply.trim()}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
+          <Textarea placeholder="Write a reply…" value={reply} onChange={(e) => setReply(e.target.value)} disabled={busy || uploadingImg} className="text-sm" rows={2} />
+          {/* Hidden file input for reply image upload */}
+          <input ref={replyImgRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
+            onChange={() => insertImageInto(setReply, replyImgRef, "comment")} />
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={sendReply} disabled={busy || uploadingImg || !reply.trim()}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
               {busy ? "Posting…" : "Post Reply"}
             </button>
-            <button
-              type="button"
-              onClick={() => setShowReply(false)}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Cancel
+            <button type="button" onClick={() => replyImgRef.current?.click()} disabled={uploadingImg}
+              className="rounded-md border border-border/60 p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40" title="Attach image">
+              <ImageIcon className="h-3.5 w-3.5" />
             </button>
+            {uploadingImg && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
+            <button type="button" onClick={() => setShowReply(false)} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
           </div>
         </div>
       )}
@@ -402,13 +423,7 @@ function CommentItem({
       {node.children.length > 0 && (
         <div className="mt-3 space-y-0 border-l border-border/40 pl-4">
           {node.children.map((child) => (
-            <CommentItem
-              key={child.id}
-              node={child}
-              postId={postId}
-              currentUser={currentUser}
-              onRefresh={onRefresh}
-            />
+            <CommentItem key={child.id} node={child} postId={postId} currentUser={currentUser} mutedIds={mutedIds} onRefresh={onRefresh} />
           ))}
         </div>
       )}
@@ -420,6 +435,7 @@ export default function BlogComments({
   postId,
   comments,
   currentUser,
+  mutedCommentIds = [],
   onRefresh,
   onUserChange,
 }: BlogCommentsProps) {
@@ -427,6 +443,8 @@ export default function BlogComments({
   const searchParams = useSearchParams()
   const authError = searchParams.get("auth_error")
   const returnTo = `${pathname}#comments`
+
+  const mutedSet = useMemo(() => new Set(mutedCommentIds), [mutedCommentIds])
 
   const [content, setContent] = useState("")
   const [authMode, setAuthMode] = useState<"login" | "register">("login")
@@ -443,6 +461,46 @@ export default function BlogComments({
   const [profileBusy, setProfileBusy] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [profileSaved, setProfileSaved] = useState(false)
+
+  // Image upload for the main comment textarea
+  const commentImgRef = useRef<HTMLInputElement>(null)
+  const [commentImgUploading, setCommentImgUploading] = useState(false)
+
+  const insertCommentImage = async () => {
+    const file = commentImgRef.current?.files?.[0]
+    if (!file) return
+    if (commentImgRef.current) commentImgRef.current.value = ""
+    setCommentImgUploading(true)
+    setError(null)
+    try {
+      const url = await uploadImage(file, "comment")
+      setContent((prev) => prev + (prev ? "\n" : "") + `![image](${url})`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Image upload failed.")
+    } finally {
+      setCommentImgUploading(false)
+    }
+  }
+
+  // Avatar upload in profile editor
+  const avatarFileRef = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+
+  const handleAvatarUpload = async () => {
+    const file = avatarFileRef.current?.files?.[0]
+    if (!file) return
+    if (avatarFileRef.current) avatarFileRef.current.value = ""
+    setAvatarUploading(true)
+    setProfileError(null)
+    try {
+      const url = await uploadImage(file, "avatar")
+      setEditAvatarUrl(url)
+    } catch (e) {
+      setProfileError(e instanceof Error ? e.message : "Avatar upload failed.")
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   const hasComments = useMemo(() => comments.length > 0, [comments])
 
@@ -702,18 +760,40 @@ export default function BlogComments({
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-muted-foreground">
-                  Avatar URL
+                  Avatar
                 </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="flex-1 rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+                    placeholder="https://example.com/avatar.jpg"
+                    type="url"
+                    value={editAvatarUrl}
+                    onChange={(e) => setEditAvatarUrl(e.target.value)}
+                    disabled={profileBusy || avatarUploading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => avatarFileRef.current?.click()}
+                    disabled={profileBusy || avatarUploading}
+                    title="Upload image"
+                    className="shrink-0 rounded-md border border-border/60 p-2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </button>
+                </div>
+                {/* Hidden file input for avatar */}
                 <input
-                  className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
-                  placeholder="https://example.com/avatar.jpg"
-                  type="url"
-                  value={editAvatarUrl}
-                  onChange={(e) => setEditAvatarUrl(e.target.value)}
-                  disabled={profileBusy}
+                  ref={avatarFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                  onChange={() => void handleAvatarUpload()}
                 />
+                {avatarUploading && (
+                  <p className="text-[11px] text-muted-foreground animate-pulse">Uploading…</p>
+                )}
                 <p className="text-[11px] text-muted-foreground/60">
-                  Direct link to a square image. Leave blank to use your initials.
+                  Upload or paste a direct link. Leave blank to use your initials.
                 </p>
               </div>
               {profileError && <p className="text-xs text-destructive">{profileError}</p>}
@@ -735,19 +815,41 @@ export default function BlogComments({
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void submitComment()
             }}
-            disabled={busy}
+            disabled={busy || commentImgUploading}
             className="text-sm"
             rows={3}
           />
+          {/* Hidden file input for comment image */}
+          <input
+            ref={commentImgRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            className="hidden"
+            onChange={() => void insertCommentImage()}
+          />
           {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
-          <button
-            type="button"
-            onClick={submitComment}
-            disabled={busy || !content.trim()}
-            className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {busy ? "Posting…" : "Post Comment"}
-          </button>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={submitComment}
+              disabled={busy || commentImgUploading || !content.trim()}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {busy ? "Posting…" : "Post Comment"}
+            </button>
+            <button
+              type="button"
+              onClick={() => commentImgRef.current?.click()}
+              disabled={commentImgUploading}
+              title="Attach image or GIF"
+              className="rounded-md border border-border/60 p-2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+            >
+              <ImageIcon className="h-4 w-4" />
+            </button>
+            {commentImgUploading && (
+              <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>
+            )}
+          </div>
         </div>
       )}
 
@@ -759,6 +861,7 @@ export default function BlogComments({
               node={comment}
               postId={postId}
               currentUser={currentUser}
+              mutedIds={mutedSet}
               onRefresh={onRefresh}
             />
           ))}
