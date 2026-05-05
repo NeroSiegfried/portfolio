@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import type { Metadata } from "next"
 import { readBlogPostDb } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug } from "@/lib/blog/queries"
 import BlogMarkdown from "@/components/blog-markdown"
@@ -8,6 +9,17 @@ import LazyComments from "@/components/lazy-comments"
 import BlogTopNav from "@/components/blog-top-nav"
 
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  title: "Features Demo",
+  description:
+    "Interactive demo of all blog features — markdown, code snippets, comments, voting and more.",
+  openGraph: {
+    title: "Blog Features Demo — Victor Nabasu",
+    description: "Interactive demo of all blog features — markdown, code snippets, comments, voting and more.",
+    type: "article",
+  },
+}
 
 export default async function BlogFeaturesDemoPage() {
   const db = await readBlogPostDb("features-demo")

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import type { Metadata } from "next"
 import { readBlogPostDb, getPostVote } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import BlogMarkdown from "@/components/blog-markdown"
@@ -15,6 +16,37 @@ import InboxButton from "@/components/blog-inbox"
 
 // ISR: rebuild at most every 60s. The page HTML is cached at CloudFront edge.
 export const revalidate = 60
+
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+  const { slug } = await params
+  try {
+    const db = await readBlogPostDb(slug)
+    if (!db) return {}
+    const post = findPublishedPostBySlug(db, slug)
+    if (!post) return {}
+    const description = post.excerpt ?? `A blog post by Victor Nabasu.`
+    const seriesLabel = post.seriesPath.at(-1)?.title
+    const fullTitle = seriesLabel ? `${post.title} — ${seriesLabel}` : post.title
+    return {
+      title: post.title,
+      description,
+      openGraph: {
+        title: fullTitle,
+        description,
+        type: "article",
+        publishedTime: post.publishedAt ?? undefined,
+        authors: ["Victor Nabasu"],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: fullTitle,
+        description,
+      },
+    }
+  } catch {
+    return {}
+  }
+}
 
 interface BlogPostPageProps {
   params: Promise<{

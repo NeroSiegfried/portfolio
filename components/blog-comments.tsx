@@ -220,15 +220,13 @@ function ImageChips({
 
           {/* Alt text input */}
           {!img.error && (
-            <input
-              type="text"
+            <textarea
               placeholder="Alt text (optional)"
               value={img.alt}
               onChange={(e) => onSetAlt(img.id, e.target.value)}
               disabled={img.uploading}
-              className={`${
-                compact ? "w-28" : "w-36"
-              } rounded border border-border/40 bg-background px-2 py-1 text-[11px] outline-none focus:border-primary disabled:opacity-50`}
+              rows={compact ? 2 : 3}
+              className="flex-1 min-w-0 resize-none rounded border border-border/40 bg-background px-2 py-1 text-[11px] outline-none focus:border-primary disabled:opacity-50"
             />
           )}
 

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import type { Metadata } from "next"
 import { readBlogHomeDb } from "@/lib/blog/store"
 import { listPublishedPosts, listSeriesTree, listPostsChronological } from "@/lib/blog/queries"
 import { getAdminEntryPath } from "@/lib/blog/auth"
@@ -14,6 +15,22 @@ import InboxButton from "@/components/blog-inbox"
 // ISR: rebuild at most every 60s. CloudFront/CDN serves cached HTML from
 // the nearest edge node — no Lambda round-trip to us-east-1 for repeat visitors.
 export const revalidate = 60
+
+export const metadata: Metadata = {
+  title: "Blog",
+  description:
+    "Dev logs, structured learning series, and interactive articles by Victor Nabasu.",
+  openGraph: {
+    title: "Blog — Victor Nabasu",
+    description:
+      "Dev logs, structured learning series, and interactive articles by Victor Nabasu.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog — Victor Nabasu",
+  },
+}
 
 export default async function BlogHomePage() {
   let db: Awaited<ReturnType<typeof readBlogHomeDb>>

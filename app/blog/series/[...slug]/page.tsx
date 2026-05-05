@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import type { Metadata } from "next"
 import { readSeriesDb } from "@/lib/blog/store"
 import { findSeriesByPath, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import SeriesTreeBrowser from "@/components/series-tree-browser"
@@ -9,6 +10,28 @@ import PortfolioLink from "@/components/portfolio-link"
 import BlogLink from "@/components/blog-link"
 
 export const revalidate = 60
+
+export async function generateMetadata({ params }: SeriesPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const db = await readSeriesDb()
+  const series = findSeriesByPath(db, slug)
+  if (!series) return {}
+  const description = series.description ?? `A series of posts by Victor Nabasu.`
+  return {
+    title: series.title,
+    description,
+    openGraph: {
+      title: `${series.title} — Series`,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${series.title} — Series`,
+      description,
+    },
+  }
+}
 
 interface SeriesPageProps {
   params: Promise<{
