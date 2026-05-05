@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto"
 import { NextResponse } from "next/server"
-import { hashPassword, setSessionCookie } from "@/lib/blog/auth"
+import { hashPassword, isSecureRequest, setSessionCookie } from "@/lib/blog/auth"
 import { createId, getPool } from "@/lib/blog/store"
 
 const SESSION_DURATION_DAYS = 14
@@ -60,6 +60,6 @@ export async function POST(request: Request) {
   )
 
   const response = NextResponse.json({ user: { id: userId, username, role: "user" } })
-  setSessionCookie(response, token)
+  setSessionCookie(response, token, isSecureRequest(request.url))
   return response
 }

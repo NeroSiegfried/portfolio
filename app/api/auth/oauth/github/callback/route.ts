@@ -1,7 +1,7 @@
 // app/api/auth/oauth/github/callback/route.ts
 import { randomBytes } from "crypto"
 import { NextResponse } from "next/server"
-import { setSessionCookie } from "@/lib/blog/auth"
+import { setSessionCookie, isSecureRequest } from "@/lib/blog/auth"
 import { createId, getPool } from "@/lib/blog/store"
 import { hashPassword } from "@/lib/blog/auth"
 
@@ -88,6 +88,6 @@ export async function GET(request: Request) {
   )
 
   const response = NextResponse.redirect(`${baseUrl}${returnTo}`)
-  setSessionCookie(response, token)
+  setSessionCookie(response, token, isSecureRequest(url))
   return response
 }

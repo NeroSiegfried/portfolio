@@ -68,25 +68,37 @@ export async function removeSession(token: string | null) {
   await pool.query("DELETE FROM sessions WHERE token = $1", [token])
 }
 
-// Use secure cookies only when the canonical site URL is https (i.e. real production).
-// This means http://localhost:3000 in `pnpm start` mode will still accept cookies.
-const USE_SECURE_COOKIE = !!(process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https"))
+/**
+ * Returns true when the request is coming from an https origin.
+ * Pass the request URL (or just its hostname/protocol) so each call site
+ * can make the decision at runtime rather than at module load time.
+ * This prevents the bug where NEXT_PUBLIC_SITE_URL=https://… in .env.local
+ * would cause secure:true cookies on http://localhost, which browsers silently drop.
+ */
+export function isSecureRequest(requestUrl: string | URL): boolean {
+  try {
+    const u = typeof requestUrl === "string" ? new URL(requestUrl) : requestUrl
+    return u.protocol === "https:"
+  } catch {
+    return false
+  }
+}
 
-export function setSessionCookie(response: NextResponse, token: string) {
+export function setSessionCookie(response: NextResponse, token: string, secure: boolean) {
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: USE_SECURE_COOKIE,
+    secure,
     path: "/",
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
   })
 }
 
-export function clearSessionCookie(response: NextResponse) {
+export function clearSessionCookie(response: NextResponse, secure: boolean) {
   response.cookies.set(SESSION_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: USE_SECURE_COOKIE,
+    secure,
     path: "/",
     maxAge: 0,
   })

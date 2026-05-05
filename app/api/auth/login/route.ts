@@ -2,6 +2,7 @@ import { randomBytes } from "crypto"
 import { NextResponse } from "next/server"
 import {
   ensureAdminAccountOnDemand,
+  isSecureRequest,
   setSessionCookie,
   toPublicUser,
   verifyPassword,
@@ -57,6 +58,6 @@ export async function POST(request: Request) {
   )
 
   const response = NextResponse.json({ user: toPublicUser(user) })
-  setSessionCookie(response, token)
+  setSessionCookie(response, token, isSecureRequest(request.url))
   return response
 }

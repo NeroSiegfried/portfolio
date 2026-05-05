@@ -1,7 +1,7 @@
 // app/api/auth/oauth/google/route.ts
 import { randomBytes } from "crypto"
 import { NextResponse } from "next/server"
-import { setSessionCookie, hashPassword } from "@/lib/blog/auth"
+import { setSessionCookie, hashPassword, isSecureRequest } from "@/lib/blog/auth"
 import { createId, getPool } from "@/lib/blog/store"
 
 const SESSION_DURATION_DAYS = 14
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
     )
 
     const response = NextResponse.redirect(`${baseUrl}${returnTo}`)
-    setSessionCookie(response, token)
+    setSessionCookie(response, token, isSecureRequest(url))
     return response
   }
 
