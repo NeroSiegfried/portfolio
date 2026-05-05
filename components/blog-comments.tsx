@@ -688,7 +688,11 @@ function CommentItem({
               type="button"
               onClick={sendReply}
               disabled={busy || replyPendingImages.some((i) => i.uploading) || !buildContent(reply, replyPendingImages)}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                busy || replyPendingImages.some((i) => i.uploading) || !buildContent(reply, replyPendingImages)
+                  ? "cursor-not-allowed border border-primary bg-transparent text-primary"
+                  : "bg-primary text-primary-foreground hover:opacity-90"
+              }`}
             >
               {busy ? "Posting…" : "Post Reply"}
             </button>
@@ -1012,7 +1016,7 @@ export default function BlogComments({
                   setProfileSaved(false)
                   setShowEditProfile((v) => !v)
                 }}
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className={`transition-colors ${showEditProfile ? "text-destructive/70 hover:text-destructive" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {showEditProfile ? "Close" : "Edit profile"}
               </button>
@@ -1021,7 +1025,7 @@ export default function BlogComments({
                 type="button"
                 onClick={logout}
                 disabled={busy}
-                className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                className="text-destructive/60 transition-colors hover:text-destructive disabled:opacity-50"
               >
                 Sign out
               </button>
@@ -1150,7 +1154,11 @@ export default function BlogComments({
               type="button"
               onClick={submitComment}
               disabled={busy || pendingImages.some((i) => i.uploading) || !buildContent(content, pendingImages)}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+              className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                busy || pendingImages.some((i) => i.uploading) || !buildContent(content, pendingImages)
+                  ? "cursor-not-allowed border border-primary bg-transparent text-primary"
+                  : "bg-primary text-primary-foreground hover:opacity-90"
+              }`}
             >
               {busy ? "Posting…" : "Post Comment"}
             </button>
@@ -1179,7 +1187,7 @@ export default function BlogComments({
                 className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                   sortOrder === o
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-primary"
                 }`}
               >
                 {o === "top" ? "Top" : o === "newest" ? "Newest" : "Oldest"}
@@ -1200,7 +1208,7 @@ export default function BlogComments({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No comments yet. Be the first.</p>
+        <p className="text-sm text-muted-foreground">No comments yet — be the first to drop one!</p>
       )}
     </section>
   )

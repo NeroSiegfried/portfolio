@@ -168,7 +168,7 @@ export default function InboxButton() {
         type="button"
         aria-label="Notifications"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className={`relative rounded-md p-1.5 transition-colors hover:text-primary ${open ? "text-primary" : "text-muted-foreground"}`}
       >
         <Bell className="h-[1.2rem] w-[1.2rem]" />
         {unreadCount > 0 && (
