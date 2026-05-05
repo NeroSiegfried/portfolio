@@ -1,8 +1,10 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound, ImageIcon, BellOff, Bell, X } from "lucide-react"
+import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound, ImageIcon, BellOff, Bell, X, ZoomIn, ZoomOut, Check } from "lucide-react"
+import Cropper from "react-easy-crop"
+import type { Area } from "react-easy-crop"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Textarea } from "@/components/ui/textarea"
@@ -70,24 +72,34 @@ interface BlogCommentsProps {
   onUserChange?: (user: PublicUser | null) => void
 }
 
-// ─── Image upload helper (presigned PUT — file goes browser → S3 directly) ───
+// ─── Image upload helper ─────────────────────────────────────────────────────
+// Small files (≤ 4 MB after compression) go through the Lambda route — magic
+// bytes are validated server-side exactly as before.
+// Large files (> 4 MB) bypass the 6 MB API Gateway body limit via a presigned
+// S3 PUT URL; the server still enforces the per-purpose max size.
 
-async function uploadImagePresigned(
-  file: File,
-  purpose: "avatar" | "comment"
-): Promise<string> {
-  const compressed = await compressImage(file, {
-    maxWidth:      purpose === "avatar" ? 400  : 1200,
-    maxHeight:     purpose === "avatar" ? 400  : 1200,
-    quality:       purpose === "avatar" ? 0.88 : 0.82,
-    skipBelowBytes: purpose === "avatar" ? 100 * 1024 : 300 * 1024,
-  })
+const LAMBDA_THRESHOLD = 4 * 1024 * 1024 // 4 MB
 
-  // Step 1 – ask the server for a presigned S3 PUT URL (tiny JSON request, no file data)
+async function uploadImageViaLambda(compressed: File, purpose: string): Promise<string> {
+  const form = new FormData()
+  form.append("file",    compressed)
+  form.append("purpose", purpose)
+  const res = await fetch("/api/upload", { method: "POST", body: form })
+  if (!res.ok) {
+    let msg = "Upload failed."
+    try { const e = (await res.json()) as { error?: string }; if (e.error) msg = e.error } catch {}
+    throw new Error(msg)
+  }
+  const { cfUrl } = (await res.json()) as { cfUrl?: string }
+  if (!cfUrl) throw new Error("Upload failed: incomplete server response.")
+  return cfUrl
+}
+
+async function uploadImageViaPresign(compressed: File, purpose: string): Promise<string> {
   const res = await fetch("/api/upload", {
-    method: "POST",
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ purpose, contentType: compressed.type, size: compressed.size }),
+    body:    JSON.stringify({ purpose, contentType: compressed.type, size: compressed.size }),
   })
   if (!res.ok) {
     let msg = "Upload failed."
@@ -96,16 +108,29 @@ async function uploadImagePresigned(
   }
   const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl?: string; cfUrl?: string }
   if (!uploadUrl || !cfUrl) throw new Error("Upload failed: incomplete server response.")
-
-  // Step 2 – PUT the file directly to S3 (no Lambda in the path)
   const put = await fetch(uploadUrl, {
-    method: "PUT",
+    method:  "PUT",
     headers: { "Content-Type": compressed.type },
-    body: compressed,
+    body:    compressed,
   })
   if (!put.ok) throw new Error("Upload failed: could not store file.")
-
   return cfUrl
+}
+
+async function uploadImagePresigned(
+  file: File,
+  purpose: "avatar" | "comment"
+): Promise<string> {
+  const compressed = await compressImage(file, {
+    maxWidth:       purpose === "avatar" ? 400  : 1200,
+    maxHeight:      purpose === "avatar" ? 400  : 1200,
+    quality:        purpose === "avatar" ? 0.88 : 0.82,
+    skipBelowBytes: purpose === "avatar" ? 100 * 1024 : 300 * 1024,
+  })
+  if (compressed.size <= LAMBDA_THRESHOLD) {
+    return uploadImageViaLambda(compressed, purpose)
+  }
+  return uploadImageViaPresign(compressed, purpose)
 }
 
 // ─── Pending-image state helpers ─────────────────────────────────────────────
@@ -221,8 +246,11 @@ function ImageChips({
 }
 
 // ─── Comment content renderer ─────────────────────────────────────────────────
+// Memoized so ReactMarkdown (and the img elements inside it) only re-renders
+// when the comment content itself changes — not when parent state (textarea
+// text, pending images, etc.) updates on every keystroke.
 
-function CommentContent({ content }: { content: string }) {
+const CommentContent = memo(function CommentContent({ content }: { content: string }) {
   return (
     <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none
       [&_p]:my-0.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0
@@ -244,6 +272,101 @@ function CommentContent({ content }: { content: string }) {
       >
         {content}
       </ReactMarkdown>
+    </div>
+  )
+})
+
+// ─── Avatar crop modal ───────────────────────────────────────────────────────
+
+async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image()
+    i.onload = () => resolve(i)
+    i.onerror = reject
+    i.src = imageSrc
+  })
+  const canvas = document.createElement("canvas")
+  const size = Math.min(pixelCrop.width, pixelCrop.height)
+  canvas.width  = size
+  canvas.height = size
+  const ctx = canvas.getContext("2d")!
+  ctx.drawImage(img, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, size, size)
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => b ? resolve(b) : reject(new Error("Canvas export failed")), "image/jpeg", 0.9)
+  )
+}
+
+function AvatarCropModal({
+  src,
+  onConfirm,
+  onCancel,
+  busy,
+}: {
+  src: string
+  onConfirm: (blob: Blob) => void
+  onCancel: () => void
+  busy: boolean
+}) {
+  const [crop, setCrop]     = useState({ x: 0, y: 0 })
+  const [zoom, setZoom]     = useState(1)
+  const [croppedArea, setCroppedArea] = useState<Area | null>(null)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+      <div className="relative w-full max-w-sm rounded-xl border border-border bg-background shadow-xl overflow-hidden">
+        <div className="p-4 pb-2 flex items-center justify-between">
+          <p className="text-sm font-semibold">Crop avatar</p>
+          <button onClick={onCancel} disabled={busy} className="text-muted-foreground hover:text-foreground disabled:opacity-40">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Crop area */}
+        <div className="relative h-72 bg-muted">
+          <Cropper
+            image={src}
+            crop={crop}
+            zoom={zoom}
+            aspect={1}
+            cropShape="round"
+            showGrid={false}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={(_, areaPixels) => setCroppedArea(areaPixels)}
+          />
+        </div>
+
+        {/* Zoom slider */}
+        <div className="flex items-center gap-2 px-4 py-3">
+          <ZoomOut className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <input
+            type="range" min={1} max={3} step={0.05}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="flex-1 accent-primary"
+          />
+          <ZoomIn className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-border/50 px-4 py-3">
+          <button onClick={onCancel} disabled={busy}
+            className="rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40">
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              if (!croppedArea) return
+              const blob = await getCroppedBlob(src, croppedArea)
+              onConfirm(blob)
+            }}
+            disabled={busy || !croppedArea}
+            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+          >
+            <Check className="h-3 w-3" />
+            {busy ? "Uploading…" : "Use this crop"}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -628,19 +751,25 @@ export default function BlogComments({
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const mainFileRef = useRef<HTMLInputElement>(null)
 
-  // Avatar upload in profile editor
+  // Avatar upload: pick file → crop modal → upload cropped blob
   const avatarFileRef = useRef<HTMLInputElement>(null)
-  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarUploading, setAvatarUploading]     = useState(false)
+  const [avatarCropSrc,   setAvatarCropSrc]       = useState<string | null>(null)
 
-  const handleAvatarUpload = async () => {
-    const file = avatarFileRef.current?.files?.[0]
-    if (!file) return
-    if (avatarFileRef.current) avatarFileRef.current.value = ""
+  const openCropModal = (file: File) => {
+    const url = URL.createObjectURL(file)
+    setAvatarCropSrc(url)
+  }
+
+  const handleCropConfirm = async (blob: Blob) => {
     setAvatarUploading(true)
     setProfileError(null)
     try {
-      const url = await uploadImagePresigned(file, "avatar")
+      const croppedFile = new File([blob], "avatar.jpg", { type: "image/jpeg" })
+      const url = await uploadImagePresigned(croppedFile, "avatar")
       setEditAvatarUrl(url)
+      if (avatarCropSrc) URL.revokeObjectURL(avatarCropSrc)
+      setAvatarCropSrc(null)
     } catch (e) {
       setProfileError(e instanceof Error ? e.message : "Avatar upload failed.")
     } finally {
@@ -929,16 +1058,32 @@ export default function BlogComments({
                     <ImageIcon className="h-4 w-4" />
                   </button>
                 </div>
-                {/* Hidden file input for avatar */}
+                {/* Hidden file input for avatar — opens the crop modal */}
                 <input
                   ref={avatarFileRef}
                   type="file"
                   accept="image/jpeg,image/png,image/gif,image/webp"
                   className="hidden"
-                  onChange={() => void handleAvatarUpload()}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) openCropModal(f)
+                    if (avatarFileRef.current) avatarFileRef.current.value = ""
+                  }}
                 />
                 {avatarUploading && (
                   <p className="text-[11px] text-muted-foreground animate-pulse">Uploading…</p>
+                )}
+                {/* Crop modal */}
+                {avatarCropSrc && (
+                  <AvatarCropModal
+                    src={avatarCropSrc}
+                    onConfirm={handleCropConfirm}
+                    onCancel={() => {
+                      URL.revokeObjectURL(avatarCropSrc)
+                      setAvatarCropSrc(null)
+                    }}
+                    busy={avatarUploading}
+                  />
                 )}
                 <p className="text-[11px] text-muted-foreground/60">
                   Upload or paste a direct link. Leave blank to use your initials.
