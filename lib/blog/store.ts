@@ -601,14 +601,35 @@ export function getCommentTree(
   })
 
   const sortNodes = (nodes: CommentNode[]) => {
-    nodes.sort((first, second) =>
-      new Date(first.createdAt).getTime() - new Date(second.createdAt).getTime()
-    )
+    // Default: highest score first; ties broken by newest first
+    nodes.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
     nodes.forEach((node) => sortNodes(node.children))
   }
 
   sortNodes(roots)
   return roots
+}
+
+export type CommentSortOrder = "top" | "newest" | "oldest"
+
+/** Re-sort an already-built comment tree in place (every level). */
+export function sortCommentTree(nodes: CommentNode[], order: CommentSortOrder): CommentNode[] {
+  const sorted = [...nodes].sort((a, b) => {
+    if (order === "top") {
+      if (b.score !== a.score) return b.score - a.score
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    }
+    const ta = new Date(a.createdAt).getTime()
+    const tb = new Date(b.createdAt).getTime()
+    return order === "newest" ? tb - ta : ta - tb
+  })
+  return sorted.map((node) => ({
+    ...node,
+    children: sortCommentTree(node.children, order),
+  }))
 }
 
 export function getPublishedPosts(posts: BlogPost[]) {

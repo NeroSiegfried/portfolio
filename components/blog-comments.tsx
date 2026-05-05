@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound, ImageIcon, BellOff, Bell, X, ZoomIn, ZoomOut, Check } from "lucide-react"
+import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound, ImageIcon, BellOff, Bell, X, ZoomIn, ZoomOut, Check, ArrowUpDown } from "lucide-react"
 import Cropper from "react-easy-crop"
 import type { Area } from "react-easy-crop"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Textarea } from "@/components/ui/textarea"
 import type { CommentNode, PublicUser } from "@/lib/blog/types"
+import { sortCommentTree, type CommentSortOrder } from "@/lib/blog/store"
 import { compressImage } from "@/lib/compress-image"
 
 // ─── Avatar helper ─────────────────────────────────────────────────────────────
@@ -778,7 +779,14 @@ export default function BlogComments({
     }
   }
 
+  const [sortOrder, setSortOrder] = useState<CommentSortOrder>("top")
+
   const hasComments = useMemo(() => comments.length > 0, [comments])
+
+  const sortedComments = useMemo(
+    () => sortCommentTree(comments, sortOrder),
+    [comments, sortOrder]
+  )
 
   const submitComment = async () => {
     const fullContent = buildContent(content, pendingImages)
@@ -1159,17 +1167,37 @@ export default function BlogComments({
       )}
 
       {hasComments ? (
-        <div className="divide-y divide-border/30">
-          {comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              node={comment}
-              postId={postId}
-              currentUser={currentUser}
-              mutedIds={mutedSet}
-              onRefresh={onRefresh}
-            />
-          ))}
+        <div>
+          {/* Sort control */}
+          <div className="mb-4 flex items-center gap-1">
+            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+            {(["top", "newest", "oldest"] as const).map((o) => (
+              <button
+                key={o}
+                type="button"
+                onClick={() => setSortOrder(o)}
+                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                  sortOrder === o
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {o === "top" ? "Top" : o === "newest" ? "Newest" : "Oldest"}
+              </button>
+            ))}
+          </div>
+          <div className="divide-y divide-border/30">
+            {sortedComments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                node={comment}
+                postId={postId}
+                currentUser={currentUser}
+                mutedIds={mutedSet}
+                onRefresh={onRefresh}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">No comments yet. Be the first.</p>
