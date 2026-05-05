@@ -3,11 +3,11 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ThumbsUp } from "lucide-react"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 interface PostVoteButtonProps {
   postId: string
   initialScore: number
-  isLoggedIn: boolean
   /** Whether the current user has already upvoted this post (server-provided). */
   initialVoted?: boolean
 }
@@ -15,9 +15,10 @@ interface PostVoteButtonProps {
 export default function PostVoteButton({
   postId,
   initialScore,
-  isLoggedIn,
   initialVoted = false,
 }: PostVoteButtonProps) {
+  const { user } = useCurrentUser()
+  const isLoggedIn = Boolean(user)
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)

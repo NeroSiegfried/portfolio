@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { readBlogHomeDb } from "@/lib/blog/store"
 import { listPublishedPosts, listSeriesTree, listPostsChronological } from "@/lib/blog/queries"
-import { getSessionUser, getAdminEntryPath } from "@/lib/blog/auth"
+import { getAdminEntryPath } from "@/lib/blog/auth"
 import AdminEntryHotkey from "@/components/admin-entry-hotkey"
 import BlogPostList from "@/components/blog-post-list"
 import BlogSeriesNav from "@/components/blog-series-nav"
@@ -10,14 +10,15 @@ import Footer from "@/components/footer"
 import { ModeToggle } from "@/components/mode-toggle"
 import PortfolioLink from "@/components/portfolio-link"
 
-export const dynamic = "force-dynamic"
+// ISR: rebuild at most every 60s. CloudFront/CDN serves cached HTML from
+// the nearest edge node — no Lambda round-trip to us-east-1 for repeat visitors.
+export const revalidate = 60
 
 export default async function BlogHomePage() {
   const db = await readBlogHomeDb()
   const posts = listPublishedPosts(db)
   const chronoPosts = listPostsChronological(db)
   const seriesTree = listSeriesTree(db)
-  const currentUser = await getSessionUser()
   const adminPath = getAdminEntryPath()
 
   return (
@@ -40,9 +41,6 @@ export default async function BlogHomePage() {
             Dev logs, structured learning series, and interactive articles.
           </p>
           <AdminEntryHotkey adminPath={adminPath} />
-          {currentUser && (
-            <p className="mt-2 text-xs text-muted-foreground">Signed in as {currentUser.username}</p>
-          )}
         </header>
 
         {/*

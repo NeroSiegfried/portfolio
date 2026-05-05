@@ -18,8 +18,8 @@ export async function GET(request: Request) {
   // Sanitize: only allow same-origin relative paths
   if (!returnTo.startsWith("/")) returnTo = "/blog"
 
-  const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1"
-  const baseUrl = isLocal ? url.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? url.origin)
+  const isLocal = !process.env.NEXT_PUBLIC_SITE_URL || url.hostname === "localhost" || url.hostname === "127.0.0.1"
+  const baseUrl = isLocal ? url.origin : process.env.NEXT_PUBLIC_SITE_URL!
   const failRedirect = `${baseUrl}/blog?auth_error=google`
 
   if (!code) return NextResponse.redirect(failRedirect)

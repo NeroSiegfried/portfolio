@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react"
 import BlogComments from "@/components/blog-comments"
-import type { CommentNode, PublicUser } from "@/lib/blog/types"
+import { useCurrentUser } from "@/hooks/use-current-user"
+import type { CommentNode } from "@/lib/blog/types"
 
 interface LazyCommentsProps {
   postId: string
   postSlug: string
-  currentUser: PublicUser | null
+  // currentUser is now resolved client-side so this page can be ISR-cached
 }
 
 /**
@@ -15,7 +16,8 @@ interface LazyCommentsProps {
  * The component itself is rendered below the fold via the article layout, so the
  * initial page paint is not blocked — we just kick off the fetch right away.
  */
-export default function LazyComments({ postId, postSlug, currentUser }: LazyCommentsProps) {
+export default function LazyComments({ postId, postSlug }: LazyCommentsProps) {
+  const { user: currentUser } = useCurrentUser()
   const [comments, setComments] = useState<CommentNode[] | null>(null)
   const [loading, setLoading] = useState(true)
 

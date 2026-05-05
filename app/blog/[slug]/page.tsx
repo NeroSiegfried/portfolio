@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { readBlogPostDb, getPostVote } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
-import { getSessionUser } from "@/lib/blog/auth"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
 import LazyComments from "@/components/lazy-comments"
@@ -12,9 +11,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import PortfolioLink from "@/components/portfolio-link"
 import BlogLink from "@/components/blog-link"
 
-export const dynamic = "force-dynamic"
-// Revalidate cached pages every 60 seconds so published/updated posts
-// appear quickly without a full re-render on every request.
+// ISR: rebuild at most every 60s. The page HTML is cached at CloudFront edge.
 export const revalidate = 60
 
 interface BlogPostPageProps {
@@ -41,8 +38,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const snippetsBySlug = listSnippetsBySlug(db)
-  const user = await getSessionUser()
-  const userVoted = user ? getPostVote(db.postVotes, post.id, user.id) !== null : false
 
   // Series sibling posts (sorted by publishedAt asc) — used for prev/next nav.
   // Filter to EXACT seriesId match only (not recursive sub-series) so that
@@ -142,7 +137,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     })
                   : "Draft"}
               </time>
-              <PostVoteButton postId={post.id} initialScore={post.upvotes} isLoggedIn={Boolean(user)} initialVoted={userVoted} />
+              <PostVoteButton postId={post.id} initialScore={post.upvotes} />
             </div>
           </header>
 
@@ -150,7 +145,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} />
           )}
 
-          <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} user={user} />
+          <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} />
 
           {seriesPosts.length > 1 && (
             <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} />
@@ -158,7 +153,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </article>
 
         <div id="comments" className="mt-12 border-t border-border/40 pt-10">
-          <LazyComments postId={post.id} postSlug={slug} currentUser={user} />
+          <LazyComments postId={post.id} postSlug={slug} />
         </div>
         </div>{/* end max-w-3xl inner column */}
       </main>

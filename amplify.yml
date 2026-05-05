@@ -1,4 +1,14 @@
 version: 1
+# ─── Required environment variables (set in Amplify Console → App settings → Environment variables) ───
+# DATABASE_URL           postgres://user:pass@host:5432/db?sslmode=require
+# NEXT_PUBLIC_SITE_URL   https://nerosiegfried.com   ← CRITICAL: used for OAuth callback URLs
+# BLOG_ADMIN_EMAIL       admin email for auto-seed
+# BLOG_ADMIN_PASSWORD    admin password for auto-seed
+# GITHUB_CLIENT_ID       GitHub OAuth App client ID (prod)
+# GITHUB_CLIENT_SECRET   GitHub OAuth App client secret (prod)
+# GOOGLE_CLIENT_ID       Google OAuth client ID
+# GOOGLE_CLIENT_SECRET   Google OAuth client secret
+# ────────────────────────────────────────────────────────────────────────────────────────────────────
 frontend:
   phases:
     preBuild:

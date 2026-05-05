@@ -2,13 +2,12 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { readBlogPostDb } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug } from "@/lib/blog/queries"
-import { getSessionUser } from "@/lib/blog/auth"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
 import LazyComments from "@/components/lazy-comments"
 import BlogTopNav from "@/components/blog-top-nav"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 60
 
 export default async function BlogFeaturesDemoPage() {
   const db = await readBlogPostDb("features-demo")
@@ -21,7 +20,6 @@ export default async function BlogFeaturesDemoPage() {
   }
 
   const snippetsBySlug = listSnippetsBySlug(db)
-  const user = await getSessionUser()
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,7 +65,7 @@ export default async function BlogFeaturesDemoPage() {
                     })
                   : "Draft"}
               </time>
-              <PostVoteButton postId={post.id} initialScore={post.upvotes} isLoggedIn={Boolean(user)} />
+              <PostVoteButton postId={post.id} initialScore={post.upvotes} />
             </div>
           </header>
 
@@ -75,7 +73,7 @@ export default async function BlogFeaturesDemoPage() {
         </article>
 
         <div className="mt-12 border-t border-border/40 pt-10">
-          <LazyComments postId={post.id} postSlug="features-demo" currentUser={user} />
+          <LazyComments postId={post.id} postSlug="features-demo" />
         </div>
 
         <div className="mt-10">

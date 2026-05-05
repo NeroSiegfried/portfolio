@@ -17,8 +17,9 @@ export async function GET(request: Request) {
   } catch { /* ignore */ }
   if (!returnTo.startsWith("/")) returnTo = "/blog"
 
-  const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1"
-  const baseUrl = isLocal ? url.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? url.origin)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  const isLocal = !siteUrl || url.hostname === "localhost" || url.hostname === "127.0.0.1"
+  const baseUrl = isLocal ? url.origin : siteUrl!
   const failRedirect = `${baseUrl}/blog?auth_error=github`
 
   if (!code) return NextResponse.redirect(failRedirect)

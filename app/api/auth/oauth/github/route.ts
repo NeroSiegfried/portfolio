@@ -3,18 +3,20 @@ import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1"
+
+  // NEXT_PUBLIC_SITE_URL is the canonical production origin (e.g. https://nerosiegfried.com).
+  // When it is set we are in production; when absent we are running locally.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  const isLocal = !siteUrl || url.hostname === "localhost" || url.hostname === "127.0.0.1"
 
   const clientId = isLocal ? process.env.GITHUB_CLIENT_ID_LOCAL : process.env.GITHUB_CLIENT_ID
   if (!clientId) {
     return NextResponse.json({ error: "GitHub OAuth is not configured." }, { status: 503 })
   }
 
-  // When local, use url.origin so GitHub redirects back to localhost, not production.
-  const baseUrl = isLocal ? url.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? url.origin)
+  const baseUrl = isLocal ? url.origin : siteUrl!
   const redirectUri = `${baseUrl}/api/auth/oauth/github/callback`
 
-  // Preserve the page the user was on so we can redirect back after auth
   const returnTo = url.searchParams.get("returnTo") ?? "/blog"
 
   const authUrl = new URL("https://github.com/login/oauth/authorize")
