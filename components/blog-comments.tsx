@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,6 +13,7 @@ interface BlogCommentsProps {
   comments: CommentNode[]
   currentUser: PublicUser | null
   onRefresh: () => Promise<void>
+  onUserChange?: (user: PublicUser | null) => void
 }
 
 function CommentItem({
@@ -31,9 +32,11 @@ function CommentItem({
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState(node.content)
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
-  // Optimistic vote tracking — seeded from server so persists across refreshes
+  const [busy, setBusy] = useState(false)
+
+  // Optimistic vote state — seeded from server
   const [userVote, setUserVote] = useState<1 | -1 | 0>(node.currentUserVote)
+  const [score, setScore] = useState(node.score)
 
   const isOwner = currentUser?.id === node.userId
   const isAdmin = currentUser?.role === "admin"
@@ -43,23 +46,37 @@ function CommentItem({
     Date.now() - new Date(node.createdAt).getTime() < EDIT_WINDOW_MS
   const canDelete = isOwner || isAdmin
 
-  const refresh = () => startTransition(() => { void onRefresh() })
-
   const sendReply = async () => {
-    if (!reply.trim()) return
-    const res = await fetch("/api/blog/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId, parentId: node.id, content: reply }),
-    })
-    if (!res.ok) { setError(((await res.json()) as { error?: string }).error ?? "Unable to reply."); return }
-    setReply(""); setShowReply(false); setError(null); refresh()
+    if (!reply.trim() || busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/blog/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, parentId: node.id, content: reply }),
+      })
+      if (!res.ok) {
+        setError(((await res.json()) as { error?: string }).error ?? "Unable to reply.")
+        return
+      }
+      setReply("")
+      setShowReply(false)
+      await onRefresh()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const vote = async (value: 1 | -1) => {
-    // Optimistic: same value toggles off, different value switches
-    const prev = userVote
-    setUserVote(prev === value ? 0 : value)
+    if (!currentUser || busy) return
+    // Optimistic update
+    const prevVote = userVote
+    const prevScore = score
+    const newVote = prevVote === value ? 0 : value
+    const scoreDelta = newVote - prevVote
+    setUserVote(newVote)
+    setScore(prevScore + scoreDelta)
 
     const res = await fetch("/api/blog/comments/vote", {
       method: "POST",
@@ -67,51 +84,77 @@ function CommentItem({
       body: JSON.stringify({ commentId: node.id, value }),
     })
     if (!res.ok) {
-      setUserVote(prev) // revert
+      // Revert on error
+      setUserVote(prevVote)
+      setScore(prevScore)
       setError(((await res.json()) as { error?: string }).error ?? "Unable to vote.")
       return
     }
-    setError(null); refresh()
+    // Optionally sync server score
+    const data = (await res.json()) as { score?: number }
+    if (typeof data.score === "number") setScore(data.score)
+    setError(null)
+    await onRefresh()
   }
 
   const saveEdit = async () => {
-    if (!editContent.trim()) return
-    const res = await fetch(`/api/blog/comments/${node.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: editContent }),
-    })
-    if (!res.ok) { setError(((await res.json()) as { error?: string }).error ?? "Unable to edit."); return }
-    setEditing(false); setError(null); refresh()
+    if (!editContent.trim() || busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/blog/comments/${node.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editContent }),
+      })
+      if (!res.ok) {
+        setError(((await res.json()) as { error?: string }).error ?? "Unable to edit.")
+        return
+      }
+      setEditing(false)
+      await onRefresh()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const deleteComment = async (hard = false) => {
-    const url = hard ? `/api/blog/comments/${node.id}?hard=1` : `/api/blog/comments/${node.id}`
-    const res = await fetch(url, { method: "DELETE" })
-    if (!res.ok) { setError(((await res.json()) as { error?: string }).error ?? "Unable to delete."); return }
-    setError(null); refresh()
+    if (busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      const url = hard ? `/api/blog/comments/${node.id}?hard=1` : `/api/blog/comments/${node.id}`
+      const res = await fetch(url, { method: "DELETE" })
+      if (!res.ok) {
+        setError(((await res.json()) as { error?: string }).error ?? "Unable to delete.")
+        return
+      }
+      await onRefresh()
+    } finally {
+      setBusy(false)
+    }
   }
 
-  const hideComment = async () => deleteComment(false)
+  const unhide = async () => {
+    await fetch(`/api/blog/comments/${node.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hidden: false }),
+    })
+    await onRefresh()
+  }
 
-  // Hidden comments: show placeholder for admins, nothing for others
+  // Hidden: placeholder for admins, nothing for regular users
   if (node.hidden && !isAdmin) return null
   if (node.hidden && isAdmin) {
     return (
       <div className="py-4 opacity-50">
         <p className="text-xs text-muted-foreground italic">[Comment hidden by moderator]</p>
-        <div className="mt-1 flex gap-2">
+        <div className="mt-1 flex gap-3">
           <button
             type="button"
-            onClick={async () => {
-              await fetch(`/api/blog/comments/${node.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hidden: false }),
-              })
-              void onRefresh()
-            }}
-            disabled={isPending}
+            onClick={unhide}
+            disabled={busy}
             className="text-xs text-primary hover:underline disabled:opacity-40"
           >
             Unhide
@@ -119,12 +162,25 @@ function CommentItem({
           <button
             type="button"
             onClick={() => deleteComment(true)}
-            disabled={isPending}
+            disabled={busy}
             className="text-xs text-destructive hover:underline disabled:opacity-40"
           >
             Hard delete
           </button>
         </div>
+        {node.children.length > 0 && (
+          <div className="mt-3 border-l border-border/40 pl-4">
+            {node.children.map((child) => (
+              <CommentItem
+                key={child.id}
+                node={child}
+                postId={postId}
+                currentUser={currentUser}
+                onRefresh={onRefresh}
+              />
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -134,8 +190,16 @@ function CommentItem({
       <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="font-semibold text-foreground/70">{node.username}</span>
         <span>·</span>
-        <span>{new Date(node.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-        {node.editedAt && <span className="rounded bg-muted px-1 py-0.5 text-[10px]">edited</span>}
+        <span>
+          {new Date(node.createdAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
+        </span>
+        {node.editedAt && (
+          <span className="rounded bg-muted px-1 py-0.5 text-[10px]">edited</span>
+        )}
       </div>
 
       {editing ? (
@@ -143,17 +207,27 @@ function CommentItem({
           <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            disabled={isPending}
+            disabled={busy}
             className="text-sm"
             rows={3}
           />
           <div className="flex gap-2">
-            <button type="button" onClick={saveEdit} disabled={isPending}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
-              Save
+            <button
+              type="button"
+              onClick={saveEdit}
+              disabled={busy}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {busy ? "Saving…" : "Save"}
             </button>
-            <button type="button" onClick={() => { setEditing(false); setEditContent(node.content) }}
-              className="text-xs text-muted-foreground hover:text-foreground">
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(false)
+                setEditContent(node.content)
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
               Cancel
             </button>
           </div>
@@ -163,76 +237,118 @@ function CommentItem({
       )}
 
       <div className="mt-2.5 flex items-center gap-3">
-        <button type="button" onClick={() => vote(1)} disabled={!currentUser || isPending}
+        <button
+          type="button"
+          onClick={() => vote(1)}
+          disabled={!currentUser || busy}
           className={[
             "flex items-center gap-1 text-xs transition-colors disabled:opacity-40",
-            userVote === 1
-              ? "text-secondary"
-              : "text-muted-foreground hover:text-secondary",
-          ].join(" ")}>
+            userVote === 1 ? "text-secondary" : "text-muted-foreground hover:text-secondary",
+          ].join(" ")}
+        >
           <ThumbsUp className="h-3 w-3" />
         </button>
-        <span className="text-xs tabular-nums text-muted-foreground">{node.score}</span>
-        <button type="button" onClick={() => vote(-1)} disabled={!currentUser || isPending}
+        <span className="text-xs tabular-nums text-muted-foreground">{score}</span>
+        <button
+          type="button"
+          onClick={() => vote(-1)}
+          disabled={!currentUser || busy}
           className={[
             "flex items-center gap-1 text-xs transition-colors disabled:opacity-40",
-            userVote === -1
-              ? "text-primary"
-              : "text-muted-foreground hover:text-primary",
-          ].join(" ")}>
+            userVote === -1 ? "text-primary" : "text-muted-foreground hover:text-primary",
+          ].join(" ")}
+        >
           <ThumbsDown className="h-3 w-3" />
         </button>
-        <button type="button" onClick={() => setShowReply((v) => !v)}
-          className="ml-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
-          Reply
-        </button>
+
+        {currentUser && (
+          <button
+            type="button"
+            onClick={() => setShowReply((v) => !v)}
+            className="ml-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Reply
+          </button>
+        )}
+
         {canEdit && !editing && (
-          <button type="button" onClick={() => setEditing(true)}
-            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
             <Pencil className="h-3 w-3" />
             Edit
           </button>
         )}
+
         {canDelete && (
-          <button type="button" onClick={() => isAdmin ? hideComment() : deleteComment()}
-            disabled={isPending}
-            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40">
-            {isAdmin ? <EyeOff className="h-3 w-3" /> : <Trash2 className="h-3 w-3" />}
+          <button
+            type="button"
+            onClick={() => (isAdmin ? deleteComment(false) : deleteComment())}
+            disabled={busy}
+            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+          >
+            <EyeOff className="h-3 w-3" />
             {isAdmin ? "Hide" : "Delete"}
           </button>
         )}
+
         {isAdmin && (
-          <button type="button" onClick={() => deleteComment(true)} disabled={isPending}
-            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40">
+          <button
+            type="button"
+            onClick={() => deleteComment(true)}
+            disabled={busy}
+            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+          >
             <Trash2 className="h-3 w-3" />
             Hard delete
           </button>
         )}
       </div>
 
-      {showReply && (
+      {showReply && currentUser && (
         <div className="mt-3 space-y-2">
           <Textarea
             placeholder="Write a reply…"
             value={reply}
             onChange={(e) => setReply(e.target.value)}
-            disabled={!currentUser}
+            disabled={busy}
             className="text-sm"
             rows={2}
           />
-          <button type="button" onClick={sendReply} disabled={!currentUser || isPending}
-            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
-            Post Reply
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={sendReply}
+              disabled={busy || !reply.trim()}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {busy ? "Posting…" : "Post Reply"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowReply(false)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
-      {error && <p className="mt-1.5 text-xs text-muted-foreground">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
 
       {node.children.length > 0 && (
         <div className="mt-3 space-y-0 border-l border-border/40 pl-4">
           {node.children.map((child) => (
-            <CommentItem key={child.id} node={child} postId={postId} currentUser={currentUser} onRefresh={onRefresh} />
+            <CommentItem
+              key={child.id}
+              node={child}
+              postId={postId}
+              currentUser={currentUser}
+              onRefresh={onRefresh}
+            />
           ))}
         </div>
       )}
@@ -240,69 +356,86 @@ function CommentItem({
   )
 }
 
-export default function BlogComments({ postId, comments, currentUser, onRefresh }: BlogCommentsProps) {
+export default function BlogComments({
+  postId,
+  comments,
+  currentUser,
+  onRefresh,
+  onUserChange,
+}: BlogCommentsProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const authError = searchParams.get("auth_error")
-  // After OAuth, send user back to this article at the comments anchor
   const returnTo = `${pathname}#comments`
+
   const [content, setContent] = useState("")
   const [authMode, setAuthMode] = useState<"login" | "register">("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [username, setUsername] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [busy, setBusy] = useState(false)
 
   const hasComments = useMemo(() => comments.length > 0, [comments])
 
   const submitComment = async () => {
-    if (!content.trim()) return
-
-    const response = await fetch("/api/blog/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId, content }),
-    })
-
-    if (!response.ok) {
-      const payload = (await response.json()) as { error?: string }
-      setError(payload.error ?? "Unable to comment.")
-      return
-    }
-
-    setContent("")
+    if (!content.trim() || busy) return
+    setBusy(true)
     setError(null)
-    startTransition(() => { void onRefresh() })
+    try {
+      const res = await fetch("/api/blog/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, content }),
+      })
+      if (!res.ok) {
+        setError(((await res.json()) as { error?: string }).error ?? "Unable to comment.")
+        return
+      }
+      setContent("")
+      await onRefresh()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const submitAuth = async () => {
-    const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/register"
-    const body = authMode === "login" ? { email, password } : { username, email, password }
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-
-    if (!response.ok) {
-      const payload = (await response.json()) as { error?: string }
-      setError(payload.error ?? "Authentication failed.")
-      return
-    }
-
+    if (busy) return
+    setBusy(true)
     setError(null)
-    startTransition(() => { void onRefresh() })
+    try {
+      const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/register"
+      const body = authMode === "login" ? { email, password } : { username, email, password }
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        setError(((await res.json()) as { error?: string }).error ?? "Authentication failed.")
+        return
+      }
+      // Fetch updated user and comments immediately
+      await onRefresh()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" })
-    startTransition(() => { void onRefresh() })
+    if (busy) return
+    setBusy(true)
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+      onUserChange?.(null)
+      await onRefresh()
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
-    <section>
+    <section id="comments">
       <h2 className="mb-6 text-xl font-bold tracking-tight">Discussion</h2>
 
       {!currentUser ? (
@@ -314,7 +447,8 @@ export default function BlogComments({ postId, comments, currentUser, onRefresh 
               {authError !== "github" && authError !== "google" && "Login failed. Please try again."}
             </div>
           )}
-          {/* Underline tab switcher */}
+
+          {/* Tab switcher */}
           <div className="mb-5 flex border-b border-border/40">
             <button
               type="button"
@@ -373,12 +507,14 @@ export default function BlogComments({ postId, comments, currentUser, onRefresh 
               <span className="text-xs text-muted-foreground">or</span>
               <div className="h-px flex-1 bg-border/50" />
             </div>
+
             {authMode === "register" && (
               <input
                 className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={busy}
               />
             )}
             <input
@@ -387,6 +523,7 @@ export default function BlogComments({ postId, comments, currentUser, onRefresh 
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={busy}
             />
             <input
               className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
@@ -394,26 +531,32 @@ export default function BlogComments({ postId, comments, currentUser, onRefresh 
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") void submitAuth() }}
+              disabled={busy}
             />
-            {error && <p className="text-xs text-muted-foreground">{error}</p>}
+            {error && <p className="text-xs text-destructive">{error}</p>}
             <button
               type="button"
               onClick={submitAuth}
-              disabled={isPending}
+              disabled={busy}
               className="mt-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {authMode === "login" ? "Sign in" : "Create account"}
+              {busy ? "Please wait…" : authMode === "login" ? "Sign in" : "Create account"}
             </button>
           </div>
         </div>
       ) : (
         <div className="mb-8">
           <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Signed in as <span className="font-medium text-foreground/80">{currentUser.username}</span></span>
+            <span>
+              Signed in as{" "}
+              <span className="font-medium text-foreground/80">{currentUser.username}</span>
+            </span>
             <button
               type="button"
               onClick={logout}
-              className="transition-colors hover:text-foreground"
+              disabled={busy}
+              className="transition-colors hover:text-foreground disabled:opacity-50"
             >
               Sign out
             </button>
@@ -422,17 +565,21 @@ export default function BlogComments({ postId, comments, currentUser, onRefresh 
             placeholder="Write a comment…"
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void submitComment()
+            }}
+            disabled={busy}
             className="text-sm"
             rows={3}
           />
-          {error && <p className="mt-1.5 text-xs text-muted-foreground">{error}</p>}
+          {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
           <button
             type="button"
             onClick={submitComment}
-            disabled={isPending}
+            disabled={busy || !content.trim()}
             className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            Post Comment
+            {busy ? "Posting…" : "Post Comment"}
           </button>
         </div>
       )}
@@ -440,7 +587,13 @@ export default function BlogComments({ postId, comments, currentUser, onRefresh 
       {hasComments ? (
         <div className="divide-y divide-border/30">
           {comments.map((comment) => (
-            <CommentItem key={comment.id} node={comment} postId={postId} currentUser={currentUser} onRefresh={onRefresh} />
+            <CommentItem
+              key={comment.id}
+              node={comment}
+              postId={postId}
+              currentUser={currentUser}
+              onRefresh={onRefresh}
+            />
           ))}
         </div>
       ) : (
@@ -449,4 +602,3 @@ export default function BlogComments({ postId, comments, currentUser, onRefresh 
     </section>
   )
 }
-
