@@ -1,17 +1,20 @@
 /**
- * AWS client factory — resolves credentials without storing any keys:
+ * AWS client factory — resolves credentials in this order:
  *
  *  1. Vercel OIDC  (VERCEL_OIDC_TOKEN + AWS_ROLE_ARN)
- *     Vercel issues a short-lived JWT per invocation; this exchanges it for
- *     temporary STS credentials via AssumeRoleWithWebIdentity.
+ *     Vercel exchanges a per-invocation JWT for temporary STS credentials.
  *
- *  2. SDK node provider chain  (everything else)
- *     On Amplify / Lambda: runtime injects execution-role creds via
- *     AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY + AWS_SESSION_TOKEN.
- *     Locally: uses ~/.aws/credentials or env vars in your shell.
+ *  2. Scoped service account  (S3_UPLOADER_KEY_ID + S3_UPLOADER_SECRET)
+ *     A dedicated IAM user with ONLY s3:PutObject on uploads/* — used by
+ *     Amplify/Vercel compute environments that don't expose an execution role.
+ *     These are NOT personal admin keys. Stored as S3_UPLOADER_* env vars
+ *     (Amplify blocks AWS_* prefix; Vercel uses encrypted env vars).
  *
- * NO static keys are stored anywhere.  Call makeS3Client() inside request
- * handlers (not at module level) so VERCEL_OIDC_TOKEN is read per-invocation.
+ *  3. SDK node provider chain  (local dev)
+ *     Reads ~/.aws/credentials or AWS_* env vars from your shell.
+ *
+ * Call makeS3Client() inside request handlers so VERCEL_OIDC_TOKEN is read
+ * at request time, not at cold-start.
  */
 
 import { S3Client } from "@aws-sdk/client-s3"
@@ -22,32 +25,31 @@ function resolveCredentials() {
   const oidcToken = process.env.VERCEL_OIDC_TOKEN
   const roleArn   = process.env.AWS_ROLE_ARN
   if (oidcToken && roleArn) {
-    console.log("[aws-clients] using Vercel OIDC credential provider")
-    return fromWebToken({
-      roleArn,
-      webIdentityToken: oidcToken,
-      roleSessionName:  "vercel-portfolio",
-    })
+    console.log("[aws-clients] credentials: Vercel OIDC")
+    return fromWebToken({ roleArn, webIdentityToken: oidcToken, roleSessionName: "vercel-portfolio" })
   }
 
-  // ── 2. Node provider chain ────────────────────────────────────────────────
-  // Covers Lambda execution role (env vars injected by runtime), EC2 instance
-  // profiles, ECS task roles, and local ~/.aws/credentials.
-  // Explicitly using fromNodeProviderChain() rather than passing undefined so
-  // the full chain (including container/IMDS metadata) is always tried.
-  console.log("[aws-clients] using SDK node provider chain (VERCEL_OIDC_TOKEN present:", !!oidcToken, "AWS_ROLE_ARN present:", !!roleArn, ")")
+  // ── 2. Scoped service account ─────────────────────────────────────────────
+  // Amplify Gen 1 WEB_COMPUTE doesn't inject execution-role credentials into
+  // the SSR runtime — the service role is build-only. We use a dedicated IAM
+  // user scoped to s3:PutObject on uploads/* only.
+  const keyId  = process.env.S3_UPLOADER_KEY_ID
+  const secret = process.env.S3_UPLOADER_SECRET
+  if (keyId && secret) {
+    console.log("[aws-clients] credentials: S3_UPLOADER service account")
+    return { accessKeyId: keyId, secretAccessKey: secret }
+  }
+
+  // ── 3. SDK node provider chain  (local dev) ───────────────────────────────
+  console.log("[aws-clients] credentials: SDK node provider chain")
   return fromNodeProviderChain()
 }
 
-/** Creates a pre-configured S3 client for the portfolio media bucket.
- *  Call inside request handlers (not at module level) so VERCEL_OIDC_TOKEN
- *  is read at request time, not at cold-start / module initialisation. */
+/** Creates a pre-configured S3 client for the portfolio media bucket. */
 export function makeS3Client(): S3Client {
   return new S3Client({
     region:      process.env.AWS_S3_REGION ?? process.env.S3_REGION ?? "us-east-1",
     credentials: resolveCredentials(),
-    // Suppress x-amz-checksum-* from presigned URLs — they trigger CORS
-    // preflight failures in the browser when PUT-ing directly to S3.
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
   })
