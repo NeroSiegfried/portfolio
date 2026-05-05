@@ -42,6 +42,8 @@ export interface BlogPost {
   content: string
   /** Optional per-post CSS injected into a <style> tag on the post page. */
   customCss?: string | null
+  /** Series display order. 0 = unset (falls back to publishedAt). Higher numbers sort later. */
+  position: number
   seriesId: string | null
   status: BlogPostStatus
   authorId: string

@@ -170,6 +170,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
   const [customCss, setCustomCss] = useState("")
   const [isDraft, setIsDraft] = useState(true)
   const [postSeriesId, setPostSeriesId] = useState("")
+  const [postPosition, setPostPosition] = useState(0)
   const [cells, setCells] = useState<string[]>([""])
   const content = cells.join("\n\n")
   const [showPreview, setShowPreview] = useState(false)
@@ -188,6 +189,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
     setCustomCss(next?.customCss ?? "")
     setIsDraft((next?.status ?? "draft") === "draft")
     setPostSeriesId(next?.seriesId ?? "")
+    setPostPosition(next?.position ?? 0)
     const blocks = (next?.content ?? "").split(/\n\n+/)
     setCells(blocks.length > 0 && blocks.some((b) => b.trim()) ? blocks : [""])
     setShowPreview(false)
@@ -205,6 +207,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
         customCss: customCss || null,
         status: isDraft ? "draft" : "published",
         seriesId: postSeriesId || null,
+        position: postPosition,
       }),
     })
     if (!res.ok) {
@@ -480,6 +483,18 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
                       <option key={s.id} value={s.id}>{s.title}</option>
                     ))}
                   </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Order:</span>
+                  <input
+                    type="number"
+                    min={0}
+                    className="w-16 rounded-md border bg-background px-2 py-2 text-sm"
+                    title="Series position (0 = unset, 1 = first, 2 = second, …)"
+                    placeholder="0"
+                    value={postPosition}
+                    onChange={(e) => setPostPosition(Number(e.target.value))}
+                  />
                 </div>
               </div>
 

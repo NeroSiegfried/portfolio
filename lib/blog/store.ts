@@ -23,8 +23,6 @@ declare global {
   // eslint-disable-next-line no-var
   var _pgPool: Pool | undefined
   // eslint-disable-next-line no-var
-  var _commentsCache: Map<string, { data: { comments: BlogComment[]; commentVotes: BlogCommentVote[]; users: BlogUser[] }; expires: number }> | undefined
-  // eslint-disable-next-line no-var
   var _homeDbCache: { data: BlogDb; expires: number } | undefined
   // eslint-disable-next-line no-var
   var _seriesDbCache: { data: BlogDb; expires: number } | undefined
@@ -99,6 +97,7 @@ function rowToPost(r: Record<string, unknown>): BlogPost {
     updatedAt: (r.updated_at as Date).toISOString(),
     publishedAt: r.published_at ? (r.published_at as Date).toISOString() : null,
     customCss: (r.custom_css as string) ?? null,
+    position: (r.position as number) ?? 0,
   }
 }
 
@@ -296,32 +295,15 @@ export async function readBlogPostDb(slug: string): Promise<BlogDb | null> {
   return data
 }
 
-const COMMENTS_TTL_MS = 120_000 // 2 minutes
-
-function getCommentsCache() {
-  if (!global._commentsCache) {
-    global._commentsCache = new Map()
-  }
-  return global._commentsCache
-}
-
-/** Fetch comments + votes + users for a single post (used by the lazy-load API route). */
+/** Fetch comments + votes + users for a single post (used by the lazy-load API route). No cache — must always be fresh so mutations are immediately visible. */
 export async function readPostCommentsDb(postSlug: string) {
-  const cache = getCommentsCache()
-  const cached = cache.get(postSlug)
-  if (cached && cached.expires > Date.now()) {
-    return cached.data
-  }
-
   const pool = getPool()
   const postRow = await pool.query(
     "SELECT id FROM posts WHERE slug=$1 AND status='published' LIMIT 1",
     [postSlug]
   )
   if (!postRow.rows.length) {
-    const empty = { comments: [] as BlogComment[], commentVotes: [] as BlogCommentVote[], users: [] as BlogUser[] }
-    cache.set(postSlug, { data: empty, expires: Date.now() + COMMENTS_TTL_MS })
-    return empty
+    return { comments: [] as BlogComment[], commentVotes: [] as BlogCommentVote[], users: [] as BlogUser[] }
   }
   const postId = postRow.rows[0].id as string
 
@@ -339,13 +321,11 @@ export async function readPostCommentsDb(postSlug: string) {
     ),
   ])
 
-  const data = {
+  return {
     comments: comments.rows.map(rowToComment),
     commentVotes: commentVotes.rows.map(rowToCommentVote),
     users: commentUsers.rows.map(rowToUser),
   }
-  cache.set(postSlug, { data, expires: Date.now() + COMMENTS_TTL_MS })
-  return data
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -420,11 +400,11 @@ export async function updateDb<T>(updater: (db: BlogDb) => T): Promise<T> {
     // Upsert / delete posts
     for (const p of db.posts) {
       await client.query(
-        `INSERT INTO posts (id,slug,title,excerpt,content,series_id,status,author_id,created_at,updated_at,published_at,custom_css)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10,$11)
+        `INSERT INTO posts (id,slug,title,excerpt,content,series_id,status,author_id,created_at,updated_at,published_at,custom_css,position)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10,$11,$12)
          ON CONFLICT (id) DO UPDATE SET
-           slug=$2,title=$3,excerpt=$4,content=$5,series_id=$6,status=$7,author_id=$8,updated_at=NOW(),published_at=$10,custom_css=$11`,
-        [p.id, p.slug, p.title, p.excerpt, p.content, p.seriesId, p.status, p.authorId, p.createdAt, p.publishedAt, p.customCss ?? null]
+           slug=$2,title=$3,excerpt=$4,content=$5,series_id=$6,status=$7,author_id=$8,updated_at=NOW(),published_at=$10,custom_css=$11,position=$12`,
+        [p.id, p.slug, p.title, p.excerpt, p.content, p.seriesId, p.status, p.authorId, p.createdAt, p.publishedAt, p.customCss ?? null, p.position ?? 0]
       )
     }
     const keptPosts = new Set(db.posts.map((p) => p.id))
@@ -629,9 +609,24 @@ export function getPublishedPosts(posts: BlogPost[]) {
   return posts
     .filter((post) => post.status === "published")
     .sort((first, second) => {
-      const firstTs = first.publishedAt ? new Date(first.publishedAt).getTime() : 0
-      const secondTs = second.publishedAt ? new Date(second.publishedAt).getTime() : 0
-      return secondTs - firstTs
+      // Explicit position takes precedence (0 = unset, treated as timestamp-based ordering)
+      const fp = first.position ?? 0
+      const sp = second.position ?? 0
+      if (fp !== 0 || sp !== 0) {
+        // Both positioned: sort ascending by position
+        if (fp !== 0 && sp !== 0) return fp - sp
+        // Only one positioned: positioned items come before unpositioned
+        if (fp !== 0) return -1
+        return 1
+      }
+      // Fallback: sort by publishedAt ?? createdAt descending (newest first for the main blog list)
+      const firstTs = new Date(first.publishedAt ?? first.createdAt).getTime()
+      const secondTs = new Date(second.publishedAt ?? second.createdAt).getTime()
+      if (firstTs !== secondTs) return secondTs - firstTs
+      const fc = new Date(first.createdAt).getTime()
+      const sc = new Date(second.createdAt).getTime()
+      if (fc !== sc) return sc - fc
+      return first.id.localeCompare(second.id)
     })
 }
 

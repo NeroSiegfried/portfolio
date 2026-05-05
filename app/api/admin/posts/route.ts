@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     customCss?: string | null
     seriesId?: string | null
     status?: BlogPostStatus
+    position?: number
   }
 
   const title = payload.title?.trim() ?? ""
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
       content: payload.content ?? "",
       customCss: payload.customCss ?? null,
       seriesId: payload.seriesId ?? null,
+      position: payload.position ?? current?.position ?? 0,
       status,
       authorId: current?.authorId ?? admin.id,
       createdAt: current?.createdAt ?? nowIso(),

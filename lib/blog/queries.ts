@@ -64,9 +64,22 @@ export function listPublishedPostsForSeries(db: BlogDb, seriesId: string): BlogP
   return listPublishedPosts(db)
     .filter((post) => post.seriesId && includeIds.has(post.seriesId))
     .sort((a, b) => {
+      // Explicit position wins (1-based; 0 = unset)
+      const ap = a.position ?? 0
+      const bp = b.position ?? 0
+      if (ap !== 0 || bp !== 0) {
+        if (ap !== 0 && bp !== 0) return ap - bp
+        if (ap !== 0) return -1
+        return 1
+      }
+      // Fallback: ascending by publishedAt ?? createdAt
       const at = new Date(a.publishedAt ?? a.createdAt).getTime()
       const bt = new Date(b.publishedAt ?? b.createdAt).getTime()
-      return at - bt  // ascending: oldest published = Project 1
+      if (at !== bt) return at - bt
+      const ac = new Date(a.createdAt).getTime()
+      const bc = new Date(b.createdAt).getTime()
+      if (ac !== bc) return ac - bc
+      return a.id.localeCompare(b.id)
     })
 }
 
