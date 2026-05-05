@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound, ImageIcon, BellOff, Bell } from "lucide-react"
+import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound, ImageIcon, BellOff, Bell, X } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Textarea } from "@/components/ui/textarea"
@@ -70,40 +70,154 @@ interface BlogCommentsProps {
   onUserChange?: (user: PublicUser | null) => void
 }
 
-// ─── Image upload helper ──────────────────────────────────────────────────────
+// ─── Image upload helper (presigned PUT — file goes browser → S3 directly) ───
 
-async function uploadImage(
+async function uploadImagePresigned(
   file: File,
   purpose: "avatar" | "comment"
 ): Promise<string> {
   const compressed = await compressImage(file, {
-    maxWidth: purpose === "avatar" ? 400 : 1200,
-    maxHeight: purpose === "avatar" ? 400 : 1200,
-    quality: purpose === "avatar" ? 0.88 : 0.82,
+    maxWidth:      purpose === "avatar" ? 400  : 1200,
+    maxHeight:     purpose === "avatar" ? 400  : 1200,
+    quality:       purpose === "avatar" ? 0.88 : 0.82,
     skipBelowBytes: purpose === "avatar" ? 100 * 1024 : 300 * 1024,
   })
 
-  const form = new FormData()
-  form.append("file", compressed)
-  form.append("purpose", purpose)
-
-  const res = await fetch("/api/upload", { method: "POST", body: form })
+  // Step 1 – ask the server for a presigned S3 PUT URL (tiny JSON request, no file data)
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ purpose, contentType: compressed.type, size: compressed.size }),
+  })
   if (!res.ok) {
     let msg = "Upload failed."
-    try {
-      const err = (await res.json()) as { error?: string }
-      if (err.error) msg = err.error
-    } catch { /* response wasn't JSON */ }
+    try { const e = (await res.json()) as { error?: string }; if (e.error) msg = e.error } catch {}
     throw new Error(msg)
   }
-  let body: { url?: string }
-  try {
-    body = (await res.json()) as { url?: string }
-  } catch {
-    throw new Error("Upload failed: unexpected server response.")
+  const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl?: string; cfUrl?: string }
+  if (!uploadUrl || !cfUrl) throw new Error("Upload failed: incomplete server response.")
+
+  // Step 2 – PUT the file directly to S3 (no Lambda in the path)
+  const put = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": compressed.type },
+    body: compressed,
+  })
+  if (!put.ok) throw new Error("Upload failed: could not store file.")
+
+  return cfUrl
+}
+
+// ─── Pending-image state helpers ─────────────────────────────────────────────
+
+interface PendingImage {
+  id:         string
+  url:        string | null   // null while uploading
+  alt:        string
+  uploading:  boolean
+  error?:     string
+}
+
+function addFilesToPending(
+  files: FileList | null,
+  setPending: React.Dispatch<React.SetStateAction<PendingImage[]>>
+) {
+  if (!files?.length) return
+  for (const file of Array.from(files)) {
+    const id = Math.random().toString(36).slice(2)
+    setPending((prev) => [...prev, { id, url: null, alt: "", uploading: true }])
+    uploadImagePresigned(file, "comment")
+      .then((url) =>
+        setPending((prev) =>
+          prev.map((img) => (img.id === id ? { ...img, url, uploading: false } : img))
+        )
+      )
+      .catch((e: unknown) =>
+        setPending((prev) =>
+          prev.map((img) =>
+            img.id === id
+              ? { ...img, uploading: false, error: e instanceof Error ? e.message : "Upload failed." }
+              : img
+          )
+        )
+      )
   }
-  if (!body.url) throw new Error("Upload failed: no URL returned.")
-  return body.url
+}
+
+function buildContent(text: string, images: PendingImage[]): string {
+  const ready = images.filter((i) => i.url && !i.uploading && !i.error)
+  const imgMd = ready.map((i) => `![${i.alt || "image"}](${i.url})`).join("\n")
+  return [text.trim(), imgMd].filter(Boolean).join("\n")
+}
+
+// ─── Image chips UI ──────────────────────────────────────────────────────────
+
+function ImageChips({
+  images,
+  onSetAlt,
+  onRemove,
+  compact = false,
+}: {
+  images:   PendingImage[]
+  onSetAlt: (id: string, alt: string) => void
+  onRemove: (id: string) => void
+  compact?: boolean
+}) {
+  if (!images.length) return null
+  return (
+    <div className="flex flex-wrap gap-2 pt-1">
+      {images.map((img) => (
+        <div
+          key={img.id}
+          className="relative flex items-start gap-2 rounded-lg border border-border/50 bg-muted/30 p-2"
+        >
+          {/* Thumbnail */}
+          <div className="shrink-0">
+            {img.uploading ? (
+              <div className={`${compact ? "h-12 w-12" : "h-16 w-16"} rounded-md bg-muted animate-pulse flex items-center justify-center`}>
+                <ImageIcon className="h-4 w-4 text-muted-foreground/40" />
+              </div>
+            ) : img.error ? (
+              <div className={`${compact ? "h-12 w-12" : "h-16 w-16"} rounded-md bg-destructive/10 flex items-center justify-center p-1`}>
+                <span className="text-[9px] text-destructive text-center leading-tight">{img.error}</span>
+              </div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={img.url!}
+                alt={img.alt || "Preview"}
+                className={`${compact ? "h-12 w-12" : "h-16 w-16"} rounded-md object-cover`}
+              />
+            )}
+          </div>
+
+          {/* Alt text input */}
+          {!img.error && (
+            <input
+              type="text"
+              placeholder="Alt text (optional)"
+              value={img.alt}
+              onChange={(e) => onSetAlt(img.id, e.target.value)}
+              disabled={img.uploading}
+              className={`${
+                compact ? "w-28" : "w-36"
+              } rounded border border-border/40 bg-background px-2 py-1 text-[11px] outline-none focus:border-primary disabled:opacity-50`}
+            />
+          )}
+
+          {/* Remove button */}
+          <button
+            type="button"
+            onClick={() => onRemove(img.id)}
+            aria-label="Remove image"
+            className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
+          >
+            <X className="h-2.5 w-2.5" />
+          </button>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 // ─── Comment content renderer ─────────────────────────────────────────────────
@@ -153,9 +267,14 @@ function CommentItem({
   const [editContent, setEditContent] = useState(node.content)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [uploadingImg, setUploadingImg] = useState(false)
-  const replyImgRef = useRef<HTMLInputElement>(null)
+
+  // Edit box: still uses markdown-in-textarea approach (presigned upload)
+  const [editUploadingImg, setEditUploadingImg] = useState(false)
   const editImgRef = useRef<HTMLInputElement>(null)
+
+  // Reply box: chips UI
+  const [replyPendingImages, setReplyPendingImages] = useState<PendingImage[]>([])
+  const replyFileRef = useRef<HTMLInputElement>(null)
 
   // Mute state — seeded from server, toggled locally
   const [muted, setMuted] = useState(() => mutedIds.has(node.id))
@@ -173,23 +292,19 @@ function CommentItem({
     Date.now() - new Date(node.createdAt).getTime() < EDIT_WINDOW_MS
   const canDelete = isOwner || isAdmin
 
-  const insertImageInto = async (
-    setter: React.Dispatch<React.SetStateAction<string>>,
-    fileRef: React.RefObject<HTMLInputElement | null>,
-    purpose: "comment"
-  ) => {
-    const file = fileRef.current?.files?.[0]
+  const insertEditImage = async () => {
+    const file = editImgRef.current?.files?.[0]
     if (!file) return
-    if (fileRef.current) fileRef.current.value = ""
-    setUploadingImg(true)
+    if (editImgRef.current) editImgRef.current.value = ""
+    setEditUploadingImg(true)
     setError(null)
     try {
-      const url = await uploadImage(file, purpose)
-      setter((prev) => prev + (prev ? "\n" : "") + `![image](${url})`)
+      const url = await uploadImagePresigned(file, "comment")
+      setEditContent((prev) => prev + (prev ? "\n" : "") + `![image](${url})`)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Image upload failed.")
     } finally {
-      setUploadingImg(false)
+      setEditUploadingImg(false)
     }
   }
 
@@ -206,20 +321,22 @@ function CommentItem({
   }
 
   const sendReply = async () => {
-    if (!reply.trim() || busy) return
+    const fullContent = buildContent(reply, replyPendingImages)
+    if (!fullContent || busy || replyPendingImages.some((i) => i.uploading)) return
     setBusy(true)
     setError(null)
     try {
       const res = await fetch("/api/blog/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, parentId: node.id, content: reply }),
+        body: JSON.stringify({ postId, parentId: node.id, content: fullContent }),
       })
       if (!res.ok) {
         setError(((await res.json()) as { error?: string }).error ?? "Unable to reply.")
         return
       }
       setReply("")
+      setReplyPendingImages([])
       setShowReply(false)
       await onRefresh()
     } finally {
@@ -336,19 +453,19 @@ function CommentItem({
 
       {editing ? (
         <div className="space-y-2">
-          <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} disabled={busy || uploadingImg} className="text-sm" rows={3} />
+          <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} disabled={busy || editUploadingImg} className="text-sm" rows={3} />
           {/* Hidden file input for edit image upload */}
           <input ref={editImgRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
-            onChange={() => insertImageInto(setEditContent, editImgRef, "comment")} />
+            onChange={() => void insertEditImage()} />
           <div className="flex items-center gap-2">
-            <button type="button" onClick={saveEdit} disabled={busy || uploadingImg} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
+            <button type="button" onClick={saveEdit} disabled={busy || editUploadingImg} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
               {busy ? "Saving…" : "Save"}
             </button>
-            <button type="button" onClick={() => editImgRef.current?.click()} disabled={uploadingImg}
+            <button type="button" onClick={() => editImgRef.current?.click()} disabled={editUploadingImg}
               className="rounded-md border border-border/60 p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40" title="Attach image">
               <ImageIcon className="h-3.5 w-3.5" />
             </button>
-            {uploadingImg && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
+            {editUploadingImg && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
             <button type="button" onClick={() => { setEditing(false); setEditContent(node.content) }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
           </div>
         </div>
@@ -409,21 +526,56 @@ function CommentItem({
 
       {showReply && currentUser && (
         <div className="mt-3 space-y-2">
-          <Textarea placeholder="Write a reply…" value={reply} onChange={(e) => setReply(e.target.value)} disabled={busy || uploadingImg} className="text-sm" rows={2} />
-          {/* Hidden file input for reply image upload */}
-          <input ref={replyImgRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
-            onChange={() => insertImageInto(setReply, replyImgRef, "comment")} />
+          <Textarea
+            placeholder="Write a reply…"
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            disabled={busy}
+            className="text-sm"
+            rows={2}
+          />
+          <ImageChips
+            images={replyPendingImages}
+            compact
+            onSetAlt={(id, alt) =>
+              setReplyPendingImages((prev) =>
+                prev.map((img) => (img.id === id ? { ...img, alt } : img))
+              )
+            }
+            onRemove={(id) =>
+              setReplyPendingImages((prev) => prev.filter((img) => img.id !== id))
+            }
+          />
+          {/* Hidden file input for reply images */}
+          <input
+            ref={replyFileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              addFilesToPending(e.target.files, setReplyPendingImages)
+              if (replyFileRef.current) replyFileRef.current.value = ""
+            }}
+          />
           <div className="flex items-center gap-2">
-            <button type="button" onClick={sendReply} disabled={busy || uploadingImg || !reply.trim()}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
+            <button
+              type="button"
+              onClick={sendReply}
+              disabled={busy || replyPendingImages.some((i) => i.uploading) || !buildContent(reply, replyPendingImages)}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
               {busy ? "Posting…" : "Post Reply"}
             </button>
-            <button type="button" onClick={() => replyImgRef.current?.click()} disabled={uploadingImg}
-              className="rounded-md border border-border/60 p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40" title="Attach image">
+            <button
+              type="button"
+              onClick={() => replyFileRef.current?.click()}
+              className="rounded-md border border-border/60 p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              title="Attach image or GIF"
+            >
               <ImageIcon className="h-3.5 w-3.5" />
             </button>
-            {uploadingImg && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
-            <button type="button" onClick={() => setShowReply(false)} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+            <button type="button" onClick={() => { setShowReply(false); setReplyPendingImages([]) }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
           </div>
         </div>
       )}
@@ -472,25 +624,9 @@ export default function BlogComments({
   const [profileError, setProfileError] = useState<string | null>(null)
   const [profileSaved, setProfileSaved] = useState(false)
 
-  // Image upload for the main comment textarea
-  const commentImgRef = useRef<HTMLInputElement>(null)
-  const [commentImgUploading, setCommentImgUploading] = useState(false)
-
-  const insertCommentImage = async () => {
-    const file = commentImgRef.current?.files?.[0]
-    if (!file) return
-    if (commentImgRef.current) commentImgRef.current.value = ""
-    setCommentImgUploading(true)
-    setError(null)
-    try {
-      const url = await uploadImage(file, "comment")
-      setContent((prev) => prev + (prev ? "\n" : "") + `![image](${url})`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Image upload failed.")
-    } finally {
-      setCommentImgUploading(false)
-    }
-  }
+  // Main comment box: chips UI
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
+  const mainFileRef = useRef<HTMLInputElement>(null)
 
   // Avatar upload in profile editor
   const avatarFileRef = useRef<HTMLInputElement>(null)
@@ -503,7 +639,7 @@ export default function BlogComments({
     setAvatarUploading(true)
     setProfileError(null)
     try {
-      const url = await uploadImage(file, "avatar")
+      const url = await uploadImagePresigned(file, "avatar")
       setEditAvatarUrl(url)
     } catch (e) {
       setProfileError(e instanceof Error ? e.message : "Avatar upload failed.")
@@ -515,20 +651,22 @@ export default function BlogComments({
   const hasComments = useMemo(() => comments.length > 0, [comments])
 
   const submitComment = async () => {
-    if (!content.trim() || busy) return
+    const fullContent = buildContent(content, pendingImages)
+    if (!fullContent || busy || pendingImages.some((i) => i.uploading)) return
     setBusy(true)
     setError(null)
     try {
       const res = await fetch("/api/blog/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, content }),
+        body: JSON.stringify({ postId, content: fullContent }),
       })
       if (!res.ok) {
         setError(((await res.json()) as { error?: string }).error ?? "Unable to comment.")
         return
       }
       setContent("")
+      setPendingImages([])
       await onRefresh()
     } finally {
       setBusy(false)
@@ -825,40 +963,51 @@ export default function BlogComments({
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void submitComment()
             }}
-            disabled={busy || commentImgUploading}
+            disabled={busy}
             className="text-sm"
             rows={3}
           />
-          {/* Hidden file input for comment image */}
+          <ImageChips
+            images={pendingImages}
+            onSetAlt={(id, alt) =>
+              setPendingImages((prev) =>
+                prev.map((img) => (img.id === id ? { ...img, alt } : img))
+              )
+            }
+            onRemove={(id) =>
+              setPendingImages((prev) => prev.filter((img) => img.id !== id))
+            }
+          />
+          {/* Hidden file input for comment images */}
           <input
-            ref={commentImgRef}
+            ref={mainFileRef}
             type="file"
             accept="image/jpeg,image/png,image/gif,image/webp"
+            multiple
             className="hidden"
-            onChange={() => void insertCommentImage()}
+            onChange={(e) => {
+              addFilesToPending(e.target.files, setPendingImages)
+              if (mainFileRef.current) mainFileRef.current.value = ""
+            }}
           />
           {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
           <div className="mt-3 flex items-center gap-2">
             <button
               type="button"
               onClick={submitComment}
-              disabled={busy || commentImgUploading || !content.trim()}
+              disabled={busy || pendingImages.some((i) => i.uploading) || !buildContent(content, pendingImages)}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {busy ? "Posting…" : "Post Comment"}
             </button>
             <button
               type="button"
-              onClick={() => commentImgRef.current?.click()}
-              disabled={commentImgUploading}
+              onClick={() => mainFileRef.current?.click()}
               title="Attach image or GIF"
-              className="rounded-md border border-border/60 p-2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              className="rounded-md border border-border/60 p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <ImageIcon className="h-4 w-4" />
             </button>
-            {commentImgUploading && (
-              <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>
-            )}
           </div>
         </div>
       )}

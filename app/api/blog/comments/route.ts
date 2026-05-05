@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/blog/auth"
 import { getPool } from "@/lib/blog/store"
 import { autoFollowSeries, notifyCommentReply } from "@/lib/blog/notifications"
+import { permanentizeImages } from "@/lib/blog/media"
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -55,10 +56,14 @@ export async function POST(request: Request) {
 
   const id = randomUUID()
   const now = new Date().toISOString()
+
+  // Permanentize any image uploads before inserting so the DB stores permanent URLs
+  const permanentContent = await permanentizeImages(content, `media/comments/${id}`)
+
   await pool.query(
     `INSERT INTO comments (id, post_id, user_id, parent_id, content, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $6)`,
-    [id, postId, user.id, parentId, content, now]
+    [id, postId, user.id, parentId, permanentContent, now]
   )
 
   // Auto-follow series (non-blocking, fire-and-forget)

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSessionUser, invalidateSessionCache } from "@/lib/blog/auth"
 import { getPool } from "@/lib/blog/store"
+import { permanentizeUrl } from "@/lib/blog/media"
 
 export async function PATCH(req: Request) {
   const user = await getSessionUser()
@@ -33,6 +34,12 @@ export async function PATCH(req: Request) {
   }
 
   const pool = getPool()
+
+  // If the avatar URL points to a temporary uploads/ object, copy it to permanent storage
+  const finalAvatarUrl = avatarUrl?.trim()
+    ? await permanentizeUrl(avatarUrl.trim(), `media/avatars/${user.id}`)
+    : (avatarUrl?.trim() || null)
+
   await pool.query(
     `UPDATE users SET
        display_name = $1,
@@ -41,7 +48,7 @@ export async function PATCH(req: Request) {
      WHERE id = $3`,
     [
       displayName?.trim() || null,
-      avatarUrl?.trim() || null,
+      finalAvatarUrl,
       user.id,
     ]
   )

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { randomUUID } from "crypto"
 import { getSessionUser } from "@/lib/blog/auth"
 
-// Body size limit for this route (Vercel default is 4.5MB; we enforce 8MB max at upload)
 export const runtime = "nodejs"
 
 const s3 = new S3Client({
@@ -16,53 +16,40 @@ const s3 = new S3Client({
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/png": "png",
-  "image/gif": "gif",
+  "image/jpg":  "jpg",
+  "image/png":  "png",
+  "image/gif":  "gif",
   "image/webp": "webp",
 }
 
-// Max file sizes (client compresses images before upload; GIFs come as-is)
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024   // 2 MB
-const MAX_COMMENT_BYTES = 8 * 1024 * 1024  // 8 MB
+const MAX_AVATAR_BYTES  = 2 * 1024 * 1024   // 2 MB
+const MAX_COMMENT_BYTES = 8 * 1024 * 1024   // 8 MB
 
-function checkMagicBytes(buf: Buffer, mime: string): boolean {
-  switch (mime) {
-    case "image/jpeg":
-    case "image/jpg":
-      return buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff
-    case "image/png":
-      return buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47
-    case "image/gif":
-      return buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46
-    case "image/webp":
-      return (
-        buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
-        buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
-      )
-    default:
-      return false
-  }
-}
-
+/**
+ * POST { purpose: "avatar"|"comment", contentType: string, size?: number }
+ * → { uploadUrl: string, key: string, cfUrl: string }
+ *
+ * The client PUTs the file directly to S3 via the presigned uploadUrl.
+ * This bypasses Lambda/API Gateway entirely, so there is no request body size limit.
+ */
 export async function POST(req: Request) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: "Login required." }, { status: 401 })
 
-  let formData: FormData
+  let body: { purpose?: string; contentType?: string; size?: number }
   try {
-    formData = await req.formData()
+    body = await req.json()
   } catch {
-    return NextResponse.json({ error: "Invalid multipart body." }, { status: 400 })
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 })
   }
 
-  const file = formData.get("file") as File | null
-  const purpose = (formData.get("purpose") as string | null) ?? "comment"  // "avatar" | "comment"
+  const { purpose = "comment", contentType, size } = body
 
-  if (!file) return NextResponse.json({ error: "No file provided." }, { status: 400 })
+  if (!contentType) {
+    return NextResponse.json({ error: "contentType is required." }, { status: 400 })
+  }
 
-  const mime = file.type
-  const ext = ALLOWED_TYPES[mime]
+  const ext = ALLOWED_TYPES[contentType]
   if (!ext) {
     return NextResponse.json(
       { error: "Unsupported file type. Allowed: JPEG, PNG, GIF, WebP." },
@@ -71,41 +58,33 @@ export async function POST(req: Request) {
   }
 
   const maxBytes = purpose === "avatar" ? MAX_AVATAR_BYTES : MAX_COMMENT_BYTES
-  if (file.size > maxBytes) {
+  if (size !== undefined && size > maxBytes) {
     return NextResponse.json(
       { error: `File too large. Maximum is ${maxBytes / 1024 / 1024} MB.` },
       { status: 413 }
     )
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer())
+  const folder   = purpose === "avatar" ? `uploads/avatars/${user.id}` : "uploads/comments"
+  const key      = `${folder}/${randomUUID()}.${ext}`
 
-  if (!checkMagicBytes(buffer, mime)) {
-    return NextResponse.json(
-      { error: "File content does not match its declared type." },
-      { status: 400 }
-    )
-  }
-
-  const folder =
-    purpose === "avatar" ? `uploads/avatars/${user.id}` : "uploads/comments"
-  const key = `${folder}/${randomUUID()}.${ext}`
-
+  let uploadUrl: string
   try {
-    await s3.send(
+    uploadUrl = await getSignedUrl(
+      s3,
       new PutObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET!,
-        Key: key,
-        Body: buffer,
-        ContentType: mime,
+        Bucket:       process.env.AWS_S3_BUCKET!,
+        Key:          key,
+        ContentType:  contentType,
         CacheControl: "public, max-age=31536000, immutable",
-      })
+      }),
+      { expiresIn: 300 }  // 5 minutes
     )
   } catch (err) {
-    console.error("[upload] S3 error:", err)
-    return NextResponse.json({ error: "Storage error. Please try again." }, { status: 502 })
+    console.error("[upload] presign error:", err)
+    return NextResponse.json({ error: "Could not generate upload URL." }, { status: 500 })
   }
 
-  const url = `https://${process.env.AWS_CLOUDFRONT_DOMAIN}/${key}`
-  return NextResponse.json({ url })
+  const cfUrl = `https://${process.env.AWS_CLOUDFRONT_DOMAIN}/${key}`
+  return NextResponse.json({ uploadUrl, key, cfUrl })
 }
