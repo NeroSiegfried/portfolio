@@ -9,7 +9,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Textarea } from "@/components/ui/textarea"
 import type { CommentNode, PublicUser } from "@/lib/blog/types"
-import { sortCommentTree, type CommentSortOrder } from "@/lib/blog/store"
+import { sortCommentTree, type CommentSortOrder } from "@/lib/blog/sort"
 import { compressImage } from "@/lib/compress-image"
 
 // ─── Avatar helper ─────────────────────────────────────────────────────────────
