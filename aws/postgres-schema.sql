@@ -91,3 +91,7 @@ CREATE TABLE IF NOT EXISTS "post_votes" (
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
+CREATE INDEX IF NOT EXISTS idx_posts_status_published_at ON posts(status, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comment_votes_comment_id ON comment_votes(comment_id);
+CREATE INDEX IF NOT EXISTS idx_post_votes_post_id ON post_votes(post_id);

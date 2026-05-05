@@ -7,6 +7,12 @@ import { createId, nowIso, upsertSession, getPool } from "@/lib/blog/store"
 const SESSION_COOKIE_NAME = "portfolio_blog_session"
 const SESSION_DURATION_DAYS = 14
 
+// Short-lived in-process cache for session → user lookups.
+// Avoids a DB round-trip on every server render for logged-in users.
+// TTL is intentionally short (30s) so revoked sessions take effect quickly.
+const SESSION_USER_CACHE = new Map<string, { user: PublicUser | null; expires: number }>()
+const SESSION_USER_TTL_MS = 30_000
+
 function parseHash(passwordHash: string) {
   const [saltHex, digestHex] = passwordHash.split(":")
   if (!saltHex || !digestHex) return null
@@ -57,6 +63,7 @@ export function createSession(db: BlogDb, userId: string): BlogSession {
 
 export async function removeSession(token: string | null) {
   if (!token) return
+  SESSION_USER_CACHE.delete(token)
   const pool = getPool()
   await pool.query("DELETE FROM sessions WHERE token = $1", [token])
 }
@@ -95,6 +102,9 @@ export async function getSessionUser(): Promise<PublicUser | null> {
   const token = await getCookieSessionToken()
   if (!token) return null
 
+  const cached = SESSION_USER_CACHE.get(token)
+  if (cached && cached.expires > Date.now()) return cached.user
+
   const pool = getPool()
   const result = await pool.query<{ id: string; username: string; role: string }>(
     `SELECT u.id, u.username, u.role
@@ -105,9 +115,12 @@ export async function getSessionUser(): Promise<PublicUser | null> {
     [token]
   )
 
-  if (!result.rows.length) return null
-  const row = result.rows[0]
-  return { id: row.id, username: row.username, role: row.role as "admin" | "user" }
+  const user: PublicUser | null = result.rows.length
+    ? { id: result.rows[0].id, username: result.rows[0].username, role: result.rows[0].role as "admin" | "user" }
+    : null
+
+  SESSION_USER_CACHE.set(token, { user, expires: Date.now() + SESSION_USER_TTL_MS })
+  return user
 }
 
 export async function requireAdminUser() {
