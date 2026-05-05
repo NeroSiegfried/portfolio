@@ -603,7 +603,7 @@ function CommentItem({
           className={["flex items-center gap-1 text-xs transition-colors disabled:opacity-40", userVote === 1 ? "text-secondary" : "text-muted-foreground hover:text-secondary"].join(" ")}>
           <ThumbsUp className="h-3 w-3" />
         </button>
-        <span className="text-xs tabular-nums text-muted-foreground">{score}</span>
+        <span className={`text-xs tabular-nums ${score > 0 ? "text-destructive" : score < 0 ? "text-primary" : "text-muted-foreground"}`}>{score}</span>
         <button type="button" onClick={() => vote(-1)} disabled={!currentUser || busy}
           className={["flex items-center gap-1 text-xs transition-colors disabled:opacity-40", userVote === -1 ? "text-primary" : "text-muted-foreground hover:text-primary"].join(" ")}>
           <ThumbsDown className="h-3 w-3" />
@@ -1016,7 +1016,7 @@ export default function BlogComments({
                   setProfileSaved(false)
                   setShowEditProfile((v) => !v)
                 }}
-                className={`transition-colors ${showEditProfile ? "text-destructive/70 hover:text-destructive" : "text-muted-foreground hover:text-foreground"}`}
+                className="text-muted-foreground transition-colors hover:text-destructive"
               >
                 {showEditProfile ? "Close" : "Edit profile"}
               </button>
@@ -1025,7 +1025,7 @@ export default function BlogComments({
                 type="button"
                 onClick={logout}
                 disabled={busy}
-                className="text-destructive/60 transition-colors hover:text-destructive disabled:opacity-50"
+                className="text-destructive/50 transition-colors hover:text-destructive disabled:opacity-50"
               >
                 Sign out
               </button>

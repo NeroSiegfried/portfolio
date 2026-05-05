@@ -4,6 +4,7 @@ import { readBlogPostDb, getPostVote } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
+import { scopePostCss } from "@/lib/blog/scope-css"
 import LazyComments from "@/components/lazy-comments"
 import SeriesPostNav from "@/components/series-post-nav"
 import Footer from "@/components/footer"
@@ -76,7 +77,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   return (
     <div className="relative flex flex-col min-h-screen overflow-x-hidden bg-background">
       {post.customCss && (
-        <style dangerouslySetInnerHTML={{ __html: post.customCss }} />
+        <style dangerouslySetInnerHTML={{ __html: scopePostCss(post.customCss) }} />
       )}
       {/* Non-sticky top bar — same style as Hero */}
       <div className="absolute inset-x-0 top-0 z-20">
@@ -167,7 +168,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />
           )}
 
-          <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} />
+          <div className="post-body">
+            <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} />
+          </div>
 
           {seriesPosts.length > 1 && (
             <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />

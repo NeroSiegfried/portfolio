@@ -12,5 +12,10 @@
       "destination": "https://nerosiegfried.com/blog/:path*",
       "permanent": true
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
 }

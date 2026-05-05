@@ -51,6 +51,15 @@ frontend:
         - pnpm install --frozen-lockfile
     build:
       commands:
+        # On non-main branches swap in the sandbox DATABASE_URL (set
+        # SANDBOX_DATABASE_URL as a global env var in the Amplify console).
+        - |
+          if [ "$AWS_BRANCH" != "main" ] && [ -n "$SANDBOX_DATABASE_URL" ]; then
+            export DATABASE_URL=$SANDBOX_DATABASE_URL
+            export NEXTAUTH_URL="https://${AWS_BRANCH}.${AWS_APP_ID}.amplifyapp.com"
+            export NEXT_PUBLIC_SITE_URL="https://${AWS_BRANCH}.${AWS_APP_ID}.amplifyapp.com"
+            echo "[sandbox] Using SANDBOX_DATABASE_URL for branch: $AWS_BRANCH"
+          fi
         - pnpm build
   artifacts:
     baseDirectory: .next
