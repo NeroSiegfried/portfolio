@@ -36,9 +36,9 @@ export function getPool(): Pool {
     global._pgPool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
-      max: 10,
-      min: 2,
-      idleTimeoutMillis: 30000,
+      max: 2,
+      min: 0,
+      idleTimeoutMillis: 10000,
       connectionTimeoutMillis: 10000,
     })
   }
@@ -56,6 +56,8 @@ function rowToUser(r: Record<string, unknown>): BlogUser {
     role: r.role as "admin" | "user",
     createdAt: (r.created_at as Date).toISOString(),
     blocked: (r.blocked as boolean) ?? false,
+    displayName: (r.display_name as string) ?? null,
+    avatarUrl: (r.avatar_url as string) ?? null,
   }
 }
 
@@ -555,6 +557,8 @@ export function getCommentTree(
   currentUserId?: string | null
 ): CommentNode[] {
   const userNameById = new Map(users.map((user) => [user.id, user.username]))
+  const userDisplayNameById = new Map(users.map((user) => [user.id, user.displayName ?? null]))
+  const userAvatarUrlById = new Map(users.map((user) => [user.id, user.avatarUrl ?? null]))
   const scoreByCommentId = new Map<string, number>()
   const userVoteByCommentId = new Map<string, 1 | -1>()
 
@@ -572,6 +576,8 @@ export function getCommentTree(
       ...comment,
       children: [],
       username: userNameById.get(comment.userId) ?? "Unknown",
+      displayName: userDisplayNameById.get(comment.userId) ?? null,
+      avatarUrl: userAvatarUrlById.get(comment.userId) ?? null,
       score: scoreByCommentId.get(comment.id) ?? 0,
       currentUserVote: userVoteByCommentId.get(comment.id) ?? 0,
     })

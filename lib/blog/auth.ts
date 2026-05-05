@@ -40,6 +40,8 @@ export function toPublicUser(user: BlogUser): PublicUser {
     id: user.id,
     username: user.username,
     role: user.role,
+    displayName: user.displayName ?? null,
+    avatarUrl: user.avatarUrl ?? null,
   }
 }
 
@@ -114,6 +116,10 @@ function pruneExpiredSessions(db: BlogDb) {
   db.sessions = db.sessions.filter((session) => new Date(session.expiresAt).getTime() > now)
 }
 
+export function invalidateSessionCache() {
+  SESSION_USER_CACHE.clear()
+}
+
 export async function getSessionUser(): Promise<PublicUser | null> {
   const token = await getCookieSessionToken()
   if (!token) return null
@@ -122,8 +128,8 @@ export async function getSessionUser(): Promise<PublicUser | null> {
   if (cached && cached.expires > Date.now()) return cached.user
 
   const pool = getPool()
-  const result = await pool.query<{ id: string; username: string; role: string }>(
-    `SELECT u.id, u.username, u.role
+  const result = await pool.query<{ id: string; username: string; role: string; display_name: string | null; avatar_url: string | null }>(
+    `SELECT u.id, u.username, u.role, u.display_name, u.avatar_url
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.token = $1 AND s.expires_at > NOW()
@@ -131,8 +137,15 @@ export async function getSessionUser(): Promise<PublicUser | null> {
     [token]
   )
 
-  const user: PublicUser | null = result.rows.length
-    ? { id: result.rows[0].id, username: result.rows[0].username, role: result.rows[0].role as "admin" | "user" }
+  const row = result.rows[0]
+  const user: PublicUser | null = row
+    ? {
+        id: row.id,
+        username: row.username,
+        role: row.role as "admin" | "user",
+        displayName: row.display_name ?? null,
+        avatarUrl: row.avatar_url ?? null,
+      }
     : null
 
   SESSION_USER_CACHE.set(token, { user, expires: Date.now() + SESSION_USER_TTL_MS })

@@ -2,9 +2,59 @@
 
 import { useMemo, useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff } from "lucide-react"
+import { Pencil, Trash2, ThumbsDown, ThumbsUp, EyeOff, UserRound } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import type { CommentNode, PublicUser } from "@/lib/blog/types"
+
+// ─── Avatar helper ─────────────────────────────────────────────────────────────
+
+function avatarColor(id: string): string {
+  const colors = [
+    "bg-orange-500", "bg-blue-500", "bg-emerald-500", "bg-violet-500",
+    "bg-pink-500", "bg-cyan-500", "bg-amber-500", "bg-rose-500",
+    "bg-indigo-500", "bg-teal-500",
+  ]
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = ((h << 5) - h + id.charCodeAt(i)) | 0
+  return colors[Math.abs(h) % colors.length]
+}
+
+function CommentAvatar({
+  userId,
+  displayName,
+  username,
+  avatarUrl,
+  size = "sm",
+}: {
+  userId: string
+  displayName: string | null
+  username: string
+  avatarUrl: string | null
+  size?: "sm" | "md"
+}) {
+  const label = displayName ?? username
+  const initial = label.charAt(0).toUpperCase()
+  const colorClass = avatarColor(userId)
+  const sizeClass = size === "sm" ? "h-6 w-6 text-[10px]" : "h-9 w-9 text-sm"
+
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt={label}
+        className={`${sizeClass} rounded-full object-cover shrink-0 ring-1 ring-border/40`}
+      />
+    )
+  }
+  return (
+    <div
+      className={`${sizeClass} ${colorClass} rounded-full flex items-center justify-center font-semibold text-white shrink-0`}
+    >
+      {initial}
+    </div>
+  )
+}
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000
 
@@ -188,7 +238,17 @@ function CommentItem({
   return (
     <div className="py-4">
       <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-        <span className="font-semibold text-foreground/70">{node.username}</span>
+        <CommentAvatar
+          userId={node.userId}
+          displayName={node.displayName}
+          username={node.username}
+          avatarUrl={node.avatarUrl}
+          size="sm"
+        />
+        <span className="font-semibold text-foreground/70">{node.displayName ?? node.username}</span>
+        {node.displayName && (
+          <span className="text-muted-foreground/50">@{node.username}</span>
+        )}
         <span>·</span>
         <span>
           {new Date(node.createdAt).toLocaleDateString("en-GB", {
@@ -376,6 +436,14 @@ export default function BlogComments({
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // Profile editing state
+  const [showEditProfile, setShowEditProfile] = useState(false)
+  const [editDisplayName, setEditDisplayName] = useState(currentUser?.displayName ?? "")
+  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser?.avatarUrl ?? "")
+  const [profileBusy, setProfileBusy] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [profileSaved, setProfileSaved] = useState(false)
+
   const hasComments = useMemo(() => comments.length > 0, [comments])
 
   const submitComment = async () => {
@@ -419,6 +487,32 @@ export default function BlogComments({
       await onRefresh()
     } finally {
       setBusy(false)
+    }
+  }
+
+  const saveProfile = async () => {
+    if (profileBusy) return
+    setProfileBusy(true)
+    setProfileError(null)
+    setProfileSaved(false)
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: editDisplayName.trim() || null,
+          avatarUrl: editAvatarUrl.trim() || null,
+        }),
+      })
+      if (!res.ok) {
+        setProfileError(((await res.json()) as { error?: string }).error ?? "Unable to save profile.")
+        return
+      }
+      setProfileSaved(true)
+      await onRefresh()
+      setTimeout(() => setProfileSaved(false), 3000)
+    } finally {
+      setProfileBusy(false)
     }
   }
 
@@ -547,20 +641,93 @@ export default function BlogComments({
         </div>
       ) : (
         <div className="mb-8">
-          <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Signed in as{" "}
-              <span className="font-medium text-foreground/80">{currentUser.username}</span>
-            </span>
-            <button
-              type="button"
-              onClick={logout}
-              disabled={busy}
-              className="transition-colors hover:text-foreground disabled:opacity-50"
-            >
-              Sign out
-            </button>
+          {/* ── Profile card ───────────────────────────────────── */}
+          <div className="mb-4 flex items-center gap-3">
+            <CommentAvatar
+              userId={currentUser.id}
+              displayName={currentUser.displayName}
+              username={currentUser.username}
+              avatarUrl={currentUser.avatarUrl}
+              size="md"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-tight truncate">
+                {currentUser.displayName ?? currentUser.username}
+              </p>
+              {currentUser.displayName && (
+                <p className="text-xs text-muted-foreground leading-tight">@{currentUser.username}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-xs shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditDisplayName(currentUser.displayName ?? "")
+                  setEditAvatarUrl(currentUser.avatarUrl ?? "")
+                  setProfileError(null)
+                  setProfileSaved(false)
+                  setShowEditProfile((v) => !v)
+                }}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {showEditProfile ? "Close" : "Edit profile"}
+              </button>
+              <span className="text-border">·</span>
+              <button
+                type="button"
+                onClick={logout}
+                disabled={busy}
+                className="text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
+
+          {/* ── Inline profile editor ──────────────────────────── */}
+          {showEditProfile && (
+            <div className="mb-5 rounded-lg border border-border/40 bg-muted/20 p-4 space-y-3">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Display name
+                </label>
+                <input
+                  className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+                  placeholder={currentUser.username}
+                  maxLength={60}
+                  value={editDisplayName}
+                  onChange={(e) => setEditDisplayName(e.target.value)}
+                  disabled={profileBusy}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Avatar URL
+                </label>
+                <input
+                  className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+                  placeholder="https://example.com/avatar.jpg"
+                  type="url"
+                  value={editAvatarUrl}
+                  onChange={(e) => setEditAvatarUrl(e.target.value)}
+                  disabled={profileBusy}
+                />
+                <p className="text-[11px] text-muted-foreground/60">
+                  Direct link to a square image. Leave blank to use your initials.
+                </p>
+              </div>
+              {profileError && <p className="text-xs text-destructive">{profileError}</p>}
+              {profileSaved && <p className="text-xs text-emerald-500">Changes saved.</p>}
+              <button
+                type="button"
+                onClick={saveProfile}
+                disabled={profileBusy}
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {profileBusy ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          )}
           <Textarea
             placeholder="Write a comment…"
             value={content}

@@ -8,6 +8,8 @@ export interface BlogUser {
   role: UserRole
   createdAt: string
   blocked?: boolean
+  displayName?: string | null
+  avatarUrl?: string | null
 }
 
 export interface BlogSession {
@@ -105,6 +107,8 @@ export interface PublicUser {
   id: string
   username: string
   role: UserRole
+  displayName: string | null
+  avatarUrl: string | null
 }
 
 export interface SeriesNode extends BlogSeries {
@@ -114,6 +118,8 @@ export interface SeriesNode extends BlogSeries {
 export interface CommentNode extends BlogComment {
   children: CommentNode[]
   username: string
+  displayName: string | null
+  avatarUrl: string | null
   score: number
   currentUserVote: 1 | -1 | 0
 }

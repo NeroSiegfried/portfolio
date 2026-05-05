@@ -29,7 +29,7 @@ interface BlogLinkProps extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElemen
  * Drop-in replacement for Next.js <Link> inside blog pages.
  * On the blog subdomain it strips the /blog prefix so URLs stay clean.
  */
-export default function BlogLink({ href, children, prefetch, ...rest }: BlogLinkProps) {
+export default function BlogLink({ href, children, prefetch = true, ...rest }: BlogLinkProps) {
   const isBlogSubdomain = useBlogSubdomain()
   const resolvedHref = isBlogSubdomain ? toBlogRelativePath(href) : href
   return (
