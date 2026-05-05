@@ -10,6 +10,7 @@ import Footer from "@/components/footer"
 import { ModeToggle } from "@/components/mode-toggle"
 import PortfolioLink from "@/components/portfolio-link"
 import BlogLink from "@/components/blog-link"
+import InboxButton from "@/components/blog-inbox"
 
 // ISR: rebuild at most every 60s. The page HTML is cached at CloudFront edge.
 export const revalidate = 60
@@ -83,7 +84,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <PortfolioLink className="text-sm text-muted-foreground transition-colors hover:text-primary">
             ← Portfolio
           </PortfolioLink>
-          <ModeToggle />
+          <div className="flex items-center gap-1">
+            <InboxButton />
+            <ModeToggle />
+          </div>
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import BlogArchiveSidebar from "@/components/blog-archive-sidebar"
 import Footer from "@/components/footer"
 import { ModeToggle } from "@/components/mode-toggle"
 import PortfolioLink from "@/components/portfolio-link"
+import InboxButton from "@/components/blog-inbox"
 
 // ISR: rebuild at most every 60s. CloudFront/CDN serves cached HTML from
 // the nearest edge node — no Lambda round-trip to us-east-1 for repeat visitors.
@@ -40,7 +41,10 @@ export default async function BlogHomePage() {
           <PortfolioLink className="text-sm text-muted-foreground transition-colors hover:text-primary">
             ← Portfolio
           </PortfolioLink>
-          <ModeToggle />
+          <div className="flex items-center gap-1">
+            <InboxButton />
+            <ModeToggle />
+          </div>
         </div>
       </div>
 

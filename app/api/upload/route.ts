@@ -91,15 +91,20 @@ export async function POST(req: Request) {
     purpose === "avatar" ? `uploads/avatars/${user.id}` : "uploads/comments"
   const key = `${folder}/${randomUUID()}.${ext}`
 
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET!,
-      Key: key,
-      Body: buffer,
-      ContentType: mime,
-      CacheControl: "public, max-age=31536000, immutable",
-    })
-  )
+  try {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET!,
+        Key: key,
+        Body: buffer,
+        ContentType: mime,
+        CacheControl: "public, max-age=31536000, immutable",
+      })
+    )
+  } catch (err) {
+    console.error("[upload] S3 error:", err)
+    return NextResponse.json({ error: "Storage error. Please try again." }, { status: 502 })
+  }
 
   const url = `https://${process.env.AWS_CLOUDFRONT_DOMAIN}/${key}`
   return NextResponse.json({ url })

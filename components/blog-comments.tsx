@@ -89,11 +89,21 @@ async function uploadImage(
 
   const res = await fetch("/api/upload", { method: "POST", body: form })
   if (!res.ok) {
-    const err = (await res.json()) as { error?: string }
-    throw new Error(err.error ?? "Upload failed.")
+    let msg = "Upload failed."
+    try {
+      const err = (await res.json()) as { error?: string }
+      if (err.error) msg = err.error
+    } catch { /* response wasn't JSON */ }
+    throw new Error(msg)
   }
-  const { url } = (await res.json()) as { url: string }
-  return url
+  let body: { url?: string }
+  try {
+    body = (await res.json()) as { url?: string }
+  } catch {
+    throw new Error("Upload failed: unexpected server response.")
+  }
+  if (!body.url) throw new Error("Upload failed: no URL returned.")
+  return body.url
 }
 
 // ─── Comment content renderer ─────────────────────────────────────────────────
@@ -766,7 +776,7 @@ export default function BlogComments({
                   <input
                     className="flex-1 rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
                     placeholder="https://example.com/avatar.jpg"
-                    type="url"
+                    type="text"
                     value={editAvatarUrl}
                     onChange={(e) => setEditAvatarUrl(e.target.value)}
                     disabled={profileBusy || avatarUploading}
