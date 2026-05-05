@@ -35,3 +35,5 @@ next-env.d.ts
 
 
 /for-prompt/
+
+.DS_Store
