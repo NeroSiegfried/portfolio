@@ -73,48 +73,24 @@ interface BlogCommentsProps {
 }
 
 // ─── Image upload helper ─────────────────────────────────────────────────────
-// Small files (≤ 4 MB after compression) go through the Lambda route — magic
-// bytes are validated server-side exactly as before.
-// Large files (> 4 MB) bypass the 6 MB API Gateway body limit via a presigned
-// S3 PUT URL; the server still enforces the per-purpose max size.
+// All uploads go browser → S3 directly via presigned PUT (no Vercel body limit).
+// File bytes never touch the Next.js server; size + type are validated here
+// (magic bytes) and on the server (size + declared type) before the URL is issued.
 
-const LAMBDA_THRESHOLD = 4 * 1024 * 1024 // 4 MB
-
-async function uploadImageViaLambda(compressed: File, purpose: string): Promise<string> {
-  const form = new FormData()
-  form.append("file",    compressed)
-  form.append("purpose", purpose)
-  const res = await fetch("/api/upload", { method: "POST", body: form })
-  if (!res.ok) {
-    let msg = "Upload failed."
-    try { const e = (await res.json()) as { error?: string }; if (e.error) msg = e.error } catch {}
-    throw new Error(msg)
-  }
-  const { cfUrl } = (await res.json()) as { cfUrl?: string }
-  if (!cfUrl) throw new Error("Upload failed: incomplete server response.")
-  return cfUrl
+const MAGIC_BYTES: Record<string, number[]> = {
+  "image/jpeg": [0xff, 0xd8, 0xff],
+  "image/jpg":  [0xff, 0xd8, 0xff],
+  "image/png":  [0x89, 0x50, 0x4e, 0x47],
+  "image/gif":  [0x47, 0x49, 0x46, 0x38],
+  "image/webp": [0x52, 0x49, 0x46, 0x46],
 }
 
-async function uploadImageViaPresign(compressed: File, purpose: string): Promise<string> {
-  const res = await fetch("/api/upload", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ purpose, contentType: compressed.type, size: compressed.size }),
-  })
-  if (!res.ok) {
-    let msg = "Upload failed."
-    try { const e = (await res.json()) as { error?: string }; if (e.error) msg = e.error } catch {}
-    throw new Error(msg)
-  }
-  const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl?: string; cfUrl?: string }
-  if (!uploadUrl || !cfUrl) throw new Error("Upload failed: incomplete server response.")
-  const put = await fetch(uploadUrl, {
-    method:  "PUT",
-    headers: { "Content-Type": compressed.type },
-    body:    compressed,
-  })
-  if (!put.ok) throw new Error("Upload failed: could not store file.")
-  return cfUrl
+async function checkMagicBytes(file: File): Promise<boolean> {
+  const sig = MAGIC_BYTES[file.type]
+  if (!sig) return false
+  const buf = await file.slice(0, sig.length).arrayBuffer()
+  const bytes = new Uint8Array(buf)
+  return sig.every((b, i) => bytes[i] === b)
 }
 
 async function uploadImagePresigned(
@@ -127,10 +103,35 @@ async function uploadImagePresigned(
     quality:        purpose === "avatar" ? 0.88 : 0.82,
     skipBelowBytes: purpose === "avatar" ? 100 * 1024 : 300 * 1024,
   })
-  if (compressed.size <= LAMBDA_THRESHOLD) {
-    return uploadImageViaLambda(compressed, purpose)
+
+  // Validate magic bytes on the (possibly re-encoded) result
+  if (!(await checkMagicBytes(compressed))) {
+    throw new Error("File content does not match its declared type.")
   }
-  return uploadImageViaPresign(compressed, purpose)
+
+  // Ask the server for a presigned PUT URL (tiny JSON request — no file bytes)
+  const res = await fetch("/api/upload", {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ purpose, contentType: compressed.type, size: compressed.size }),
+  })
+  if (!res.ok) {
+    let msg = "Upload failed."
+    try { const e = (await res.json()) as { error?: string }; if (e.error) msg = e.error } catch {}
+    throw new Error(msg)
+  }
+  const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl?: string; cfUrl?: string }
+  if (!uploadUrl || !cfUrl) throw new Error("Upload failed: incomplete server response.")
+
+  // PUT the file directly to S3
+  const put = await fetch(uploadUrl, {
+    method:  "PUT",
+    headers: { "Content-Type": compressed.type },
+    body:    compressed,
+  })
+  if (!put.ok) throw new Error("Upload failed: could not store file.")
+
+  return cfUrl
 }
 
 // ─── Pending-image state helpers ─────────────────────────────────────────────
