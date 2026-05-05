@@ -18,7 +18,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
-      "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com",
+      "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com https://*.s3.amazonaws.com https://*.s3.us-east-1.amazonaws.com https://d2ukq6p6guyuw1.cloudfront.net",
       "frame-ancestors 'self'",
     ].join("; "),
   },
@@ -38,6 +38,9 @@ const nextConfig = {
       { protocol: "https", hostname: "www.nerosiegfried.com" },
       { protocol: "https", hostname: "blog.nerosiegfried.com" },
       { protocol: "https", hostname: "d2ukq6p6guyuw1.cloudfront.net" },
+      { protocol: "https", hostname: "du86d70bfiu40.cloudfront.net" },
+      { protocol: "https", hostname: "*.s3.amazonaws.com" },
+      { protocol: "https", hostname: "*.s3.us-east-1.amazonaws.com" },
     ],
   },
   async headers() {

@@ -76,8 +76,12 @@ export async function POST(req: Request) {
       { expiresIn: 300 }
     )
   } catch (err) {
-    console.error("[upload] presign error:", err)
-    return NextResponse.json({ error: "Could not generate upload URL." }, { status: 500 })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error("[upload] presign error:", msg)
+    return NextResponse.json(
+      { error: "Could not generate upload URL.", detail: msg },
+      { status: 500 }
+    )
   }
 
   const cfUrl = `https://${process.env.AWS_CLOUDFRONT_DOMAIN ?? process.env.CLOUDFRONT_DOMAIN}/${key}`
