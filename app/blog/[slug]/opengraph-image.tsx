@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og"
 import { readBlogPostDb } from "@/lib/blog/store"
 import { findPublishedPostBySlug } from "@/lib/blog/queries"
+import fs from "fs"
+import path from "path"
 
 export const runtime = "nodejs"
 export const size = { width: 1200, height: 630 }
@@ -8,11 +10,6 @@ export const contentType = "image/png"
 
 interface Props {
   params: Promise<{ slug: string }>
-}
-
-export async function generateImageMetadata({ params }: Props) {
-  const { slug } = await params
-  return [{ id: slug }]
 }
 
 export default async function OGImage({ params }: Props) {
@@ -36,9 +33,16 @@ export default async function OGImage({ params }: Props) {
     // fallback to defaults
   }
 
-  // Clamp title length so it fits
-  const shortTitle = title.length > 60 ? `${title.slice(0, 58)}…` : title
-  const shortExcerpt = excerpt.length > 120 ? `${excerpt.slice(0, 118)}…` : excerpt
+  // Load assets
+  const publicDir = path.join(process.cwd(), "public")
+  const logoSvgB64 = fs.readFileSync(path.join(publicDir, "logo.svg")).toString("base64")
+  const logoSrc = `data:image/svg+xml;base64,${logoSvgB64}`
+  const portraitBuf = fs.readFileSync(path.join(publicDir, "victor-nabasu.jpg"))
+  const portraitSrc = `data:image/jpeg;base64,${portraitBuf.toString("base64")}`
+
+  const shortTitle = title.length > 55 ? `${title.slice(0, 53)}…` : title
+  const shortExcerpt = excerpt.length > 110 ? `${excerpt.slice(0, 108)}…` : excerpt
+  const titleFontSize = shortTitle.length > 38 ? 50 : shortTitle.length > 25 ? 60 : 72
 
   return new ImageResponse(
     (
@@ -47,113 +51,167 @@ export default async function OGImage({ params }: Props) {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          background: "linear-gradient(135deg, #09090b 0%, #18181b 60%, #1c1917 100%)",
-          padding: "64px 80px",
-          fontFamily: "system-ui, sans-serif",
+          background: "#09090b",
+          fontFamily: "'Inter', system-ui, sans-serif",
           position: "relative",
+          overflow: "hidden",
         }}
       >
-        {/* Grid */}
+        {/* Subtle dot-grid texture */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
+            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
           }}
         />
 
-        {/* Top row: series label + logo */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f97316" }} />
-            <span style={{ color: "#f97316", fontSize: 18, fontWeight: 600, letterSpacing: 2 }}>
-              {seriesLabel ? seriesLabel.toUpperCase() : "BLOG"}
-            </span>
-          </div>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 14,
-              background: "#27272a",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg width="40" height="40" viewBox="0 0 64 64" fill="none">
-              <path
-                d="M14 48 L14 16 L22 16 L38 36 L38 16 L46 16 L46 48 L38 48 L22 28 L22 48 Z"
-                fill="white"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Middle: title */}
+        {/* Left glow */}
         <div
           style={{
-            color: "#ffffff",
-            fontSize: shortTitle.length > 40 ? 52 : 64,
-            fontWeight: 700,
-            lineHeight: 1.15,
-            letterSpacing: -1.5,
-            maxWidth: 1000,
-            flex: 1,
+            position: "absolute",
+            left: -120,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: 500,
+            height: 500,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%)",
+          }}
+        />
+
+        {/* Portrait photo — right side, full-height bleed */}
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            width: 420,
+            height: "100%",
             display: "flex",
-            alignItems: "center",
+            overflow: "hidden",
           }}
         >
-          {shortTitle}
+          {/* Fade mask on left edge of portrait */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: 180,
+              height: "100%",
+              background: "linear-gradient(to right, #09090b 0%, transparent 100%)",
+              zIndex: 2,
+            }}
+          />
+          {/* Fade at bottom */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              bottom: 0,
+              width: "100%",
+              height: 200,
+              background: "linear-gradient(to top, #09090b 0%, transparent 100%)",
+              zIndex: 2,
+            }}
+          />
+          <img
+            src={portraitSrc}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center top",
+              opacity: 0.75,
+              filter: "grayscale(20%)",
+            }}
+          />
         </div>
 
-        {/* Bottom: excerpt + author */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
-          {shortExcerpt && (
+        {/* Content column */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 10,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: "52px 60px",
+            width: 780,
+            height: "100%",
+          }}
+        >
+          {/* Top: logo + category label */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <img src={logoSrc} style={{ width: 48, height: 48 }} />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ color: "#ffffff", fontSize: 18, fontWeight: 700, letterSpacing: -0.3 }}>
+                  Victor Nabasu
+                </span>
+                <span style={{ color: "#71717a", fontSize: 14, letterSpacing: 0.5 }}>nerosiegfried.com</span>
+              </div>
+            </div>
             <div
               style={{
-                color: "#71717a",
-                fontSize: 22,
-                lineHeight: 1.5,
-                maxWidth: 900,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(249,115,22,0.12)",
+                border: "1px solid rgba(249,115,22,0.3)",
+                borderRadius: 100,
+                padding: "6px 14px",
               }}
             >
-              {shortExcerpt}
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#f97316" }} />
+              <span style={{ color: "#f97316", fontSize: 13, fontWeight: 600, letterSpacing: 1.5 }}>
+                {seriesLabel ? seriesLabel.toUpperCase() : "BLOG"}
+              </span>
             </div>
-          )}
+          </div>
+
+          {/* Middle: title */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1, justifyContent: "center" }}>
+            {/* Orange accent line */}
+            <div style={{ width: 48, height: 4, borderRadius: 2, background: "#f97316" }} />
+            <div
+              style={{
+                color: "#ffffff",
+                fontSize: titleFontSize,
+                fontWeight: 800,
+                lineHeight: 1.1,
+                letterSpacing: -2,
+              }}
+            >
+              {shortTitle}
+            </div>
+            {shortExcerpt && (
+              <div
+                style={{
+                  color: "#71717a",
+                  fontSize: 20,
+                  lineHeight: 1.55,
+                }}
+              >
+                {shortExcerpt}
+              </div>
+            )}
+          </div>
+
+          {/* Bottom: date area / domain stamp */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              borderTop: "1px solid rgba(255,255,255,0.08)",
-              paddingTop: 16,
+              gap: 8,
+              borderTop: "1px solid rgba(255,255,255,0.07)",
+              paddingTop: 20,
             }}
           >
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: 16,
-                fontWeight: 700,
-              }}
-            >
-              VN
-            </div>
-            <span style={{ color: "#a1a1aa", fontSize: 20, fontWeight: 500 }}>Victor Nabasu</span>
-            <span style={{ color: "#3f3f46", fontSize: 20 }}>·</span>
-            <span style={{ color: "#52525b", fontSize: 20 }}>nerosiegfried.com</span>
+            <span style={{ color: "#3f3f46", fontSize: 16 }}>Written by</span>
+            <span style={{ color: "#a1a1aa", fontSize: 16, fontWeight: 600 }}>Victor Nabasu</span>
           </div>
         </div>
       </div>
