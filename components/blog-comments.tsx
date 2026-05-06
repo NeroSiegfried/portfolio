@@ -776,6 +776,7 @@ export default function BlogComments({
   // Profile editing state
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [editDisplayName, setEditDisplayName] = useState(currentUser?.displayName ?? "")
+  const [editUsername, setEditUsername] = useState(currentUser?.username ?? "")
   const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser?.avatarUrl ?? "")
   const [profileBusy, setProfileBusy] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -877,6 +878,7 @@ export default function BlogComments({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           displayName: editDisplayName.trim() || null,
+          username: editUsername.trim() || undefined,
           avatarUrl: editAvatarUrl.trim() || null,
         }),
       })
@@ -1040,11 +1042,12 @@ export default function BlogComments({
                 onClick={() => {
                   setEditDisplayName(currentUser.displayName ?? "")
                   setEditAvatarUrl(currentUser.avatarUrl ?? "")
+                  setEditUsername(currentUser.username ?? "")
                   setProfileError(null)
                   setProfileSaved(false)
                   setShowEditProfile((v) => !v)
                 }}
-                className="text-muted-foreground transition-colors hover:text-destructive"
+                className={`text-muted-foreground transition-colors ${showEditProfile ? "hover:text-destructive" : "hover:text-primary"}`}
               >
                 {showEditProfile ? "Close" : "Edit profile"}
               </button>
@@ -1063,6 +1066,23 @@ export default function BlogComments({
           {/* ── Inline profile editor ──────────────────────────── */}
           {showEditProfile && (
             <div className="mb-5 rounded-lg border border-border/40 bg-muted/20 p-4 space-y-3">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Handle
+                </label>
+                <div className="flex items-center gap-1 rounded-md border border-border/60 bg-background px-3 py-2 focus-within:border-primary transition-colors">
+                  <span className="text-xs text-muted-foreground select-none">@</span>
+                  <input
+                    className="flex-1 min-w-0 bg-transparent text-sm outline-none"
+                    placeholder={currentUser.username}
+                    maxLength={30}
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
+                    disabled={profileBusy}
+                  />
+                </div>
+                <p className="text-[11px] text-muted-foreground/60">Lowercase letters, numbers, _ and - only. Must be unique.</p>
+              </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-muted-foreground">
                   Display name

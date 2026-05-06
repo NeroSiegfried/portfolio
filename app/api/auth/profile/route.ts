@@ -16,12 +16,29 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 })
   }
 
-  const { displayName, avatarUrl } = body as { displayName?: string | null; avatarUrl?: string | null }
+  const { displayName, username, avatarUrl } = body as { displayName?: string | null; username?: string; avatarUrl?: string | null }
 
   // Basic validation
   if (displayName !== undefined && displayName !== null) {
     if (typeof displayName !== "string" || displayName.trim().length > 60) {
       return NextResponse.json({ error: "Display name must be 60 characters or fewer." }, { status: 400 })
+    }
+  }
+  if (username !== undefined) {
+    if (typeof username !== "string" || username.trim().length < 2 || username.trim().length > 30) {
+      return NextResponse.json({ error: "Handle must be between 2 and 30 characters." }, { status: 400 })
+    }
+    if (!/^[a-z0-9_-]+$/.test(username.trim())) {
+      return NextResponse.json({ error: "Handle may only contain lowercase letters, numbers, _ and -." }, { status: 400 })
+    }
+    // Check uniqueness (pool will be initialised below if not already)
+    const checkPool = getPool()
+    const taken = await checkPool.query<{ id: string }>(
+      `SELECT id FROM users WHERE username = $1 AND id != $2`,
+      [username.trim(), user.id]
+    )
+    if (taken.rows.length > 0) {
+      return NextResponse.json({ error: "That handle is already taken." }, { status: 409 })
     }
   }
   if (avatarUrl !== undefined && avatarUrl !== null) {
@@ -44,12 +61,14 @@ export async function PATCH(req: Request) {
     `UPDATE users SET
        display_name = $1,
        avatar_url   = $2,
+       username     = COALESCE($4, username),
        updated_at   = NOW()
      WHERE id = $3`,
     [
       displayName?.trim() || null,
       finalAvatarUrl,
       user.id,
+      username?.trim() || null,
     ]
   )
 
