@@ -23,21 +23,12 @@ export const metadata: Metadata = {
     description:
       "Portfolio of Victor Nabasu — MSc Advanced Software Engineering at King's College London. Building software with Python, C, TypeScript, and more.",
     url: siteUrl,
-    images: [
-      {
-        url: "/victor-nabasu.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Victor Nabasu",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Victor Nabasu — Full Stack Developer & Engineer",
     description:
       "Portfolio of Victor Nabasu — MSc Advanced Software Engineering at King's College London.",
-    images: ["/victor-nabasu.jpg"],
   },
   icons: {
     icon: "/logo.svg",

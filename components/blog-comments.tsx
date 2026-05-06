@@ -540,13 +540,43 @@ function CommentItem({
     await onRefresh()
   }
 
-  // Hidden: placeholder for admins, nothing for regular users
-  if (node.hidden && !isAdmin) return null
+  // Hidden comments:
+  // - Non-admins: show a greyed-out placeholder (not invisible)
+  // - Admins: show actual content with opacity + moderation controls
+  if (node.hidden && !isAdmin) {
+    return (
+      <div id={`comment-${node.id}`} className="py-4">
+        <div className="flex items-center gap-2 rounded-md border border-border/30 bg-muted/20 px-3 py-2.5">
+          <EyeOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+          <span className="text-xs italic text-muted-foreground/50">This comment was hidden by a moderator.</span>
+        </div>
+        {node.children.length > 0 && (
+          <div className="mt-3 border-l border-border/40 pl-4">
+            {node.children.map((child) => (
+              <CommentItem key={child.id} node={child} postId={postId} currentUser={currentUser} mutedIds={mutedIds} onRefresh={onRefresh} />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
   if (node.hidden && isAdmin) {
     return (
-      <div className="py-4 opacity-50">
-        <p className="text-xs text-muted-foreground italic">[Comment hidden by moderator]</p>
-        <div className="mt-1 flex gap-3">
+      <div id={`comment-${node.id}`} className="py-4">
+        {/* Content shown at reduced opacity */}
+        <div className="opacity-40">
+          <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+            <CommentAvatar userId={node.userId} displayName={node.displayName} username={node.username} avatarUrl={node.avatarUrl} size="sm" />
+            <span className="font-semibold text-foreground/70">{node.displayName ?? node.username}</span>
+            {node.displayName && <span className="text-muted-foreground/50">@{node.username}</span>}
+            <span>·</span>
+            <span>{new Date(node.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+          </div>
+          <CommentContent content={node.content} />
+        </div>
+        {/* Admin controls */}
+        <div className="mt-2 flex items-center gap-2">
+          <span className="rounded border border-border/40 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">hidden</span>
           <button type="button" onClick={unhide} disabled={busy} className="text-xs text-primary hover:underline disabled:opacity-40">Unhide</button>
           <button type="button" onClick={() => deleteComment(true)} disabled={busy} className="text-xs text-destructive hover:underline disabled:opacity-40">Hard delete</button>
         </div>

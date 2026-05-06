@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import type { Metadata } from "next"
+import Script from "next/script"
 import { readBlogPostDb, getPostVote } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import BlogMarkdown from "@/components/blog-markdown"
@@ -106,8 +107,28 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const immediateSeriesTitle = post.seriesPath.at(-1)?.title ?? ""
   const immediateSeriesNumberFormat = post.seriesPath.at(-1)?.numberFormat ?? null
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nerosiegfried.com"
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt ?? undefined,
+    author: { "@type": "Person", name: "Victor Nabasu", url: siteUrl },
+    publisher: { "@type": "Person", name: "Victor Nabasu", url: siteUrl },
+    datePublished: post.publishedAt ?? post.createdAt,
+    dateModified: post.updatedAt ?? post.publishedAt ?? post.createdAt,
+    url: `${siteUrl}/blog/${slug}`,
+    image: `${siteUrl}/blog/${slug}/opengraph-image`,
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/blog/${slug}` },
+  }
+
   return (
     <div className="relative flex flex-col min-h-screen overflow-x-hidden bg-background">
+      <Script
+        id="json-ld-post"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {post.customCss && (
         <style dangerouslySetInnerHTML={{ __html: scopePostCss(post.customCss) }} />
       )}

@@ -17,6 +17,8 @@ export async function generateMetadata({ params }: SeriesPageProps): Promise<Met
   const series = findSeriesByPath(db, slug)
   if (!series) return {}
   const description = series.description ?? `A series of posts by Victor Nabasu.`
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nerosiegfried.com"
+  const ogImage = `${siteUrl}/api/og/series?slug=${slug.join("/")}`
   return {
     title: series.title,
     description,
@@ -24,11 +26,13 @@ export async function generateMetadata({ params }: SeriesPageProps): Promise<Met
       title: `${series.title} — Series`,
       description,
       type: "website",
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${series.title} — Series`,
       description,
+      images: [ogImage],
     },
   }
 }
