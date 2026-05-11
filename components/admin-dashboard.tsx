@@ -1,12 +1,13 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BlogMarkdown from "@/components/blog-markdown"
 import type { BlogPost, BlogSeries, BlogSnippet } from "@/lib/blog/types"
+import { compressImage } from "@/lib/compress-image"
 
 interface AdminDashboardProps {
   posts: BlogPost[]
@@ -174,6 +175,53 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
   const [cells, setCells] = useState<string[]>([""])
   const content = cells.join("\n\n")
   const [showPreview, setShowPreview] = useState(false)
+
+  // ── Image upload for post cells ────────────────────────────────────────────
+  const cellFileInputRef = useRef<HTMLInputElement>(null)
+  const activeUploadCellRef = useRef<number>(-1)
+  const [uploadingCell, setUploadingCell] = useState<number | null>(null)
+  const [cellUploadError, setCellUploadError] = useState<string | null>(null)
+
+  const handleCellImageUpload = (i: number) => {
+    activeUploadCellRef.current = i
+    cellFileInputRef.current?.click()
+  }
+
+  const handleCellFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    const cellIdx = activeUploadCellRef.current
+    if (cellIdx < 0) return
+    setUploadingCell(cellIdx)
+    setCellUploadError(null)
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.82, skipBelowBytes: 300 * 1024 })
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purpose: "comment", contentType: compressed.type, size: compressed.size }),
+      })
+      if (!res.ok) {
+        const j = (await res.json()) as { error?: string }
+        throw new Error(j.error ?? "Upload failed")
+      }
+      const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl: string; cfUrl: string }
+      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type }, body: compressed })
+      if (!put.ok) throw new Error("Upload failed: could not store file.")
+      setCells((prev) =>
+        prev.map((c, idx) => {
+          if (idx !== cellIdx) return c
+          const sep = c && !c.endsWith("\n") ? "\n\n" : ""
+          return c + sep + `![image](${cfUrl})`
+        })
+      )
+    } catch (err) {
+      setCellUploadError(err instanceof Error ? err.message : "Upload failed")
+    } finally {
+      setUploadingCell(null)
+    }
+  }
 
   const snippetsBySlug = useMemo(
     () => new Map(snippets.map((s) => [s.slug, s])),
@@ -507,6 +555,18 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
                 </p>
 
                 {/* ── Notebook cells ── */}
+                {/* Hidden file input for image uploads */}
+                <input
+                  ref={cellFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleCellFileChange}
+                />
+                {cellUploadError && (
+                  <p className="text-xs text-destructive">{cellUploadError}</p>
+                )}
+
                 <div className="space-y-2">
                   {/* Insert before first cell */}
                   <button
@@ -524,16 +584,27 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
                         <span className="text-[10px] text-muted-foreground/40 select-none font-mono">
                           [{i + 1}]
                         </span>
-                        {cells.length > 1 && (
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => setCells((prev) => prev.filter((_, idx) => idx !== i))}
-                            className="text-[10px] text-muted-foreground/40 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                            title="Remove cell"
+                            title="Upload image"
+                            onClick={() => handleCellImageUpload(i)}
+                            disabled={uploadingCell !== null}
+                            className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-30"
                           >
-                            ✕ remove
+                            {uploadingCell === i ? "↑ uploading…" : "📷 image"}
                           </button>
-                        )}
+                          {cells.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setCells((prev) => prev.filter((_, idx) => idx !== i))}
+                              className="text-[10px] text-muted-foreground/40 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                              title="Remove cell"
+                            >
+                              ✕ remove
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Editor textarea */}

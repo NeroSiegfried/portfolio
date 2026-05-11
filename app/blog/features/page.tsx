@@ -2,6 +2,8 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { readBlogPostDb } from "@/lib/blog/store"
+
+export const dynamic = "force-dynamic"
 import { findPublishedPostBySlug, listSnippetsBySlug } from "@/lib/blog/queries"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
