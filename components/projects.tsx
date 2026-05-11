@@ -38,7 +38,7 @@ const projects: Project[] = [
     technologies: ["HTML", "CSS", "JavaScript"],
     showcaseMode: "web",
     desktopPreviewUrl: "/projects/LoopBridge.png",
-    liveUrl: "https://nerosiegfried.github.io/LoopBridge/",
+    liveUrl: "http://44.197.184.251/",
     githubUrl: "https://github.com/NeroSiegfried/LoopBridge",
     blogPostSlug: "loopbridge-build-log",
   },
