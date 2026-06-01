@@ -49,6 +49,12 @@ const devices = [
 ];
 
 (async () => {
+  // Skip screenshot capture in CI environments or when puppeteer is not available
+  if (process.env.CI || process.env.VERCEL) {
+    console.log('Skipping screenshot capture in CI environment');
+    process.exit(0);
+  }
+
   console.log('Launching local browser for reliable screenshots...');
   const browser = await puppeteer.launch({ 
     headless: true,
