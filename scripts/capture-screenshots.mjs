@@ -1,3 +1,9 @@
+// Skip in CI environments BEFORE importing anything
+if (process.env.CI || process.env.VERCEL) {
+  console.log('Skipping screenshot capture in CI environment');
+  process.exit(0);
+}
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -49,12 +55,6 @@ const devices = [
 ];
 
 (async () => {
-  // Skip screenshot capture in CI environments or when puppeteer is not available
-  if (process.env.CI || process.env.VERCEL) {
-    console.log('Skipping screenshot capture in CI environment');
-    process.exit(0);
-  }
-
   console.log('Launching local browser for reliable screenshots...');
   const browser = await puppeteer.launch({ 
     headless: true,
@@ -88,14 +88,13 @@ const devices = [
           hasTouch: dev.isMobile,
         });
         
-        // Wait until there are no more than 2 network connections for at least 500 ms.
         try {
             await page.goto(proj.liveUrl, { waitUntil: 'networkidle0', timeout: 30000 });
         } catch (e) {
             console.warn(`  Warning during navigation: ${e.message}`);
         }
         
-        let waitMs = 0; // default delay to 0, use waitFor in components/projects.tsx for specific projects
+        let waitMs = 0;
         if (proj.waitFor > 0) {
           waitMs = proj.waitFor * 1000;
         }
