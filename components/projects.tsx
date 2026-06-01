@@ -373,7 +373,7 @@ function MacbookFrame({ project }: { project: Project }) {
     <div className="device device-macbook-pro">
       <div className="device-frame">
         <div className="device-screen">
-          <ScreenContent url={project.desktopPreviewUrl} alt={`${project.title} — desktop`} deviceType="macbook" fallbackLiveUrl={project.liveUrl} />
+          <ScreenContent url={project.desktopPreviewUrl} alt={`${project.title} — desktop`} deviceType="macbook" fallbackLiveUrl={project.liveUrl} projectId={project.id} />
         </div>
       </div>
       <div className="device-stripe" />
@@ -391,7 +391,7 @@ function IpadFrame({ project }: { project: Project }) {
     <div className="device device-ipad-pro">
       <div className="device-frame">
         <div className="device-screen">
-          <ScreenContent url={project.ipadUrl} alt={`${project.title} — tablet`} deviceType="ipad" fallbackLiveUrl={project.liveUrl} />
+          <ScreenContent url={project.ipadUrl} alt={`${project.title} — tablet`} deviceType="ipad" fallbackLiveUrl={project.liveUrl} projectId={project.id} />
         </div>
       </div>
       <div className="device-stripe" />
@@ -409,7 +409,7 @@ function IphoneFrame({ project }: { project: Project }) {
     <div className="device device-iphone-14-pro">
       <div className="device-frame">
         <div className="device-screen">
-          <ScreenContent url={project.mobilePreviewUrl} alt={`${project.title} — mobile`} deviceType="iphone" fallbackLiveUrl={project.liveUrl} />
+          <ScreenContent url={project.mobilePreviewUrl} alt={`${project.title} — mobile`} deviceType="iphone" fallbackLiveUrl={project.liveUrl} projectId={project.id} />
         </div>
       </div>
       <div className="device-stripe" />
@@ -428,7 +428,7 @@ function StudioDisplayFrame({ project }: { project: Project }) {
       <div className="sd-bezels">
         {/* sd-screen is position:absolute — overlay/img children are contained within it */}
         <div className="sd-screen">
-          <ScreenContent url={project.studioDisplayUrl} alt={`${project.title} — display`} deviceType="studio" fallbackLiveUrl={project.liveUrl} />
+          <ScreenContent url={project.studioDisplayUrl} alt={`${project.title} — display`} deviceType="studio" fallbackLiveUrl={project.liveUrl} projectId={project.id} />
         </div>
       </div>
       <div className="sd-stand">
