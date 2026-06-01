@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import https from 'https';
+import puppeteer from 'puppeteer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,53 +48,67 @@ const devices = [
   { name: 'iphone', width: 393, height: 852, dsf: 3, isMobile: true }
 ];
 
-async function download(url, dest) {
-  return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      if (res.statusCode !== 200 && res.statusCode !== 302 && res.statusCode !== 301) {
-        return reject(new Error(`Failed to download ${url}: ${res.statusCode}`));
-      }
-      
-      if (res.statusCode === 302 || res.statusCode === 301) {
-        return download(res.headers.location, dest).then(resolve).catch(reject);
-      }
-      
-      const file = fs.createWriteStream(dest);
-      res.pipe(file);
-      file.on('finish', () => {
-        file.close(resolve);
-      });
-    }).on('error', (err) => {
-      reject(err);
-    });
-  });
-}
-
 (async () => {
+  console.log('Launching local browser for reliable screenshots...');
+  const browser = await puppeteer.launch({ 
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--ignore-certificate-errors', '--disable-features=HttpsUpgrades']
+  });
+  
   for (const proj of regexProjects) {
+    console.log(`\nProcessing project ${proj.id}: ${proj.liveUrl}`);
     for (const dev of devices) {
-      const qs = [
-        `url=${encodeURIComponent(proj.liveUrl)}`,
-        'screenshot=true',
-        'embed=screenshot.url',
-        `viewport.width=${dev.width}`,
-        `viewport.height=${dev.height}`,
-        `viewport.deviceScaleFactor=${dev.dsf}`
-      ];
-      if (dev.isMobile) qs.push('viewport.isMobile=true');
-      if (proj.waitFor > 0) qs.push(`waitFor=${proj.waitFor * 1000}`);
-      
-      const microlinkUrl = `https://api.microlink.io/?${qs.join('&')}`;
+      console.log(`  Taking ${dev.name} snapshot...`);
       const destFile = path.join(publicDir, `${proj.id}-${dev.name}.png`);
       
-      console.log(`Downloading ${dev.name} snapshot for project ${proj.id}...`);
+      const page = await browser.newPage();
       try {
-        await download(microlinkUrl, destFile);
-        console.log(`Saved ${destFile}`);
+        await page.setRequestInterception(true);
+        page.on('request', (request) => {
+            const reqUrl = request.url();
+            const targetHost = new URL(proj.liveUrl).host;
+            if (proj.liveUrl.startsWith('http://') && reqUrl.startsWith(`https://${targetHost}`)) {
+                request.continue({ url: reqUrl.replace('https:', 'http:') });
+            } else {
+                request.continue();
+            }
+        });
+
+        await page.setViewport({
+          width: dev.width,
+          height: dev.height,
+          deviceScaleFactor: dev.dsf,
+          isMobile: dev.isMobile,
+          hasTouch: dev.isMobile,
+        });
+        
+        // Wait until there are no more than 2 network connections for at least 500 ms.
+        try {
+            await page.goto(proj.liveUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+        } catch (e) {
+            console.warn(`  Warning during navigation: ${e.message}`);
+        }
+        
+        let waitMs = 0; // default delay to 0, use waitFor in components/projects.tsx for specific projects
+        if (proj.waitFor > 0) {
+          waitMs = proj.waitFor * 1000;
+        }
+        
+        if (waitMs > 0) {
+          console.log(`  Waiting ${waitMs}ms before capture...`);
+          await new Promise(r => setTimeout(r, waitMs));
+        }
+        
+        await page.screenshot({ path: destFile });
+        console.log(`  Saved ${destFile}`);
       } catch (err) {
-        console.error(`Error downloading ${destFile}:`, err);
+        console.error(`  Error capturing ${dev.name}:`, err.message);
+      } finally {
+        await page.close();
       }
     }
   }
-  console.log("All screenshots processed.");
+  
+  await browser.close();
+  console.log("\nAll screenshots processed.");
 })();
