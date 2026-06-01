@@ -273,6 +273,19 @@
       "createdAt": "2026-04-28T07:18:03Z",
       "updatedAt": "2026-04-28T07:18:03Z",
       "publishedAt": "2026-04-28T07:18:03Z"
+    },
+    {
+      "id": "p_stitch_bloom",
+      "slug": "stitch-bloom",
+      "title": "Stitch Bloom Build Log",
+      "excerpt": "Coming soon...",
+      "content": "# Coming Soon\n\nThis post is coming soon.",
+      "seriesId": "s_portfolio",
+      "status": "published",
+      "authorId": "admin",
+      "createdAt": "2026-06-01T13:59:49.727Z",
+      "updatedAt": "2026-06-01T13:59:49.733Z",
+      "publishedAt": "2026-06-01T13:59:49.733Z"
     }
   ],
   "snippets": [

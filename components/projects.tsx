@@ -27,9 +27,21 @@ interface Project {
   liveUrl?: string
   githubUrl?: string
   blogPostSlug?: string
+  /** Delay in seconds before taking the screenshot */
+  waitFor?: number
 }
 
 const projects: Project[] = [
+  {
+    id: 10,
+    title: "Stitch Bloom",
+    description: "A custom web application and showcase for the Stitch Bloom brand.",
+    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
+    showcaseMode: "web",
+    liveUrl: "https://thestitchbloom.com/",
+    githubUrl: "https://github.com/NeroSiegfried/stitch-bloom",
+    blogPostSlug: "stitch-bloom",
+  },
   {
     id: 9,
     title: "LoopBridge (ongoing)",
@@ -37,10 +49,10 @@ const projects: Project[] = [
       "A website development project for a crypto trading community. Built in plain HTML, CSS, and JavaScript to keep contribution simple for frontend developers across different stacks.",
     technologies: ["HTML", "CSS", "JavaScript"],
     showcaseMode: "web",
-    desktopPreviewUrl: "/projects/LoopBridge.png",
     liveUrl: "http://44.197.184.251/",
     githubUrl: "https://github.com/NeroSiegfried/LoopBridge",
     blogPostSlug: "loopbridge-build-log",
+    waitFor: 1,
   },
   {
     id: 1,
@@ -49,10 +61,10 @@ const projects: Project[] = [
       "A cozy word-play challenge with casino-style elegance featuring both single-player and real-time multiplayer modes. This project tested AI-assisted workflows for complex web app development.",
     technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "PostgreSQL", "Neon", "Vercel", "Cursor"],
     showcaseMode: "web",
-    desktopPreviewUrl: "/projects/Anagrams.png",
     liveUrl: "https://v0-anagram-game-requirements.vercel.app/",
     githubUrl: "https://github.com/NeroSiegfried/anagrams2",
     blogPostSlug: "anagrams-architecture-notes",
+    waitFor: 6,
   },
   {
     id: 2,
@@ -317,7 +329,7 @@ const WALLPAPERS: Record<DeviceType, { lg: string; md: string; sm: string }> = {
  * When a URL is supplied → <img> filling the screen.
  * When no URL → Apple wallpaper for that device type, loaded responsively.
  */
-function ScreenContent({ url, alt, deviceType }: { url?: string; alt: string; deviceType: DeviceType }) {
+function ScreenContent({ url, alt, deviceType, fallbackLiveUrl, projectId }: { url?: string; alt: string; deviceType: DeviceType; fallbackLiveUrl?: string; projectId?: number }) {
   const imgStyle: React.CSSProperties = { width: "100%", height: "100%", objectFit: "cover", display: "block" }
   // Wrapper fills the device-screen (which is position:relative), clips to its border-radius,
   // and ensures the wallpaper never bleeds outside the rounded corners.
@@ -328,11 +340,17 @@ function ScreenContent({ url, alt, deviceType }: { url?: string; alt: string; de
     borderRadius: "inherit",
   }
 
-  if (url) {
+  let finalUrl = url;
+  if (!finalUrl && fallbackLiveUrl && projectId) {
+    // Rely on static locally-built screenshots instead of live fetches
+    finalUrl = `/projects/${projectId}-${deviceType}.png`;
+  }
+
+  if (finalUrl) {
     return (
       <div style={wrapStyle}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url} alt={alt} loading="lazy" decoding="async" style={imgStyle} />
+        <img src={finalUrl} alt={alt} loading="lazy" decoding="async" style={imgStyle} />
       </div>
     )
   }
@@ -355,7 +373,7 @@ function MacbookFrame({ project }: { project: Project }) {
     <div className="device device-macbook-pro">
       <div className="device-frame">
         <div className="device-screen">
-          <ScreenContent url={project.desktopPreviewUrl} alt={`${project.title} — desktop`} deviceType="macbook" />
+          <ScreenContent url={project.desktopPreviewUrl} alt={`${project.title} — desktop`} deviceType="macbook" fallbackLiveUrl={project.liveUrl} />
         </div>
       </div>
       <div className="device-stripe" />
@@ -373,7 +391,7 @@ function IpadFrame({ project }: { project: Project }) {
     <div className="device device-ipad-pro">
       <div className="device-frame">
         <div className="device-screen">
-          <ScreenContent url={project.ipadUrl} alt={`${project.title} — tablet`} deviceType="ipad" />
+          <ScreenContent url={project.ipadUrl} alt={`${project.title} — tablet`} deviceType="ipad" fallbackLiveUrl={project.liveUrl} />
         </div>
       </div>
       <div className="device-stripe" />
@@ -391,7 +409,7 @@ function IphoneFrame({ project }: { project: Project }) {
     <div className="device device-iphone-14-pro">
       <div className="device-frame">
         <div className="device-screen">
-          <ScreenContent url={project.mobilePreviewUrl} alt={`${project.title} — mobile`} deviceType="iphone" />
+          <ScreenContent url={project.mobilePreviewUrl} alt={`${project.title} — mobile`} deviceType="iphone" fallbackLiveUrl={project.liveUrl} />
         </div>
       </div>
       <div className="device-stripe" />
@@ -410,7 +428,7 @@ function StudioDisplayFrame({ project }: { project: Project }) {
       <div className="sd-bezels">
         {/* sd-screen is position:absolute — overlay/img children are contained within it */}
         <div className="sd-screen">
-          <ScreenContent url={project.studioDisplayUrl} alt={`${project.title} — display`} deviceType="studio" />
+          <ScreenContent url={project.studioDisplayUrl} alt={`${project.title} — display`} deviceType="studio" fallbackLiveUrl={project.liveUrl} />
         </div>
       </div>
       <div className="sd-stand">
