@@ -33,6 +33,17 @@ interface Project {
 
 const projects: Project[] = [
   {
+    id: 11,
+    title: "Derivian",
+    description:
+      "A professional website for a supported living business in London. Built with accessibility at its core — including an easy-read mode for visually impaired users — and equipped with business email infrastructure and templated contact flows to streamline every client interaction.",
+    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Vercel"],
+    showcaseMode: "web",
+    liveUrl: "https://www.derivian.co.uk",
+    blogPostSlug: "derivian-build-log",
+    waitFor: 3,
+  },
+  {
     id: 10,
     title: "Stitch Bloom",
     description: "A custom web application and showcase for the Stitch Bloom brand.",
