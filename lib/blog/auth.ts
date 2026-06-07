@@ -1,8 +1,8 @@
 import { pbkdf2Sync, randomBytes, timingSafeEqual } from "crypto"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
-import type { BlogDb, BlogSession, BlogUser, PublicUser } from "@/lib/blog/types"
-import { createId, nowIso, upsertSession, getPool } from "@/lib/blog/store"
+import type { BlogUser, PublicUser } from "@/lib/blog/types"
+import { createId, getPool } from "@/lib/blog/store"
 
 const SESSION_COOKIE_NAME = "portfolio_blog_session"
 const SESSION_DURATION_DAYS = 14
@@ -43,24 +43,6 @@ export function toPublicUser(user: BlogUser): PublicUser {
     displayName: user.displayName ?? null,
     avatarUrl: user.avatarUrl ?? null,
   }
-}
-
-function getSessionExpiryIso() {
-  const expiry = new Date()
-  expiry.setDate(expiry.getDate() + SESSION_DURATION_DAYS)
-  return expiry.toISOString()
-}
-
-export function createSession(db: BlogDb, userId: string): BlogSession {
-  const session: BlogSession = {
-    token: randomBytes(32).toString("hex"),
-    userId,
-    createdAt: nowIso(),
-    expiresAt: getSessionExpiryIso(),
-  }
-
-  upsertSession(db, session)
-  return session
 }
 
 export async function removeSession(token: string | null) {
@@ -109,11 +91,6 @@ export function clearSessionCookie(response: NextResponse, secure: boolean) {
 async function getCookieSessionToken() {
   const cookieStore = await cookies()
   return cookieStore.get(SESSION_COOKIE_NAME)?.value ?? null
-}
-
-function pruneExpiredSessions(db: BlogDb) {
-  const now = Date.now()
-  db.sessions = db.sessions.filter((session) => new Date(session.expiresAt).getTime() > now)
 }
 
 export function invalidateSessionCache() {

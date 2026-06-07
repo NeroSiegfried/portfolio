@@ -29,8 +29,9 @@ next-env.d.ts
 
 .DS_Store
 
+# Allow documentation
+# *.md (Commented out to allow README updates)
 
-*.md
 .env*.local
 
 

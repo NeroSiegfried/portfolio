@@ -40,6 +40,7 @@ const projects: Project[] = [
     technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Vercel"],
     showcaseMode: "web",
     liveUrl: "https://www.derivian.co.uk",
+    githubUrl: "https://github.com/NeroSiegfried/derivian-care",
     blogPostSlug: "derivian-build-log",
     waitFor: 3,
   },
