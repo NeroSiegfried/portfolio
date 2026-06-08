@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto"
+import { unstable_cache, revalidateTag } from "next/cache"
 import { Pool } from "pg"
 import type {
   BlogComment,
@@ -19,12 +20,6 @@ import type {
 declare global {
   // eslint-disable-next-line no-var
   var _pgPool: Pool | undefined
-  // eslint-disable-next-line no-var
-  var _homeDbCache: { data: BlogDb; expires: number } | undefined
-  // eslint-disable-next-line no-var
-  var _seriesDbCache: { data: BlogDb; expires: number } | undefined
-  // eslint-disable-next-line no-var
-  var _postDbCache: Map<string, { data: BlogDb | null; expires: number }> | undefined
 }
 
 export function getPool(): Pool {
@@ -180,116 +175,100 @@ export async function readDb(): Promise<BlogDb> {
   }
 }
 
-const HOME_TTL_MS = 60_000
+const CACHE_TTL = 60 // seconds
 
-export async function readBlogHomeDb(): Promise<BlogDb> {
-  if (global._homeDbCache && global._homeDbCache.expires > Date.now()) {
-    return global._homeDbCache.data
-  }
-  const pool = getPool()
-  const [series, posts, postVotes] = await Promise.all([
-    pool.query("SELECT * FROM series ORDER BY title"),
-    pool.query(
-      `SELECT id, slug, title, excerpt, series_id, status, author_id,
-              published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
-       FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
-    ),
-    pool.query("SELECT * FROM post_votes"),
-  ])
-  const data: BlogDb = {
-    users: [],
-    sessions: [],
-    series: series.rows.map(rowToSeries),
-    posts: posts.rows.map(rowToPost),
-    snippets: [],
-    comments: [],
-    commentVotes: [],
-    postVotes: postVotes.rows.map(rowToPostVote),
-  }
-  global._homeDbCache = { data, expires: Date.now() + HOME_TTL_MS }
-  return data
-}
+export const readBlogHomeDb = unstable_cache(
+  async (): Promise<BlogDb> => {
+    const pool = getPool()
+    const [series, posts, postVotes] = await Promise.all([
+      pool.query("SELECT * FROM series ORDER BY title"),
+      pool.query(
+        `SELECT id, slug, title, excerpt, series_id, status, author_id,
+                published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+         FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
+      ),
+      pool.query("SELECT * FROM post_votes"),
+    ])
+    return {
+      users: [],
+      sessions: [],
+      series: series.rows.map(rowToSeries),
+      posts: posts.rows.map(rowToPost),
+      snippets: [],
+      comments: [],
+      commentVotes: [],
+      postVotes: postVotes.rows.map(rowToPostVote),
+    }
+  },
+  ["blog-home"],
+  { revalidate: CACHE_TTL, tags: ["blog-home", "blog-data"] }
+)
 
-const SERIES_TTL_MS = 60_000
+export const readSeriesDb = unstable_cache(
+  async (): Promise<BlogDb> => {
+    const pool = getPool()
+    const [series, posts, postVotes] = await Promise.all([
+      pool.query("SELECT * FROM series ORDER BY title"),
+      pool.query(
+        `SELECT id, slug, title, excerpt, series_id, status, author_id,
+                published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+         FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
+      ),
+      pool.query("SELECT * FROM post_votes"),
+    ])
+    return {
+      users: [],
+      sessions: [],
+      series: series.rows.map(rowToSeries),
+      posts: posts.rows.map(rowToPost),
+      snippets: [],
+      comments: [],
+      commentVotes: [],
+      postVotes: postVotes.rows.map(rowToPostVote),
+    }
+  },
+  ["blog-series"],
+  { revalidate: CACHE_TTL, tags: ["blog-series", "blog-data"] }
+)
 
-export async function readSeriesDb(): Promise<BlogDb> {
-  if (global._seriesDbCache && global._seriesDbCache.expires > Date.now()) {
-    return global._seriesDbCache.data
-  }
-  const pool = getPool()
-  const [series, posts, postVotes] = await Promise.all([
-    pool.query("SELECT * FROM series ORDER BY title"),
-    pool.query(
-      `SELECT id, slug, title, excerpt, series_id, status, author_id,
-              published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
-       FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
-    ),
-    pool.query("SELECT * FROM post_votes"),
-  ])
-  const data: BlogDb = {
-    users: [],
-    sessions: [],
-    series: series.rows.map(rowToSeries),
-    posts: posts.rows.map(rowToPost),
-    snippets: [],
-    comments: [],
-    commentVotes: [],
-    postVotes: postVotes.rows.map(rowToPostVote),
-  }
-  global._seriesDbCache = { data, expires: Date.now() + SERIES_TTL_MS }
-  return data
-}
+export const readBlogPostDb = unstable_cache(
+  async (slug: string): Promise<BlogDb | null> => {
+    const pool = getPool()
+    const postRow = await pool.query(
+      "SELECT * FROM posts WHERE slug=$1 AND status='published' LIMIT 1",
+      [slug]
+    )
+    if (!postRow.rows.length) return null
+    const post = rowToPost(postRow.rows[0])
+    const postId = post.id
 
-const POST_TTL_MS = 60_000
+    const [series, siblingPosts, snippets, postVotes] = await Promise.all([
+      pool.query("SELECT * FROM series ORDER BY title"),
+      pool.query(
+        `SELECT id, slug, title, excerpt, series_id, status, author_id,
+                published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+         FROM posts WHERE status='published' AND id != $1
+         ORDER BY COALESCE(published_at, created_at) ASC`,
+        [postId]
+      ),
+      pool.query("SELECT * FROM snippets ORDER BY created_at DESC"),
+      pool.query("SELECT * FROM post_votes WHERE post_id=$1", [postId]),
+    ])
 
-function getPostDbCache() {
-  if (!global._postDbCache) global._postDbCache = new Map()
-  return global._postDbCache
-}
-
-export async function readBlogPostDb(slug: string): Promise<BlogDb | null> {
-  const cache = getPostDbCache()
-  const cached = cache.get(slug)
-  if (cached && cached.expires > Date.now()) return cached.data
-
-  const pool = getPool()
-  const postRow = await pool.query(
-    "SELECT * FROM posts WHERE slug=$1 AND status='published' LIMIT 1",
-    [slug]
-  )
-  if (!postRow.rows.length) {
-    cache.set(slug, { data: null, expires: Date.now() + POST_TTL_MS })
-    return null
-  }
-  const post = rowToPost(postRow.rows[0])
-  const postId = post.id
-
-  const [series, siblingPosts, snippets, postVotes] = await Promise.all([
-    pool.query("SELECT * FROM series ORDER BY title"),
-    pool.query(
-      `SELECT id, slug, title, excerpt, series_id, status, author_id,
-              published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
-       FROM posts WHERE status='published' AND id != $1
-       ORDER BY COALESCE(published_at, created_at) ASC`,
-      [postId]
-    ),
-    pool.query("SELECT * FROM snippets ORDER BY created_at DESC"),
-    pool.query("SELECT * FROM post_votes WHERE post_id=$1", [postId]),
-  ])
-
-  const data: BlogDb = {
-    users: [],
-    sessions: [],
-    series: series.rows.map(rowToSeries),
-    posts: [post, ...siblingPosts.rows.map(rowToPost)],
-    snippets: snippets.rows.map(rowToSnippet),
-    comments: [],
-    commentVotes: [],
-    postVotes: postVotes.rows.map(rowToPostVote),
-  }
-  cache.set(slug, { data, expires: Date.now() + POST_TTL_MS })
-  return data
-}
+    return {
+      users: [],
+      sessions: [],
+      series: series.rows.map(rowToSeries),
+      posts: [post, ...siblingPosts.rows.map(rowToPost)],
+      snippets: snippets.rows.map(rowToSnippet),
+      comments: [],
+      commentVotes: [],
+      postVotes: postVotes.rows.map(rowToPostVote),
+    }
+  },
+  ["blog-post"],
+  { revalidate: CACHE_TTL, tags: ["blog-posts", "blog-data"] }
+)
 
 export async function readPostCommentsDb(postSlug: string) {
   const pool = getPool()
@@ -400,6 +379,7 @@ export async function updateDb<T>(updater: (db: BlogDb) => T): Promise<T> {
       )
     }
     await client.query("COMMIT")
+    revalidateTag("blog-data")
   } catch (err) {
     await client.query("ROLLBACK")
     throw err
