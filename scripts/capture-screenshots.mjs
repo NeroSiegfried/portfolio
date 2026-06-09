@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import puppeteer from 'puppeteer';
+import sharp from 'sharp';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,37 +48,64 @@ for (const block of blocks) {
   }
 }
 
+// ── Device capture specs ──────────────────────────────────────────────────────
+// dsf = deviceScaleFactor; the final PNG will be (width * dsf) × (height * dsf) px.
+// lo  = 25 % of the PNG dimensions, JPEG 55 % — quick blurry preview
+// md  = 50 % of the PNG dimensions, JPEG 75 % — good for 1× displays
+// hi  = full PNG (the raw puppeteer output, unchanged)
 const devices = [
-  { name: 'macbook', width: 1440, height: 900, dsf: 2, isMobile: false },
-  { name: 'studio', width: 2560, height: 1440, dsf: 2, isMobile: false },
-  { name: 'ipad', width: 834, height: 1194, dsf: 2, isMobile: true },
-  { name: 'iphone', width: 393, height: 852, dsf: 3, isMobile: true }
+  { name: 'macbook', width: 1440, height: 900,  dsf: 2, isMobile: false },
+  { name: 'studio',  width: 2560, height: 1440, dsf: 2, isMobile: false },
+  { name: 'ipad',    width: 834,  height: 1194, dsf: 2, isMobile: true  },
+  { name: 'iphone',  width: 393,  height: 852,  dsf: 3, isMobile: true  },
 ];
 
+/**
+ * Generate lo and md JPEG tiers from an existing PNG.
+ */
+async function generateTiers(pngPath) {
+  const img = sharp(pngPath);
+  const { width, height } = await img.metadata();
+
+  const mdPath = pngPath.replace('.png', '-md.jpg');
+  await sharp(pngPath)
+    .resize(Math.round(width * 0.5), Math.round(height * 0.5))
+    .jpeg({ quality: 75 })
+    .toFile(mdPath);
+
+  const loPath = pngPath.replace('.png', '-lo.jpg');
+  await sharp(pngPath)
+    .resize(Math.round(width * 0.25), Math.round(height * 0.25))
+    .jpeg({ quality: 55 })
+    .toFile(loPath);
+
+  console.log(`    tiers → ${path.basename(loPath)}, ${path.basename(mdPath)}`);
+}
+
 (async () => {
-  console.log('Launching local browser for reliable screenshots...');
-  const browser = await puppeteer.launch({ 
+  console.log('Launching browser for screenshots...');
+  const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--ignore-certificate-errors', '--disable-features=HttpsUpgrades']
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--ignore-certificate-errors', '--disable-features=HttpsUpgrades'],
   });
-  
+
   for (const proj of regexProjects) {
-    console.log(`\nProcessing project ${proj.id}: ${proj.liveUrl}`);
+    console.log(`\nProject ${proj.id}: ${proj.liveUrl}`);
     for (const dev of devices) {
-      console.log(`  Taking ${dev.name} snapshot...`);
+      console.log(`  [${dev.name}]`);
       const destFile = path.join(publicDir, `${proj.id}-${dev.name}.png`);
-      
+
       const page = await browser.newPage();
       try {
         await page.setRequestInterception(true);
         page.on('request', (request) => {
-            const reqUrl = request.url();
-            const targetHost = new URL(proj.liveUrl).host;
-            if (proj.liveUrl.startsWith('http://') && reqUrl.startsWith(`https://${targetHost}`)) {
-                request.continue({ url: reqUrl.replace('https:', 'http:') });
-            } else {
-                request.continue();
-            }
+          const reqUrl = request.url();
+          const targetHost = new URL(proj.liveUrl).host;
+          if (proj.liveUrl.startsWith('http://') && reqUrl.startsWith(`https://${targetHost}`)) {
+            request.continue({ url: reqUrl.replace('https:', 'http:') });
+          } else {
+            request.continue();
+          }
         });
 
         await page.setViewport({
@@ -87,33 +115,30 @@ const devices = [
           isMobile: dev.isMobile,
           hasTouch: dev.isMobile,
         });
-        
+
         try {
-            await page.goto(proj.liveUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+          await page.goto(proj.liveUrl, { waitUntil: 'networkidle0', timeout: 30000 });
         } catch (e) {
-            console.warn(`  Warning during navigation: ${e.message}`);
+          console.warn(`    nav warning: ${e.message}`);
         }
-        
-        let waitMs = 0;
+
         if (proj.waitFor > 0) {
-          waitMs = proj.waitFor * 1000;
+          console.log(`    waiting ${proj.waitFor * 1000}ms...`);
+          await new Promise(r => setTimeout(r, proj.waitFor * 1000));
         }
-        
-        if (waitMs > 0) {
-          console.log(`  Waiting ${waitMs}ms before capture...`);
-          await new Promise(r => setTimeout(r, waitMs));
-        }
-        
+
         await page.screenshot({ path: destFile });
-        console.log(`  Saved ${destFile}`);
+        console.log(`    hi  → ${path.basename(destFile)}`);
+
+        await generateTiers(destFile);
       } catch (err) {
-        console.error(`  Error capturing ${dev.name}:`, err.message);
+        console.error(`    error: ${err.message}`);
       } finally {
         await page.close();
       }
     }
   }
-  
+
   await browser.close();
-  console.log("\nAll screenshots processed.");
+  console.log('\nAll screenshots processed.');
 })();
