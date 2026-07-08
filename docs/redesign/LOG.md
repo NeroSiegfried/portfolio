@@ -30,6 +30,31 @@
 - Created branch `redesign/v2`.
 - Created `CLAUDE.md`, `docs/redesign/TODO.md`, `docs/redesign/LOG.md`.
 
+## 2026-07-08 — Session 1 (cont.): Phase 1 — v1 live backup
+
+### Approach decision (important)
+Instead of physically copying ~20 components into `components/v1/`, I used a **`basePath` React context** (`lib/base-path.tsx`). Rationale:
+- Nearly all blog links already route through one component, `BlogLink`, which uses a context (`SubdomainContext`) to transform hrefs. Extending that pattern with a `basePath` context flips the entire `/v1` subtree's links to `/v1/*` with almost no per-component edits.
+- The **existing components ARE the frozen v1 library.** The redesign (Phase 3/4) must create NEW component files and must NOT edit these existing section components in ways that change their look. This keeps v1 frozen without duplication.
+- Consequence/constraint recorded in CLAUDE.md: redesign = new component files (e.g. under `components/v2/`), reuse `components/ui/*` freely (scoped by tokens).
+
+### What changed
+- New: `lib/base-path.tsx` (`BasePathContext`/`useBasePath`/`withBase`/`BasePathProvider`, default base `""`).
+- Edited (non-visual, default-`""` so live `/` unchanged): `blog-link.tsx`, `portfolio-link.tsx`, `series-post-nav.tsx` (the `<select>` post-jump used `window.location.href`), `hero.tsx`, `about.tsx`, `projects.tsx`.
+- New routes: `app/v1/layout.tsx` (provides base `/v1`, wraps `.v1-scope`, `noindex`), `app/v1/page.tsx`, `app/v1/blog/{layout,page,[slug]/page,features/page,series/[...slug]/page}.tsx` + loading skeletons. Blog pages are near-verbatim copies (absolute `@/` imports + context prefixing = copies just work). Fixed 2 plain `<Link>` in the v1 features copy and dropped a dead `getPostVote` import.
+- `app/globals.css`: added `.v1-scope` seam (marker only for now).
+- `vercel.json`: enabled preview deploys for `redesign/v2`.
+
+### Verification (dev server on :3939)
+- 200: `/`, `/v1`, `/blog`, `/v1/blog`, `/v1/blog/features`, `/v1/blog/blog-welcome`, `/v1/blog/series/cs-journey`. 404: `/v1/nonexistent`.
+- v1 HTML links all `/v1/*` (portfolio "Read Blog", project "Read Article", blog list/series/archive, breadcrumb, "← Portfolio" → `/v1`). **Zero** bare-`/blog` leaks in v1 HTML.
+- Live `/` and `/blog` still emit bare `/blog` links — untouched. DB is reachable from this env (blog pages returned 200 with real slugs).
+
+### Non-obvious notes
+- **Pre-existing type errors** exist in the repo (14, e.g. `getPostVote` missing in store, `not-found.tsx` canvas nulls, `db-postgres.ts` type mismatches). `next.config.mjs` sets `typescript.ignoreBuildErrors` + `eslint.ignoreDuringBuilds`, so builds tolerate them. My new code adds none.
+- **`.v1-scope` is a deferred seam:** today v1 and live share tokens, so it's a no-op. When Phase 3 changes `:root`/`.dark` tokens (colors, radius, and font if it changes in `app/layout.tsx`), the CURRENT values must be pinned under `.v1-scope` / `.dark .v1-scope` or v1 will drift. Note: `tailwind.config.ts` maps `primary`/`secondary` to hardcoded hexes (`#2F70FF`/`#FF6B4A`) while `--primary`/`--secondary` HSL vars are ~1° off — to scope those two colors, convert them to `hsl(var(--x)/<alpha-value>)` first (match hexes exactly to avoid a shift).
+- **Vercel Preview env:** if `DATABASE_URL`/OAuth secrets are Production-scoped only, the branch preview's blog will hit its try/catch fallback. Portfolio `/v1` needs no DB. Confirm on the preview.
+
 ### Next
-- Build Phase 1 (v1 live backup), verify, commit, push, check preview.
-- Then Phase 2 (template analysis → DESIGN-SPEC → sign-off).
+- Commit + push Phase 1 → verify Vercel preview (desktop + mobile).
+- Phase 2: template analysis with Puppeteer → `DESIGN-SPEC.md` → **owner sign-off** before building.

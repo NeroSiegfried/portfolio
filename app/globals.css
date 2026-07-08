@@ -66,6 +66,19 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   V1 SCOPE — frozen backup design tokens
+   The /v1 subtree is wrapped in `.v1-scope` (see app/v1/layout.tsx).
+   Today the live site and v1 share the same tokens, so this is a no-op.
+   When the redesign (Phase 3) changes the tokens on :root / .dark, PIN the
+   CURRENT values here (and under `.dark .v1-scope`, plus font-family if it
+   changes) so /v1 keeps rendering exactly as it does today.
+   See docs/redesign/LOG.md + TODO.md.
+═══════════════════════════════════════════════════════════════ */
+.v1-scope {
+  --v1-scope: 1; /* marker only; populate frozen v1 token values in Phase 3 */
+}
+
 @layer base {
   * {
     @apply border-border;

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useBlogSubdomain } from "@/lib/blog/subdomain-context"
+import { useBasePath } from "@/lib/base-path"
 
 interface PortfolioLinkProps {
   children: React.ReactNode
@@ -20,6 +21,7 @@ interface PortfolioLinkProps {
  */
 export default function PortfolioLink({ children, className }: PortfolioLinkProps) {
   const isBlogSubdomain = useBlogSubdomain()
+  const basePath = useBasePath()
 
   if (isBlogSubdomain) {
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -40,7 +42,7 @@ export default function PortfolioLink({ children, className }: PortfolioLinkProp
   }
 
   return (
-    <Link href="/" prefetch className={className}>
+    <Link href={basePath || "/"} prefetch className={className}>
       {children}
     </Link>
   )

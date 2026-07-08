@@ -6,6 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { BookOpen, ChevronDown, ExternalLink, Github, LayoutGrid } from "lucide-react"
+import { useBasePath, withBase } from "@/lib/base-path"
 
 type ShowcaseMode = "web" | "picture"
 
@@ -701,13 +702,14 @@ function PicturePreview({ project }: { project: Project }) {
 }
 
 function ProjectActions({ project }: { project: Project }) {
+  const basePath = useBasePath()
   return (
     <div className="mt-6 mb-8 flex flex-col gap-3 sm:flex-row justify-center">
       {/* Repo + Read Article: side-by-side below sm, become direct flex children at sm+ */}
       <div className="flex gap-3 max-[380px]:flex-col sm:contents">
         {project.blogPostSlug ? (
           <Button asChild size="default" variant="outline" className="flex-1 gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground sm:max-w-[190px]">
-            <a href={`/blog/${project.blogPostSlug}`}>
+            <a href={withBase(basePath, `/blog/${project.blogPostSlug}`)}>
               <BookOpen className="h-4 w-4" />
               Read Article
             </a>

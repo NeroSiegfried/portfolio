@@ -11,22 +11,24 @@
 - [x] Get owner decisions (v1=live copy at /v1 · deploy=preview per push · checkpoint=review spec first)
 - [x] Create branch `redesign/v2`
 - [x] Create persistent docs: `CLAUDE.md`, `docs/redesign/TODO.md`, `docs/redesign/LOG.md`
-- [ ] Commit foundation
+- [x] Commit foundation
 
-## Phase 1 — Backup current site as live "v1"  (before any redesign)
+## Phase 1 — Backup current site as live "v1"  ✅
 Goal: current design fully browsable + functional at `/v1`, sharing DB/auth/APIs. New design will occupy `/`.
-- [ ] Freeze current portfolio components into `components/v1/` (hero, about, projects, tech-stack, contact, footer, mode-toggle deps as needed)
-- [ ] Freeze current blog components into `components/v1/` (blog-top-nav, blog-post-list, blog-series-nav, blog-archive-sidebar, blog-markdown, blog-comments, series/vote/snippet embeds, etc.)
-- [ ] `app/v1/page.tsx` → renders v1 portfolio (imports from `components/v1/`)
-- [ ] `app/v1/blog/page.tsx`, `app/v1/blog/[slug]/page.tsx`, `app/v1/blog/features/page.tsx`, `app/v1/blog/series/[...slug]/page.tsx` (reuse shared `lib/blog/*` data layer)
-- [ ] Rewrite ALL internal links inside v1 to stay in `/v1/**`:
-  - [ ] portfolio "Read Blog" → `/v1/blog`; project "Read Article" → `/v1/blog/[slug]`
-  - [ ] blog "← Portfolio" → `/v1`; post/series/archive links → `/v1/blog/...`
-  - [ ] verify OAuth/comment/vote actions still hit shared `/api/**` (must NOT be namespaced)
-- [ ] Preserve v1 CSS: ensure classes v1 depends on (device frames, footer-pattern, theme-toggle, btn-show-*) are not removed by the redesign; scope into `app/v1/` styles if needed
-- [ ] Preserve v1 metadata/OG so v1 pages don't 500
-- [ ] Verify locally: every v1 page renders + every v1 link resolves within /v1 + login/comment still work
-- [ ] Commit + push → check Vercel preview `/v1` on desktop + mobile
+**Approach used (better than copying components): a `basePath` React context.** Existing components ARE the frozen v1 library; the redesign will build NEW component files and must not alter these. See LOG.
+- [x] `lib/base-path.tsx` — `BasePathContext` + `useBasePath()` + `withBase()` + `BasePathProvider` (default "")
+- [x] Wire basePath into central link components: `blog-link.tsx`, `portfolio-link.tsx`, `series-post-nav.tsx` (`<select>` jump)
+- [x] Wire basePath into portfolio blog-links: `hero.tsx`, `about.tsx`, `projects.tsx`
+- [x] `app/v1/layout.tsx` (BasePathProvider base="/v1", `.v1-scope` wrapper, `noindex`)
+- [x] `app/v1/page.tsx` (portfolio, mirrors app/page.tsx)
+- [x] `app/v1/blog/{layout,page,[slug]/page,features/page,series/[...slug]/page}.tsx` (+ loading skeletons)
+- [x] Fix 2 plain (non-BlogLink) links in v1 features copy → `/v1/blog...`
+- [x] Removed dead `getPostVote` import from v1 [slug] copy
+- [x] `.v1-scope` CSS seam added to globals.css (no-op today; **populate frozen tokens in Phase 3**)
+- [x] Verified via dev server: `/v1`, `/v1/blog`, `/v1/blog/[slug]`, `/v1/blog/series/...`, `/v1/blog/features` all 200; every link prefixed `/v1/*`; zero bare-`/blog` leaks; live `/` + `/blog` unchanged; `/v1/nonexistent` 404
+- [x] Enabled branch preview deploys in `vercel.json` (`redesign/v2: true`)
+- [ ] Commit + push → check Vercel preview `/v1` on desktop + mobile (env: confirm Preview scope has DATABASE_URL etc.)
+- [ ] (Deferred to Phase 5) add a small "back to current site" affordance on /v1
 
 ## Phase 2 — Template analysis → DESIGN SPEC  (ends at owner sign-off)
 Tooling: Puppeteer script → screenshot each page at 3 viewports (mobile 390, tablet 834, desktop 1440) + dump computed styles/tokens. Save artifacts under scratchpad; write findings into `DESIGN-SPEC.md`.

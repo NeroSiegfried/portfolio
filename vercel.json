@@ -15,7 +15,8 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "main": true
+      "main": true,
+      "redesign/v2": true
     }
   }
 }

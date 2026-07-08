@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useBlogSubdomain } from "@/lib/blog/subdomain-context"
+import { useBasePath, withBase } from "@/lib/base-path"
 
 /**
  * Converts an internal /blog/… path into the correct path for the current host.
@@ -31,7 +32,8 @@ interface BlogLinkProps extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElemen
  */
 export default function BlogLink({ href, children, prefetch = true, ...rest }: BlogLinkProps) {
   const isBlogSubdomain = useBlogSubdomain()
-  const resolvedHref = isBlogSubdomain ? toBlogRelativePath(href) : href
+  const basePath = useBasePath()
+  const resolvedHref = withBase(basePath, isBlogSubdomain ? toBlogRelativePath(href) : href)
   return (
     <Link href={resolvedHref} prefetch={prefetch} {...rest}>
       {children}

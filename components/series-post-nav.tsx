@@ -9,6 +9,7 @@ import { formatSeriesEntry } from "@/lib/blog/format"
 import BlogLink from "@/components/blog-link"
 import { useBlogSubdomain } from "@/lib/blog/subdomain-context"
 import { toBlogRelativePath } from "@/components/blog-link"
+import { useBasePath, withBase } from "@/lib/base-path"
 
 interface SeriesPostNavProps {
   /** All posts in the same series (ordered by publishedAt asc, oldest first). */
@@ -27,6 +28,7 @@ export default function SeriesPostNav({ posts, currentSlug, seriesTitle, numberF
   if (posts.length < 2) return null
 
   const isBlogSubdomain = useBlogSubdomain()
+  const basePath = useBasePath()
   const idx = posts.findIndex((p) => p.slug === currentSlug)
   const prev = idx > 0 ? posts[idx - 1] : null
   const next = idx < posts.length - 1 ? posts[idx + 1] : null
@@ -103,7 +105,7 @@ export default function SeriesPostNav({ posts, currentSlug, seriesTitle, numberF
           const path = isBlogSubdomain
             ? toBlogRelativePath(`/blog/${e.target.value}`)
             : `/blog/${e.target.value}`
-          window.location.href = path
+          window.location.href = withBase(basePath, path)
         }}
       >
         {posts.map((p, i) => (

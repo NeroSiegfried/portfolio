@@ -4,8 +4,10 @@
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
+import { useBasePath, withBase } from "@/lib/base-path"
 
 export default function About() {
+  const basePath = useBasePath()
   return (
     <section id="about" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -55,7 +57,7 @@ export default function About() {
                   I’ve worked on projects ranging from satellite modeling to domain‐specific languages (DSML) and AI‐powered web apps. In my free time, I leetcode, play Japanese RPGs, and explore new AI and DevOps technologies.
                 </p>
                 <p className="mb-6 text-base leading-relaxed">
-                  I am currently on a "CS from scratch" quest because my first degree is in Electrical Engineering, and I want to cover my CS fundamentals more deeply. You can check out my journey on my <a href="/blog" className="text-primary font-semibold hover:underline">blog</a> or follow along on my X account (<a href="https://x.com/NeroSiegfried" target="_blank" rel="noopener noreferrer">@NeroSiegfried</a>).
+                  I am currently on a "CS from scratch" quest because my first degree is in Electrical Engineering, and I want to cover my CS fundamentals more deeply. You can check out my journey on my <a href={withBase(basePath, "/blog")} className="text-primary font-semibold hover:underline">blog</a> or follow along on my X account (<a href="https://x.com/NeroSiegfried" target="_blank" rel="noopener noreferrer">@NeroSiegfried</a>).
                 </p>
                 <p className="text-base leading-relaxed">
                   I’m currently seeking new opportunities to apply my skills and grow as a developer. If you have an interesting project or role in mind, let’s connect!

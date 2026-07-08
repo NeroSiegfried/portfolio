@@ -8,8 +8,10 @@ import { ArrowDown } from "lucide-react"
 import { useTheme } from "next-themes"
 import Link from "next/link"
 import { ModeToggle } from "@/components/mode-toggle"
+import { useBasePath, withBase } from "@/lib/base-path"
 
 export default function Hero() {
+  const basePath = useBasePath()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { resolvedTheme } = useTheme()
   // Keep theme in a ref so the animation loop can read the latest value
@@ -178,7 +180,7 @@ export default function Hero() {
             variant="outline"
             className="border-primary text-primary px-4 transition-transform duration-200 hover:scale-[1.03] hover:bg-primary hover:text-primary-foreground"
           >
-            <Link href="/blog">Read Blog</Link>
+            <Link href={withBase(basePath, "/blog")}>Read Blog</Link>
           </Button>
           <ModeToggle />
         </div>
