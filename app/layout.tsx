@@ -1,10 +1,24 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Inter_Tight, Nanum_Myeongjo, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+// Body sans (unchanged from v1). Display + serif + mono added for v2.
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" })
+// Oversized, tight display headings (portfolie's "Inter Display" analogue).
+const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-display", display: "swap" })
+// Serif for blog article/section titles (reado / narrate analogue).
+const nanumMyeongjo = Nanum_Myeongjo({
+  subsets: ["latin"],
+  weight: ["400", "700", "800"],
+  variable: "--font-serif",
+  display: "swap",
+})
+// Monospace eyebrow / micro labels.
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" })
+
+const fontVars = `${inter.variable} ${interTight.variable} ${nanumMyeongjo.variable} ${geistMono.variable}`
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nerosiegfried.com"
 
@@ -44,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col`}>
+      <body className={`${fontVars} font-sans antialiased min-h-screen flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
         </ThemeProvider>

@@ -4,65 +4,67 @@
 
 @layer base {
   :root {
-    --background: 220 33% 98%;
-    --foreground: 0 0% 10%;
+    /* v2 — LIGHT theme (warm editorial paper + #FB460D accent) */
+    --background: 40 24% 96%;
+    --foreground: 0 0% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 0 0% 4%;
 
-    --primary: 220 100% 59%;
+    --primary: 14 96% 52%; /* accent #FB460D */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 12 100% 54%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 40 14% 90%;
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 220 10% 90%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 40 14% 91%;
+    --muted-foreground: 0 0% 38%;
 
-    --accent: 12 100% 54%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 40 16% 92%;
+    --accent-foreground: 0 0% 10%;
 
-    --destructive: 0 100% 50%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 220 100% 59%;
+    --border: 40 12% 87%;
+    --input: 40 12% 87%;
+    --ring: 14 96% 52%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem; /* 10px */
   }
 
   .dark {
-    --background: 0 0% 10%;
-    --foreground: 220 33% 98%;
+    /* v2 — DARK theme (near-black editorial, portfolie-inspired) */
+    --background: 0 0% 5%;
+    --foreground: 0 0% 96%;
 
-    --card: 0 0% 15%;
-    --card-foreground: 220 33% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 15%;
-    --popover-foreground: 220 33% 98%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 220 100% 59%;
+    --primary: 14 96% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 12 100% 54%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 12 100% 54%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 96%;
 
-    --destructive: 0 100% 50%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 220 100% 59%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 14 96% 52%;
   }
 }
 
@@ -76,7 +78,47 @@
    See docs/redesign/LOG.md + TODO.md.
 ═══════════════════════════════════════════════════════════════ */
 .v1-scope {
-  --v1-scope: 1; /* marker only; populate frozen v1 token values in Phase 3 */
+  /* Frozen v1 LIGHT tokens — identical to the original :root palette.
+     primary/secondary were hardcoded hexes in tailwind; as HSL triplets they
+     reproduce #2F70FF / #FF6B4A (≤1–3/255 rounding, imperceptible). */
+  --background: 220 33% 98%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 221 100% 59%; /* #2F70FF */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 11 100% 65%; /* #FF6B4A */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 10% 90%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 12 100% 54%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 90%;
+  --input: 220 13% 90%;
+  --ring: 220 100% 59%;
+  --radius: 0.5rem;
+}
+
+.dark .v1-scope {
+  /* Frozen v1 DARK tokens — identical to the original .dark palette. */
+  --background: 0 0% 10%;
+  --foreground: 220 33% 98%;
+  --card: 0 0% 15%;
+  --card-foreground: 220 33% 98%;
+  --popover: 0 0% 15%;
+  --popover-foreground: 220 33% 98%;
+  --primary: 221 100% 59%;
+  --secondary: 11 100% 65%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 12 100% 54%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 220 100% 59%;
 }
 
 @layer base {

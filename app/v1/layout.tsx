@@ -22,7 +22,9 @@ export const metadata: Metadata = {
 export default function V1Layout({ children }: { children: React.ReactNode }) {
   return (
     <BasePathProvider base="/v1">
-      <div className="v1-scope">{children}</div>
+      {/* bg-background + min-h-screen so the FROZEN v1 background paints behind
+          transparent v1 sections (the shared <body> uses the v2 palette). */}
+      <div className="v1-scope bg-background min-h-screen">{children}</div>
     </BasePathProvider>
   )
 }
