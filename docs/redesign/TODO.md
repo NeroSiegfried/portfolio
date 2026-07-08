@@ -31,7 +31,11 @@ Goal: current design fully browsable + functional at `/v1`, sharing DB/auth/APIs
 - [ ] (Deferred to Phase 5) add a small "back to current site" affordance on /v1
 
 ## Phase 2 — Template analysis → DESIGN SPEC  (ends at owner sign-off)
-Tooling: Puppeteer script → screenshot each page at 3 viewports (mobile 390, tablet 834, desktop 1440) + dump computed styles/tokens. Save artifacts under scratchpad; write findings into `DESIGN-SPEC.md`.
+Tooling (breakpoint-driven, per owner guidance): FIRST extract each template's REAL breakpoints from its inline `@media` rules (Framer inlines all CSS — no external stylesheets), THEN render/screenshot + dump computed styles at widths just below/above each real breakpoint. Save artifacts under scratchpad; write findings into `DESIGN-SPEC.md`.
+Confirmed real breakpoints (from inline CSS):
+- **portfolie**: ≤809 (phone) · 810–1199 (tablet) · 1200–1439 (desktop) · ≥1440 (large desktop)  → capture at 375, 809, 810, 1199, 1200, 1439, 1440
+- **reado-wbs**: ≤809 (phone) · 810–1199 (tablet) · ≥1200 (desktop)  → capture at 375, 809, 810, 1199, 1200, 1440
+- Other templates: extract their own breakpoints the same way before capturing.
 Portfolio templates (primary = **portfolie**):
 - [ ] portfolie.framer.website  (PRIMARY)
 - [ ] portfoliod.framer.website

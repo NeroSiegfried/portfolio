@@ -58,3 +58,15 @@ Instead of physically copying ~20 components into `components/v1/`, I used a **`
 ### Next
 - Commit + push Phase 1 → verify Vercel preview (desktop + mobile).
 - Phase 2: template analysis with Puppeteer → `DESIGN-SPEC.md` → **owner sign-off** before building.
+
+## 2026-07-08 — Session 1 (cont.): preview deploy + Phase 2 methodology
+
+### Vercel / production host finding
+- Git push to `redesign/v2` did NOT auto-create a Vercel deployment; latest Vercel deploy is 29 days old. Combined with `amplify.yml` + "Analytics no-op on Amplify" comment, **production (nerosiegfried.com) likely runs on AWS Amplify**, with Vercel git auto-deploy dormant. RESOLVE the production-host question before the Phase 6 merge (does merging main deploy to Amplify? Is the plan to move to Vercel?).
+- Vercel CLI is authed as `nerosiegfried`. Created a manual PREVIEW deploy (not prod): **https://portfolio-joxgbsagj-nerosiegfrieds-projects.vercel.app** (`/v1` = v1 portfolio). All routes 200, build OK.
+- Preview is behind **Vercel Deployment Protection** (Vercel Authentication) → raw URL shows "Login – Vercel" to anyone not signed into the account. Owner can view in-browser. Offered to disable preview protection for a public link (awaiting owner).
+
+### Phase 2 methodology (owner guidance: use CSS breakpoints, not fixed viewports)
+- Framer templates inline ALL CSS (no external stylesheets), so real breakpoints are grep-able from the page HTML `@media` rules.
+- Confirmed breakpoints — portfolie: 809/810, 1199/1200, 1439/1440 (4 tiers). reado-wbs: 809/810, 1199/1200 (3 tiers). Will extract each other template's own breakpoints before capturing.
+- Plan: extract breakpoints → render + dump computed styles/screenshots at widths straddling each real breakpoint → write `DESIGN-SPEC.md`.
