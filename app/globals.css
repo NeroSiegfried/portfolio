@@ -541,3 +541,31 @@
     animation: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   V2 (redesign) — shared utilities
+═══════════════════════════════════════════════════════════════ */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Grid-rows accordion (0fr → 1fr) driven by data-open, not inline style. */
+.v2-accordion {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.35s ease, opacity 0.35s ease;
+}
+.v2-accordion[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.v2-accordion > div { overflow: hidden; min-height: 0; }
+
+/* Infinite marquee track (tech strip). Width/px set by the component. */
+.v2-marquee { display: flex; width: max-content; animation: v2-marquee-scroll 40s linear infinite; }
+.v2-marquee:hover { animation-play-state: paused; }
+@keyframes v2-marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) { .v2-marquee { animation: none; } }

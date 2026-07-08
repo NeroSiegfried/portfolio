@@ -86,3 +86,28 @@ Instead of physically copying ~20 components into `components/v1/`, I used a **`
 - Build NEW components under `components/v2/` (portfolio) + new blog components; DO NOT edit the existing section components (they are the frozen v1 library used by /v1).
 - **Freeze v1 tokens NOW:** when changing `:root`/`.dark` in globals.css to the v2 palette, pin the CURRENT values under `.v1-scope` / `.dark .v1-scope`. Also convert tailwind `primary`/`secondary` (currently hardcoded hexes `#2F70FF`/`#FF6B4A`) to `hsl(var(--x)/<alpha-value>)` and set vars to match those hexes exactly, so `.v1-scope` can override them. Verify /v1 visually unchanged after.
 - Preserve custom classes v1 uses (device frames, footer-pattern, theme-toggle, btn-show-*, animate-carousel).
+
+## 2026-07-08 — Session 1 (cont.): Phase 3 — token foundation + v2 portfolio
+
+### Token foundation + v1 freeze (verified)
+- globals.css: v2 light (warm paper `40 24% 96%`) + dark (`0 0% 5%`) palettes, accent `--primary: 14 96% 52%` (#FB460D), radius 0.625rem. Frozen v1 tokens pinned under `.v1-scope` / `.dark .v1-scope` (incl. `--primary 221 100% 59%` = #2F70FF, `--secondary 11 100% 65%` = #FF6B4A, radius 0.5rem).
+- tailwind: `primary`/`secondary` → `hsl(var(--x)/<alpha-value>)` (were hardcoded hexes) so `.v1-scope` can override; left other semantic tokens in their original `hsl(var(--x))` format so v1 opacity-modifier behavior is unchanged (pixel-identical). Added `fontFamily` (sans/display/serif/mono) + xl/2xl radii.
+- Fonts: Inter (body, `--font-sans`), Inter Tight (`--font-display`), Nanum Myeongjo (`--font-serif`), Geist Mono (`--font-mono`) via next/font/google (self-hosted → CSP fine).
+- **v1 body-bg leak fix:** `<body>` (shared) uses v2 tokens and is an ancestor of `.v1-scope`, so transparent v1 sections showed the v2 bg. Fix: `.v1-scope` wrapper now has `bg-background min-h-screen`, painting the frozen v1 bg. Verified: on /v1 `.v1-scope` computed bg = rgb(26,26,26), `--primary` = 221 100% 59%. Colors identical to pre-change Vercel baseline.
+
+### v2 portfolio built (components/v2/*)
+- `lib/portfolio-data.ts`: projects (copied from v1, untouched), technologies, stats, services, faqs.
+- `components/v2/device-showcase.tsx`: WebPreview/PicturePreview + 4 device frames ported verbatim from v1 (token-independent; frame CSS shared in globals). Inline styles here are the allowed computed-geometry (ResizeObserver scale) case only.
+- Sections: primitives (Eyebrow/SectionHead), mode-toggle (minimal v2), site-nav (scroll-aware), hero (clamp display 3→9.5rem), stats, about (statement + headshot), services (accent-bullet list, no boxes), projects (editorial list → accordion into device showcase, `.v2-accordion` data-open), tech-stack (`.v2-marquee`), latest-posts (server-fed 3 posts, serif titles), faq, contact (→ /api/contact), footer (+ "View previous site (v1)" link → /v1).
+- `app/page.tsx`: async server component; fetches 3 latest published posts (try/catch → [] fallback); composes v2 sections; `revalidate=60`.
+- `next.config`: added `cdn.jsdelivr.net` to image remotePatterns (some tech logos; also fixes latent v1 image issue).
+
+### Verified (dev server :3941)
+- `/` 200, no compile errors. Desktop dark+light + mobile 375 screenshots look editorial/on-spec (oversized tight Inter Tight hero, mono eyebrows, orange #FB460D accent, device showcase intact, warm-paper light / near-black dark). Latest-posts strip loads real posts (Computer Systems, Derivian, Stitch Bloom). `whileInView` cards appear gray in screenshots (caught pre-reveal) but load correctly.
+
+### Convention going forward
+- v2 components live in `components/v2/*`; existing top-level section components remain the FROZEN v1 library (do not edit their look). Shared: `components/ui/*`, `lib/blog/*`, device-frame + custom CSS in globals.
+
+### Next
+- Commit + push + CLI preview deploy → owner review of portfolio.
+- Then Phase 4: blog redesign (reado-style, serif titles, preserve snippets/comments/series). Then Phase 5 QA/redirects, Phase 6 ship.

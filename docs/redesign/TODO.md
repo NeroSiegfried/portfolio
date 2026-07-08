@@ -57,14 +57,16 @@ Deliverables in `DESIGN-SPEC.md`:
 
 ## Phase 3 — Build redesign: shared system + portfolio
 Convention: NEW components under `components/v2/`; reuse `components/ui/*`; do NOT edit existing section components (they are v1). No inline static styles.
-- [ ] Token foundation: rewrite `:root`/`.dark` in globals.css to v2 palette (light warm paper / dark near-black, accent #FB460D)
-- [ ] **Freeze v1 first:** pin current tokens under `.v1-scope`/`.dark .v1-scope`; convert tailwind `primary`/`secondary` hexes → `hsl(var(--x)/<alpha-value>)`; verify /v1 unchanged
-- [ ] Fonts via next/font: Inter Tight (display), Nanum Myeongjo (serif), Geist Mono (labels), body sans; wire CSS vars; update CSP font-src if needed
-- [ ] Component CSS files / Tailwind layers (separation of concerns; no inline static styles)
-- [ ] Portfolio v2 sections: nav · hero (oversized tight, theme-aware) · stats row · about statement · "What I do" list · projects + device showcase · tech stack · "Latest from blog" strip · FAQ accordion · contact + footer CTA
-- [ ] Swap `app/page.tsx` to render v2 components
-- [ ] Responsive pass at real breakpoints (809/1199/1439) + motion/interactions + reduced-motion
-- [ ] Commit + push → CLI preview deploy → verify desktop + mobile + light/dark
+- [x] Token foundation: v2 palette in `:root`/`.dark` (warm paper / near-black, accent #FB460D)
+- [x] **Froze v1:** tokens pinned under `.v1-scope`/`.dark .v1-scope`; tailwind primary/secondary → `hsl(var(--x)/<alpha-value>)`; verified /v1 pixel-identical (`.v1-scope` bg rgb(26), primary #2F70FF)
+- [x] Fonts via next/font: Inter Tight (display), Nanum Myeongjo (serif), Geist Mono (labels), Inter (body); `--font-*` vars; CSP unaffected (self-hosted)
+- [x] v2 utility CSS in globals (`.v2-accordion` data-open, `.v2-marquee`, smooth-scroll) — no inline static styles
+- [x] Portfolio v2 sections (components/v2/*): site-nav · hero · stats · about · services · projects (device showcase reused) · tech-stack · latest-posts · faq · contact · footer
+- [x] `lib/portfolio-data.ts` (projects/tech/stats/services/faqs); `next.config` allow cdn.jsdelivr.net for logos
+- [x] Swapped `app/page.tsx` to v2 (async, fetches 3 latest posts for the strip)
+- [x] Verified on dev server: `/` 200, no errors; desktop dark+light + mobile captured; latest posts load; device showcase works
+- [ ] Commit + push → CLI preview deploy → owner review
+- [ ] Polish pass after review (marquee gaps, motion reveal timing, a11y)
 
 ## Phase 4 — Build redesign: blog
 - [ ] Rebuild blog index (reado-style) + post page + series + features
