@@ -1,0 +1,129 @@
+# Redesign v2 — Design Spec
+
+> **STATUS: READY FOR OWNER REVIEW — sign-off required before any redesign code (Phase 3).**
+> All 10 templates analyzed (2 primaries in depth + 7 secondaries + computed tokens for all). Screenshots in scratchpad `screens/<name>/`; re-capture anytime with `node scripts/redesign-capture.mjs <url> <name> <widths>`.
+> Method: real breakpoints read from each template's inline `@media` CSS; Puppeteer renders + extracts computed styles (fonts, type scale, colors, radii) at widths straddling each breakpoint; screenshots reviewed at desktop + mobile. Capture tool: `scripts/redesign-capture.mjs`.
+
+---
+
+## 0. The central design decision (needs your call)
+
+The two primaries have **opposite moods**, so "unify portfolio + blog" needs a deliberate bridge:
+
+| | **portfolie** (portfolio primary) | **reado** (blog primary) |
+|---|---|---|
+| Mood | Dark, bold, editorial/agency | Light, calm, editorial/magazine |
+| Background | Black `#000` (alternating black/white sections) | Warm paper gray `#E9E9E9` + white cards |
+| Headings | **Inter Display**, 500, HUGE + ultra-tight (lh 1.0, ls −6%) | **Nanum Myeongjo** (serif), 700, lh 1.2 |
+| Body/labels | **Geist** + **Geist Mono** micro-labels | **Switzer** sans |
+| Accent | Hot orange-red `#FB460D` | Mostly monochrome + subtle warm gold `#F0BF75` |
+| Shape | Sharp, low radius (8–11px) | Rounded, pills (radius up to 50px) |
+| Boxes | Avoided (lists + imagery); boxes only for pricing | Card-grid (tasteful image cards) |
+
+**Recommended bridge (Option A):** one shared type system + spacing + accent, but let *surface* differ by section purpose:
+- **Portfolio (`/`)** leans portfolie: dark hero, oversized tight display headline, mono eyebrow labels, list-based sections, hot accent, big project imagery (your device showcase fits here).
+- **Blog (`/blog`)** leans reado: light reading surface, serif headline option, card grid, pills for series/tags.
+- **Shared tokens** so they feel like one brand: same accent, same body sans, same spacing scale, same nav/footer system, and a display face used in both (portfolio big/tight; blog can pair a serif for article titles).
+
+Other options to consider:
+- **Option B — all dark (portfolie everywhere):** blog also dark/editorial. Most cohesive, but long-form reading on black is harder.
+- **Option C — all light (reado everywhere):** portfolio also light/serif-magazine. Calmer, but loses portfolie's punch.
+
+Also to decide: **accent color** — adopt portfolie's `#FB460D`, keep your current blue `#2F70FF` / orange `#FF6B4A`, or a new pick. (Your current brand is blue+orange; portfolie is orange-red.)
+
+➡️ **These are the main sign-off questions.** Everything below recreates the template patterns; the palette/mood choice above steers which surface each gets.
+
+---
+
+## 1. PRIMARY — portfolie (portfolio)  ·  https://portfolie.framer.website/
+Real breakpoints (from inline CSS): **≤809 / 810–1199 / 1200–1439 / ≥1440** (4 tiers).
+
+### Tokens (extracted, computed)
+- **Fonts:** Inter Display (headings, w500); Geist Mono (eyebrow/micro labels + some body, w400); Geist (sans body); PP Neue Montreal Medium (minor).
+- **Type scale (fluid by tier):** H1 84px→105px→176px, lh = 1.0, letter-spacing ≈ −6% (−5px→−10.6px). H2 19→24→30px (ls −1px, w400). Section H3 47px w500. Body/labels Geist Mono 12–16px, lh 24px, ls −0.2px. Small labels 12–14px.
+- **Colors:** bg black `#000`; sections alternate black/white; text black on white, white on black; **accent `#FB460D`** (orange-red); muted gray `#666`, `rgba(255,255,255,.6)`.
+- **Radii:** 8–11px (sharp). **Boxes:** avoided except pricing cards.
+
+### Layout (desktop → mobile)
+1. **Hero** — full-bleed image, minimal top nav, giant tight headline bottom-left over image, Geist Mono sub-line, CTA buttons ("Book a Call"). Mobile: headline wraps 3 lines, buttons stack.
+2. **About statement** — one large paragraph (white bg) + grayscale **logo cloud** ("top companies"). Eyebrow "About Us" top-left / "Portfolio" top-right.
+3. **Services** — mono eyebrow, 3-col list of services, each = **orange bullet marker + title + mono description** (no boxes). Mobile: 1 col.
+4. **Work** ("The Sh\*t we've Done") — dark section; left small **thumbnail selector**, right large **stacked project images**; "View all projects". Mobile: thumbs row + stacked images.
+5. **Pricing** — two cards (white "Active" + dark "Elevated" w/ orange CTA), feature lists, scarcity line. Mobile: stack.
+6. **FAQ** — accordion (+ toggles).
+7. **Testimonials** — table-like **two-column list** (star rating + name + quote), no boxes.
+8. **Footer** — big "Let's Work" CTA, nav + contact columns, large wordmark.
+
+Pattern signature: eyebrow-label top-left / section-label top-right, hairline dividers, alternating black/white, one hot accent, big imagery, minimal boxes.
+
+---
+
+## 2. PRIMARY — reado (blog)  ·  https://reado-wbs.framer.website/
+Real breakpoints: **≤809 / 810–1199 / ≥1200** (3 tiers).
+
+### Tokens (extracted)
+- **Fonts:** Nanum Myeongjo (serif headings, w700); Switzer (sans body/UI, w500); Geist (minor).
+- **Type scale:** H1 60px serif w700 lh 72px; H2/H3 20px serif w700; body Switzer 13–18px; scale 60/50/40/30/24/20/18/16/13.
+- **Colors:** bg warm gray `#E9E9E9`; white cards; black `#000` (footer/"Watch" section, wordmark); muted `#2F2F2F`, `#A3A3A3`; subtle warm gold accent `#F0BF75`.
+- **Radii:** pills/rounded — **50px** (tags/buttons), plus 6–11px cards.
+
+### Layout (desktop → mobile)
+1. **Top nav** — logo left, center links (Home/Blog/Podcast/Search), "Subscribe" pill right.
+2. **Masthead** — huge display wordmark ("READO") full-width + **category bar** (Health/Business/… with separators).
+3. **Hero row** — left: serif headline + newsletter signup (dashed box) + email input; right: **featured post card** (image + category pill + title + author).
+4. **Recent posts** — heading + "View all" pill; **3-col post-card grid** (image, category pill, serif title, author + read-time). Mobile: 2-up small cards.
+5. **Editor's choice** — full-width feature image w/ overlaid title.
+6. **Watch** — dark section, featured video + 3-col video cards. *(Repurpose for interactive snippet showcases.)*
+7. **Mission quote** — centered portrait + statement + attribution.
+8. **Discover more** — mixed multi-column card layout + ad slot.
+9. **Podcasts** — 2-col media cards w/ cover + play. *(Optional / repurpose.)*
+10. **Footer** — dark, wordmark + newsletter + Pages/Categories/Socials columns.
+
+Cards used, but tasteful (image-led, minimal chrome, rounded). Maps directly to your blog post list, series/tags (category bar + pills), featured post, and archive.
+
+---
+
+## 3. SECONDARY templates — findings + patterns worth borrowing
+
+### Portfolio secondaries
+- **portfoliod** (dark; Switzer + Clash Display; h1 80px/700 tight): closest cousin to portfolie. **Borrow:** numbered sections (01–05), a **stats row** ("4+ years / projects / awards"), **device mockups shown on real surfaces** (aligns with your device showcase), client-logo strip, big email-address CTA.
+- **banter** (white; **Anton** ultra-display 146px; Roboto Mono labels; photography): **Borrow:** **year-anchored gallery** (large year numerals between image clusters), awards **table**, restrained whitespace, huge wordmark + script-signature footer.
+- **portfoliob** (light `#F7F7F7`; Sora 80px/800; sharp radii): **Borrow:** services-with-imagery rows, and a **"Latest Insights" blog-teaser strip on the portfolio home** → a clean bridge that surfaces your blog from the portfolio.
+
+### Blog secondaries
+- **narrate** (light gray; **Nanum Myeongjo serif**; lime accent) — reinforces reado. **Borrow:** centered serif hero, **horizontal 2-col post cards** (image + serif title + pill tag + author avatar + date), lime newsletter CTA band, serif wordmark footer.
+- **reflect** (warm paper `#E9E4D8`; big sans caps; red accent `#FF4747`; pill tags): **Borrow:** hairline-topped cards, featured post + 2-col grid, full-width red inbox CTA band.
+- **narric** (white; content-platform; 3D icons): **Borrow:** **"/ SECTION" slash labels**, a **stats bar** (categories/topics/articles counts), tag-in-parens metadata `(Writing)(SEO)`, "Top Authors" row.
+- **presshub** (white; Inter; colorful): news-magazine, more boxes. **Borrow:** **category tile grid**, 3-col featured cards, "get to know us" about block. (Boxier than your taste — use sparingly.)
+
+### Convergence
+Blog templates strongly agree: light/warm surface, large editorial headings (serif *or* big sans), **pill tags**, image-led **card grid**, featured/editor's-choice, newsletter/CTA band, multi-column footer. Portfolio templates: eyebrow/section labels, hairline dividers, big imagery, minimal boxes, one hot accent, huge wordmark footer; dark (portfolie/portfoliod) vs light (portfoliob/banter).
+
+---
+
+## 4. Feature preservation (must survive the redesign)
+- **Responsive device showcase** (MacBook/Studio/iPad/iPhone) → lives in the portfolio **Work** section; the big-imagery slot in portfolie is the natural frame.
+- **Interactive snippets w/ session pass-through** → embedded in blog posts (as today) and optionally a blog-index "showcase" strip in the reado "Watch/Podcasts" slot.
+- **Blog slugs, series, comments, votes, admin** → unchanged data/behavior; only presentation changes.
+
+## 5. Component → source mapping (draft; finalize after secondaries)
+| Your section | Template pattern | Source |
+|---|---|---|
+| Portfolio nav | minimal top bar + accent CTA | portfolie |
+| Portfolio hero | full-bleed + oversized tight headline | portfolie |
+| About | large statement paragraph (+ optional logos) | portfolie |
+| Tech stack | mono service-list style OR logo cloud | portfolie (adapt current carousel) |
+| Projects + device showcase | Work: thumbnail selector + big imagery | portfolie |
+| Contact | footer "Let's Work" CTA + form | portfolie footer |
+| Blog index | masthead + category bar + post-card grid + featured | reado |
+| Blog post | serif title + Switzer body reading column; snippets inline | reado + current |
+| Series/tags | category bar + pills | reado |
+
+---
+
+## Open questions for sign-off
+1. **Mood/bridge:** Option A (dark portfolio / light blog, shared tokens) vs B (all dark) vs C (all light)?
+2. **Accent color:** `#FB460D` (portfolie) / keep blue+orange / other?
+3. **Type:** adopt Inter Display + Geist/Geist Mono (portfolio) and a serif (Nanum Myeongjo or similar) for blog titles? Or unify on one display face?
+4. Blog "Watch/Podcasts" slots → use for interactive **snippet showcases**, or drop?
+5. Keep portfolie's pricing/testimonials sections? (You may not want pricing on a personal portfolio — likely replace with something like "Experience"/"Now".)

@@ -37,23 +37,23 @@ Confirmed real breakpoints (from inline CSS):
 - **reado-wbs**: ≤809 (phone) · 810–1199 (tablet) · ≥1200 (desktop)  → capture at 375, 809, 810, 1199, 1200, 1440
 - Other templates: extract their own breakpoints the same way before capturing.
 Portfolio templates (primary = **portfolie**):
-- [ ] portfolie.framer.website  (PRIMARY)
-- [ ] portfoliod.framer.website
-- [ ] banter.framer.website
-- [ ] portfoliob.framer.website
+- [x] portfolie.framer.website  (PRIMARY — deep: tokens + desktop + mobile)
+- [x] portfoliod.framer.website  (tokens + desktop)
+- [x] banter.framer.website  (tokens + desktop)
+- [x] portfoliob.framer.website  (tokens + desktop)
 Blog templates (primary = **reado**):
-- [ ] reado-wbs.framer.website  (PRIMARY)
-- [ ] narric.framer.website
-- [ ] narrate-template.framer.website
-- [ ] reflect-template.framer.website
-- [ ] press-hub-blog.framer.website
+- [x] reado-wbs.framer.website  (PRIMARY — deep: tokens + desktop + mobile)
+- [x] narric.framer.website  (tokens + desktop)
+- [x] narrate-template.framer.website  (tokens + desktop)
+- [x] reflect-template.framer.website  (tokens + desktop)
+- [x] press-hub-blog.framer.website  (tokens + desktop)
 Deliverables in `DESIGN-SPEC.md`:
-- [ ] Per-template: layout, sections, type scale, color, spacing, motion, components, responsive behavior (with screenshots)
-- [ ] Harmonized design system (tokens: type scale, color, spacing, radius, shadows, motion) unifying portfolio + blog
-- [ ] Component-by-component mapping: which template pattern → which of my sections; how current content fits
-- [ ] Where content is missing for a template section → proposed handling
-- [ ] Plan for keeping device-showcase + snippet features within the new look
-- [ ] **[!] Owner sign-off on DESIGN-SPEC.md**
+- [x] Per-template: layout, sections, type scale, color, radii, components, responsive (data-extracted + screenshots)
+- [x] Central design decision framed (mood bridge, accent, type) — see spec §0
+- [x] Component-by-component mapping (draft) — spec §5
+- [x] Plan for keeping device-showcase + snippet features — spec §4
+- [ ] **[!] Owner sign-off on DESIGN-SPEC.md** (§0 + Open Questions) — IN REVIEW
+- [ ] After sign-off: finalize harmonized token system + finalize mapping
 
 ## Phase 3 — Build redesign: shared system + portfolio
 - [ ] Implement harmonized tokens (globals.css vars + tailwind config), fonts, dark mode
