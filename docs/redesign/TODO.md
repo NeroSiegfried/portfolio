@@ -52,15 +52,19 @@ Deliverables in `DESIGN-SPEC.md`:
 - [x] Central design decision framed (mood bridge, accent, type) — see spec §0
 - [x] Component-by-component mapping (draft) — spec §5
 - [x] Plan for keeping device-showcase + snippet features — spec §4
-- [ ] **[!] Owner sign-off on DESIGN-SPEC.md** (§0 + Open Questions) — IN REVIEW
-- [ ] After sign-off: finalize harmonized token system + finalize mapping
+- [x] **Owner sign-off on DESIGN-SPEC.md** ✅ (2026-07-08: unified light+dark both sections · accent #FB460D · Inter Tight display + Nanum Myeongjo serif blog + Geist Mono labels · portfolio adds stats/what-I-do/latest-blog/FAQ, drop pricing+testimonials)
+- [x] Finalized harmonized token system (light+dark palettes) recorded in spec
 
 ## Phase 3 — Build redesign: shared system + portfolio
-- [ ] Implement harmonized tokens (globals.css vars + tailwind config), fonts, dark mode
-- [ ] Global CSS layer / component CSS files (no inline static styles)
-- [ ] Rebuild portfolio sections per spec (nav, hero, about, projects+device showcase, tech, contact, footer)
-- [ ] Responsive pass at 3 viewports; motion/interactions
-- [ ] Commit + push → verify preview
+Convention: NEW components under `components/v2/`; reuse `components/ui/*`; do NOT edit existing section components (they are v1). No inline static styles.
+- [ ] Token foundation: rewrite `:root`/`.dark` in globals.css to v2 palette (light warm paper / dark near-black, accent #FB460D)
+- [ ] **Freeze v1 first:** pin current tokens under `.v1-scope`/`.dark .v1-scope`; convert tailwind `primary`/`secondary` hexes → `hsl(var(--x)/<alpha-value>)`; verify /v1 unchanged
+- [ ] Fonts via next/font: Inter Tight (display), Nanum Myeongjo (serif), Geist Mono (labels), body sans; wire CSS vars; update CSP font-src if needed
+- [ ] Component CSS files / Tailwind layers (separation of concerns; no inline static styles)
+- [ ] Portfolio v2 sections: nav · hero (oversized tight, theme-aware) · stats row · about statement · "What I do" list · projects + device showcase · tech stack · "Latest from blog" strip · FAQ accordion · contact + footer CTA
+- [ ] Swap `app/page.tsx` to render v2 components
+- [ ] Responsive pass at real breakpoints (809/1199/1439) + motion/interactions + reduced-motion
+- [ ] Commit + push → CLI preview deploy → verify desktop + mobile + light/dark
 
 ## Phase 4 — Build redesign: blog
 - [ ] Rebuild blog index (reado-style) + post page + series + features

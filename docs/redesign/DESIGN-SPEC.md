@@ -6,7 +6,23 @@
 
 ---
 
-## 0. The central design decision (needs your call)
+## ✅ SIGNED OFF (2026-07-08) — build to these
+
+- **Mood:** ONE consistent theme system across portfolio AND blog, with **light + dark** modes (existing theme toggle drives both). Dark = portfolie-editorial (near-black surface, white display headlines, hot accent); Light = warm editorial (paper surface, dark headlines). Same tokens both sections — NOT split dark/light by section.
+- **Accent:** `#FB460D` (orange-red), both modes.
+- **Type:** Display headings = **Inter Tight** (oversized, tight tracking, à la portfolie's Inter Display); **blog article/section titles = Nanum Myeongjo (serif)**; eyebrow/micro-labels = **Geist Mono**; body = clean sans (Inter/Geist Sans).
+- **Portfolio sections:** hero · stats row · about · "What I do" (services list, no boxes) · projects + device showcase · tech stack · "Latest from the blog" strip · FAQ · contact/footer CTA. **Drop pricing + testimonials.**
+- **Blog:** reado-style (masthead + series/category bar + featured + post-card grid + archive) with serif titles; snippets preserved inline + optional index "showcase" strip; comments/votes/series/admin unchanged.
+
+### Harmonized token system (finalized — v2)
+Light theme: bg warm paper `#F6F5F2`, surface/card `#FFFFFF`, text `#0A0A0A`, muted `#6B6B6B`, border `#E5E3DD`, accent `#FB460D`.
+Dark theme: bg `#0D0D0D`, surface/card `#161616`, text `#F5F5F5`, muted `#A1A1A1`, border `#262626`, accent `#FB460D`.
+Radii: base `10px`; cards `12–16px`; pills/tags `9999px`. Type scale (fluid via clamp): display 3.5→7rem (portfolio hero), h1 2.5→3.5rem, h2 2→2.5rem, h3 1.5rem, body 1–1.125rem, label 0.75rem mono uppercase. Section rhythm: `py` ~5–8rem; container max ~1200–1280px with occasional full-bleed.
+Fonts (loading plan): `next/font` — Inter Tight (display), Nanum Myeongjo (serif), Geist Mono (labels), Inter or Geist Sans (body). Update CSP/font-src if self-hosted.
+
+---
+
+## 0. The central design decision (RESOLVED above — kept for reference)
 
 The two primaries have **opposite moods**, so "unify portfolio + blog" needs a deliberate bridge:
 

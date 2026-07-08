@@ -70,3 +70,19 @@ Instead of physically copying ~20 components into `components/v1/`, I used a **`
 - Framer templates inline ALL CSS (no external stylesheets), so real breakpoints are grep-able from the page HTML `@media` rules.
 - Confirmed breakpoints — portfolie: 809/810, 1199/1200, 1439/1440 (4 tiers). reado-wbs: 809/810, 1199/1200 (3 tiers). Will extract each other template's own breakpoints before capturing.
 - Plan: extract breakpoints → render + dump computed styles/screenshots at widths straddling each real breakpoint → write `DESIGN-SPEC.md`.
+
+## 2026-07-08 — Session 1 (cont.): Phase 2 complete + SIGN-OFF
+
+- Analyzed all 10 templates (primaries portfolie/reado deep; 7 secondaries + tokens). `DESIGN-SPEC.md` written; capture tool saved to `scripts/redesign-capture.mjs`; screenshots in scratchpad `screens/`.
+- Made the Vercel preview PUBLIC (disabled `ssoProtection` via API). Confirmed production is **Vercel** (not Amplify) per owner; will do CLI preview deploys per milestone (git auto-deploy dormant).
+- **Owner sign-off decisions** (see DESIGN-SPEC "SIGNED OFF" block):
+  1. Mood: ONE theme system for both sections, **light + dark** modes, consistent (NOT split dark-portfolio/light-blog). Dark = portfolie look; light = warm editorial.
+  2. Accent `#FB460D`.
+  3. Type: Inter Tight display + Nanum Myeongjo serif (blog titles) + Geist Mono labels + sans body.
+  4. Portfolio sections: core + stats + "What I do" + "Latest from blog" + FAQ; drop pricing/testimonials.
+- Finalized token palettes (light+dark) recorded in spec.
+
+### Phase 3 kickoff notes (important)
+- Build NEW components under `components/v2/` (portfolio) + new blog components; DO NOT edit the existing section components (they are the frozen v1 library used by /v1).
+- **Freeze v1 tokens NOW:** when changing `:root`/`.dark` in globals.css to the v2 palette, pin the CURRENT values under `.v1-scope` / `.dark .v1-scope`. Also convert tailwind `primary`/`secondary` (currently hardcoded hexes `#2F70FF`/`#FF6B4A`) to `hsl(var(--x)/<alpha-value>)` and set vars to match those hexes exactly, so `.v1-scope` can override them. Verify /v1 visually unchanged after.
+- Preserve custom classes v1 uses (device frames, footer-pattern, theme-toggle, btn-show-*, animate-carousel).
