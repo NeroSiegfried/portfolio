@@ -673,6 +673,10 @@ button:hover .v2-slide > span { transform: translateY(-100%); }
 .v2-arrow__i--2 { transform: translate(-100%, 100%); }
 a:hover .v2-arrow__i--1, button:hover .v2-arrow__i--1, .group:hover .v2-arrow__i--1 { transform: translate(100%, -100%); }
 a:hover .v2-arrow__i--2, button:hover .v2-arrow__i--2, .group:hover .v2-arrow__i--2 { transform: translate(0, 0); }
+/* Back/left variant: the arrow slides out to the left, a copy slides in from the right. */
+.v2-arrow--left .v2-arrow__i--2 { transform: translate(100%, 0); }
+a:hover .v2-arrow--left .v2-arrow__i--1, button:hover .v2-arrow--left .v2-arrow__i--1, .group:hover .v2-arrow--left .v2-arrow__i--1 { transform: translate(-100%, 0); }
+a:hover .v2-arrow--left .v2-arrow__i--2, button:hover .v2-arrow--left .v2-arrow__i--2, .group:hover .v2-arrow--left .v2-arrow__i--2 { transform: translate(0, 0); }
 @media (prefers-reduced-motion: reduce) { .v2-arrow__i { transition: none; } }
 
 /* Footer wordmark scales to its own container width (cqw), not the viewport. */
@@ -705,7 +709,7 @@ a:hover .v2-arrow__i--2, button:hover .v2-arrow__i--2, .group:hover .v2-arrow__i
 /* Page-transition wipe: covers the viewport then retracts top→bottom (origin bottom). */
 .v2-page-wipe {
   position: fixed; inset: 0; z-index: 100; pointer-events: none;
-  background: hsl(var(--primary)); transform-origin: bottom;
+  background: hsl(var(--background)); transform-origin: bottom;
 }
 @media (prefers-reduced-motion: reduce) { .v2-page-wipe { display: none; } }
 

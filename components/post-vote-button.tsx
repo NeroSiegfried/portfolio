@@ -75,13 +75,16 @@ export default function PostVoteButton({
   }
 
   return (
-    <div>
+    // `relative` so the error sits absolutely below the button and doesn't add
+    // height — otherwise this block would be taller than the sibling Live/Repo
+    // box and `items-center` in the header row would misalign them.
+    <div className="relative inline-flex">
       <button
         type="button"
         onClick={vote}
         disabled={isPending}
         className={[
-          "group inline-flex items-center gap-2.5 border px-3.5 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors disabled:opacity-50",
+          "group inline-flex items-center gap-2.5 border px-3.5 py-2.5 font-mono text-xs uppercase tracking-[0.12em] transition-colors disabled:opacity-50",
           voted
             ? "border-primary/60 bg-primary/10 text-primary"
             : "border-border text-muted-foreground hover:border-primary hover:text-primary",
@@ -91,10 +94,9 @@ export default function PostVoteButton({
         <span>{voted ? "Upvoted" : "Upvote"}</span>
         <span className="border-l border-border pl-2.5 tabular-nums">{score}</span>
       </button>
-      {/* Fixed height to prevent layout shift */}
-      <div className="mt-1.5 h-4">
-        {error && <p className="font-mono text-[0.7rem] text-muted-foreground">{error}</p>}
-      </div>
+      {error && (
+        <p className="absolute left-0 top-full mt-1.5 whitespace-nowrap font-mono text-[0.7rem] text-muted-foreground">{error}</p>
+      )}
     </div>
   )
 }

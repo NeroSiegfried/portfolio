@@ -196,7 +196,7 @@ function ImageChips({
       {images.map((img) => (
         <div
           key={img.id}
-          className="relative flex items-start gap-2 rounded-lg border border-border/50 bg-muted/30 p-2"
+          className="relative flex items-start gap-2 border border-border/50 bg-muted/30 p-2"
         >
           {/* Thumbnail */}
           <div className="shrink-0">
@@ -226,7 +226,7 @@ function ImageChips({
               onChange={(e) => onSetAlt(img.id, e.target.value)}
               disabled={img.uploading}
               rows={compact ? 2 : 3}
-              className="flex-1 min-w-0 resize-none rounded border border-border/40 bg-background px-2 py-1 text-[11px] outline-none focus:border-primary disabled:opacity-50"
+              className="flex-1 min-w-0 resize-none border border-border/40 bg-background px-2 py-1 text-[11px] outline-none focus:border-primary disabled:opacity-50"
             />
           )}
 
@@ -350,7 +350,7 @@ function AvatarCropModal({
 
         <div className="flex items-center justify-end gap-2 border-t border-border/50 px-4 py-3">
           <button onClick={onCancel} disabled={busy}
-            className="rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40">
+            className="border border-border px-3 py-1.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40">
             Cancel
           </button>
           <button
@@ -360,7 +360,7 @@ function AvatarCropModal({
               onConfirm(blob)
             }}
             disabled={busy || !croppedArea}
-            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+            className="flex items-center gap-1.5 bg-primary px-3 py-1.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-primary-foreground disabled:opacity-50"
           >
             <Check className="h-3 w-3" />
             {busy ? "Uploading…" : "Use this crop"}
@@ -546,7 +546,7 @@ function CommentItem({
   if (node.hidden && !isAdmin) {
     return (
       <div id={`comment-${node.id}`} className="py-4">
-        <div className="flex items-center gap-2 rounded-md border border-border/30 bg-muted/20 px-3 py-2.5">
+        <div className="flex items-center gap-2 border border-border/40 bg-muted/20 px-3 py-2.5">
           <EyeOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
           <span className="text-xs italic text-muted-foreground/50">This comment was hidden by a moderator.</span>
         </div>
@@ -576,7 +576,7 @@ function CommentItem({
         </div>
         {/* Admin controls */}
         <div className="mt-2 flex items-center gap-2">
-          <span className="rounded border border-border/40 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">hidden</span>
+          <span className="border border-border/40 bg-muted/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">hidden</span>
           <button type="button" onClick={unhide} disabled={busy} className="text-xs text-primary hover:underline disabled:opacity-40">Unhide</button>
           <button type="button" onClick={() => deleteComment(true)} disabled={busy} className="text-xs text-destructive hover:underline disabled:opacity-40">Hard delete</button>
         </div>
@@ -601,21 +601,21 @@ function CommentItem({
         <span>
           {new Date(node.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
         </span>
-        {node.editedAt && <span className="rounded bg-muted px-1 py-0.5 text-[10px]">edited</span>}
+        {node.editedAt && <span className="bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em]">edited</span>}
       </div>
 
       {editing ? (
         <div className="space-y-2">
-          <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} disabled={busy || editUploadingImg} className="text-sm" rows={3} />
+          <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} disabled={busy || editUploadingImg} className="rounded-none text-sm" rows={3} />
           {/* Hidden file input for edit image upload */}
           <input ref={editImgRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden"
             onChange={() => void insertEditImage()} />
           <div className="flex items-center gap-2">
-            <button type="button" onClick={saveEdit} disabled={busy || editUploadingImg} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
+            <button type="button" onClick={saveEdit} disabled={busy || editUploadingImg} className="bg-primary px-4 py-2 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50">
               {busy ? "Saving…" : "Save"}
             </button>
             <button type="button" onClick={() => editImgRef.current?.click()} disabled={editUploadingImg}
-              className="rounded-md border border-border/60 p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40" title="Attach image">
+              className="border border-border p-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40" title="Attach image">
               <ImageIcon className="h-3.5 w-3.5" />
             </button>
             {editUploadingImg && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
@@ -684,7 +684,7 @@ function CommentItem({
             value={reply}
             onChange={(e) => setReply(e.target.value)}
             disabled={busy}
-            className="text-sm"
+            className="rounded-none text-sm"
             rows={2}
           />
           <ImageChips
@@ -716,7 +716,7 @@ function CommentItem({
               type="button"
               onClick={sendReply}
               disabled={busy || replyPendingImages.some((i) => i.uploading) || !buildContent(reply, replyPendingImages)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`px-4 py-2 font-mono text-[0.7rem] uppercase tracking-[0.12em] transition-all ${
                 busy || replyPendingImages.some((i) => i.uploading) || !buildContent(reply, replyPendingImages)
                   ? "cursor-not-allowed border border-primary bg-transparent text-primary"
                   : "bg-primary text-primary-foreground hover:opacity-90"
@@ -727,7 +727,7 @@ function CommentItem({
             <button
               type="button"
               onClick={() => replyFileRef.current?.click()}
-              className="rounded-md border border-border/60 p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              className="border border-border p-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
               title="Attach image or GIF"
             >
               <ImageIcon className="h-3.5 w-3.5" />
@@ -914,9 +914,9 @@ export default function BlogComments({
       </div>
 
       {!currentUser ? (
-        <div className="mb-8">
+        <div className="mb-8 border border-border bg-card/30 p-5 md:p-6">
           {authError && (
-            <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+            <div className="mb-4 border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
               {authError === "github" && "GitHub login failed. Make sure GitHub OAuth is configured and try again."}
               {authError === "google" && "Google login failed. Make sure Google OAuth is configured and try again."}
               {authError !== "github" && authError !== "google" && "Login failed. Please try again."}
@@ -957,7 +957,7 @@ export default function BlogComments({
             {/* OAuth buttons */}
             <a
               href={`/api/auth/oauth/github?returnTo=${encodeURIComponent(returnTo)}`}
-              className="flex items-center justify-center gap-2.5 rounded-md border border-border/60 bg-background px-4 py-2 text-sm font-medium transition-colors hover:border-foreground/40 hover:bg-muted"
+              className="flex items-center justify-center gap-2.5 border border-border bg-card px-4 py-3 font-mono text-xs uppercase tracking-[0.1em] transition-colors hover:border-primary hover:bg-muted/40"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4 fill-foreground" aria-hidden="true">
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
@@ -966,7 +966,7 @@ export default function BlogComments({
             </a>
             <a
               href={`/api/auth/oauth/google?returnTo=${encodeURIComponent(returnTo)}`}
-              className="flex items-center justify-center gap-2.5 rounded-md border border-border/60 bg-background px-4 py-2 text-sm font-medium transition-colors hover:border-foreground/40 hover:bg-muted"
+              className="flex items-center justify-center gap-2.5 border border-border bg-card px-4 py-3 font-mono text-xs uppercase tracking-[0.1em] transition-colors hover:border-primary hover:bg-muted/40"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -985,7 +985,7 @@ export default function BlogComments({
 
             {authMode === "register" && (
               <input
-                className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+                className="border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -993,7 +993,7 @@ export default function BlogComments({
               />
             )}
             <input
-              className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+              className="border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
               placeholder="Email"
               type="email"
               value={email}
@@ -1001,7 +1001,7 @@ export default function BlogComments({
               disabled={busy}
             />
             <input
-              className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+              className="border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
               placeholder="Password"
               type="password"
               value={password}
@@ -1014,14 +1014,14 @@ export default function BlogComments({
               type="button"
               onClick={submitAuth}
               disabled={busy}
-              className="mt-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="mt-1 bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {busy ? "Please wait…" : authMode === "login" ? "Sign in" : "Create account"}
             </button>
           </div>
         </div>
       ) : (
-        <div className="mb-8">
+        <div className="mb-8 border border-border bg-card/30 p-5 md:p-6">
           {/* ── Profile card ───────────────────────────────────── */}
           <div className="mb-4 flex items-center gap-3">
             <CommentAvatar
@@ -1068,12 +1068,12 @@ export default function BlogComments({
 
           {/* ── Inline profile editor ──────────────────────────── */}
           {showEditProfile && (
-            <div className="mb-5 rounded-lg border border-border/40 bg-muted/20 p-4 space-y-3">
+            <div className="mb-5 border border-border bg-muted/20 p-4 space-y-3">
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-muted-foreground">
                   Handle
                 </label>
-                <div className="flex items-center gap-1 rounded-md border border-border/60 bg-background px-3 py-2 focus-within:border-primary transition-colors">
+                <div className="flex items-center gap-1 border border-border bg-background px-3 py-2.5 focus-within:border-primary transition-colors">
                   <span className="text-xs text-muted-foreground select-none">@</span>
                   <input
                     className="flex-1 min-w-0 bg-transparent text-sm outline-none"
@@ -1091,7 +1091,7 @@ export default function BlogComments({
                   Display name
                 </label>
                 <input
-                  className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+                  className="w-full border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
                   placeholder={currentUser.username}
                   maxLength={60}
                   value={editDisplayName}
@@ -1105,7 +1105,7 @@ export default function BlogComments({
                 </label>
                 <div className="flex items-center gap-2">
                   <input
-                    className="flex-1 rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary"
+                    className="flex-1 border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
                     placeholder="https://example.com/avatar.jpg"
                     type="text"
                     value={editAvatarUrl}
@@ -1117,7 +1117,7 @@ export default function BlogComments({
                     onClick={() => avatarFileRef.current?.click()}
                     disabled={profileBusy || avatarUploading}
                     title="Upload image"
-                    className="shrink-0 rounded-md border border-border/60 p-2 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                    className="shrink-0 border border-border p-2.5 text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40"
                   >
                     <ImageIcon className="h-4 w-4" />
                   </button>
@@ -1159,7 +1159,7 @@ export default function BlogComments({
                 type="button"
                 onClick={saveProfile}
                 disabled={profileBusy}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="bg-primary px-4 py-2 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {profileBusy ? "Saving…" : "Save changes"}
               </button>
@@ -1173,7 +1173,7 @@ export default function BlogComments({
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void submitComment()
             }}
             disabled={busy}
-            className="text-sm"
+            className="rounded-none text-sm"
             rows={3}
           />
           <ImageChips
@@ -1205,7 +1205,7 @@ export default function BlogComments({
               type="button"
               onClick={submitComment}
               disabled={busy || pendingImages.some((i) => i.uploading) || !buildContent(content, pendingImages)}
-              className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
+              className={`px-5 py-2.5 font-mono text-xs uppercase tracking-[0.14em] transition-all ${
                 busy || pendingImages.some((i) => i.uploading) || !buildContent(content, pendingImages)
                   ? "cursor-not-allowed border border-primary bg-transparent text-primary"
                   : "bg-primary text-primary-foreground hover:opacity-90"
@@ -1217,7 +1217,7 @@ export default function BlogComments({
               type="button"
               onClick={() => mainFileRef.current?.click()}
               title="Attach image or GIF"
-              className="rounded-md border border-border/60 p-2 text-muted-foreground transition-colors hover:text-foreground"
+              className="border border-border p-2.5 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
             >
               <ImageIcon className="h-4 w-4" />
             </button>
@@ -1228,24 +1228,24 @@ export default function BlogComments({
       {hasComments ? (
         <div>
           {/* Sort control */}
-          <div className="mb-4 flex items-center gap-1">
-            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+          <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
+            <ArrowUpDown className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
             {(["top", "newest", "oldest"] as const).map((o) => (
               <button
                 key={o}
                 type="button"
                 onClick={() => setSortOrder(o)}
-                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`border px-3 py-1.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] transition-colors ${
                   sortOrder === o
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-primary"
+                    ? "border-primary/60 bg-primary/10 text-primary"
+                    : "border-transparent text-muted-foreground hover:text-primary"
                 }`}
               >
                 {o === "top" ? "Top" : o === "newest" ? "Newest" : "Oldest"}
               </button>
             ))}
           </div>
-          <div className="divide-y divide-border/30">
+          <div className="divide-y divide-border/60">
             {sortedComments.map((comment) => (
               <CommentItem
                 key={comment.id}

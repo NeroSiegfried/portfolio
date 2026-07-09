@@ -147,7 +147,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <BlogNav />
 
       <div className="relative bg-background">
-        <div className="mx-3 border-x border-border md:mx-4">
+        <div className="mx-4 border-x border-border md:mx-6">
           {/* Breadcrumb + top prev/next pager */}
           <div className="px-4 pt-28 md:px-6 md:pt-32">
             <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground">
@@ -240,9 +240,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
           ) : null}
 
-          {/* Comments */}
+          {/* Comments — full width (only the reading body is measure-constrained). */}
           <div id="comments" className="px-4 pb-16 pt-8 md:px-6">
-            <div className="max-w-3xl border-t border-border pt-10">
+            <div className="border-t border-border pt-10">
               <LazyComments postId={post.id} postSlug={slug} />
             </div>
           </div>

@@ -44,7 +44,7 @@ export default async function BlogFeaturesDemoPage() {
       <BlogNav />
 
       <div className="relative bg-background">
-        <div className="mx-3 border-x border-border md:mx-4">
+        <div className="mx-4 border-x border-border md:mx-6">
           <article>
             <div className="px-4 pt-28 md:px-6 md:pt-32">
               <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground">

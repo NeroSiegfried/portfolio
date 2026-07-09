@@ -53,7 +53,7 @@ export default async function Home() {
       {/* Opaque layer covers the hero as it scrolls over; inner frame draws the
           tight margin lines that run all the way through the footer. */}
       <div className="relative z-10 bg-background">
-        <div className="mx-3 border-x border-border md:mx-4">
+        <div className="mx-4 border-x border-border md:mx-6">
           {/* Scroll reveals wrap only non-sticky sections — Projects and Faq hold
               `md:sticky` children, which a transformed ancestor would break. */}
           <Reveal><Stats /></Reveal>

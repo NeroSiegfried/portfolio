@@ -64,7 +64,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
       <BlogNav />
 
       <div className="relative bg-background">
-        <div className="mx-3 border-x border-border md:mx-4">
+        <div className="mx-4 border-x border-border md:mx-6">
           {/* Header */}
           <section className="px-4 pt-28 md:px-6 md:pt-32">
             {/* Breadcrumb */}

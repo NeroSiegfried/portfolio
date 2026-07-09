@@ -3,14 +3,15 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, Search, X } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { ModeToggle } from "@/components/v2/mode-toggle"
 import { HoverSlide } from "@/components/v2/hover-slide"
+import { AnimatedArrow } from "@/components/v2/animated-arrow"
 import InboxButton from "@/components/blog-inbox"
 import { cn } from "@/lib/utils"
 
 /**
- * Fixed, scroll-aware blog nav (aligned to the mx-3/md:mx-4 content frame).
+ * Fixed, scroll-aware blog nav (aligned to the mx-4/md:mx-6 content frame).
  * Left: back to portfolio. Centre: blog wordmark. Right: search + inbox + theme
  * + a Subscribe button (mirrors the portfolio nav's Contact CTA). Search opens an
  * inline bar and routes to /blog?q=… which the feed reads client-side.
@@ -50,13 +51,13 @@ export function BlogNav() {
   return (
     <header
       className={cn(
-        "fixed inset-x-3 top-4 z-50 border border-border bg-card transition-transform duration-300 md:inset-x-4",
+        "fixed inset-x-4 top-4 z-50 border border-border bg-card transition-transform duration-300 md:inset-x-6",
         hidden ? "-translate-y-[160%]" : "translate-y-0",
       )}
     >
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-3 md:px-6 md:py-[0.9rem]">
-        <Link href="/" className="inline-flex items-center gap-2 justify-self-start font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
-          <ArrowLeft className="h-3.5 w-3.5" /> <HoverSlide className="hidden sm:inline-flex">Portfolio</HoverSlide>
+        <Link href="/" className="group inline-flex items-center gap-2 justify-self-start font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+          <AnimatedArrow direction="left" className="text-sm" /> <HoverSlide className="hidden sm:inline-flex">Portfolio</HoverSlide>
         </Link>
 
         <Link href="/blog" className="justify-self-center font-display text-lg font-semibold tracking-tight text-card-foreground">

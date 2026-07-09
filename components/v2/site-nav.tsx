@@ -38,11 +38,11 @@ export function SiteNav() {
   return (
     <header
       className={cn(
-        "fixed inset-x-3 top-4 z-50 border border-border bg-card transition-transform duration-300 md:inset-x-4",
+        "fixed inset-x-4 top-4 z-50 border border-border bg-card transition-transform duration-300 md:inset-x-6",
         hidden && !open ? "-translate-y-[160%]" : "translate-y-0",
       )}
     >
-      <div className="grid grid-cols-2 items-center px-5 py-4 md:grid-cols-3 md:px-7 md:py-[1.15rem]">
+      <div className="grid grid-cols-2 items-center px-4 py-4 md:grid-cols-3 md:px-6 md:py-[1.15rem]">
         <a href="#top" className="inline-flex items-center justify-self-start font-display text-lg font-semibold tracking-tight text-card-foreground">
           <HoverSlide>Victor Nabasu</HoverSlide>
         </a>

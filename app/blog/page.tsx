@@ -52,7 +52,7 @@ export default async function BlogHomePage() {
       <AdminEntryHotkey adminPath={adminPath} />
       {/* Framed content column — mirrors the portfolio home so the two feel unified. */}
       <div className="relative bg-background">
-        <div className="mx-3 border-x border-border md:mx-4">
+        <div className="mx-4 border-x border-border md:mx-6">
           <BlogIndex posts={posts} seriesTree={seriesTree} />
           <Footer />
         </div>
