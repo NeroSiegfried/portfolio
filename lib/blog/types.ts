@@ -42,6 +42,8 @@ export interface BlogPost {
   title: string
   excerpt: string
   content: string
+  /** Optional cover image URL — used as the card image and the article header image. */
+  coverImage?: string | null
   /** Optional per-post CSS injected into a <style> tag on the post page. */
   customCss?: string | null
   /** Series display order. 0 = unset (falls back to publishedAt). Higher numbers sort later. */

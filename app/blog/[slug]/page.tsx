@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import type { Metadata } from "next"
 import Script from "next/script"
-import { readBlogPostDb, getPostVote } from "@/lib/blog/store"
+import { readBlogPostDb } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import { projectByBlogSlug } from "@/lib/portfolio-data"
 import BlogMarkdown from "@/components/blog-markdown"
@@ -10,11 +11,11 @@ import PostVoteButton from "@/components/post-vote-button"
 import { scopePostCss } from "@/lib/blog/scope-css"
 import LazyComments from "@/components/lazy-comments"
 import SeriesPostNav from "@/components/series-post-nav"
-import Footer from "@/components/footer"
-import { ModeToggle } from "@/components/mode-toggle"
-import PortfolioLink from "@/components/portfolio-link"
-import BlogLink from "@/components/blog-link"
-import InboxButton from "@/components/blog-inbox"
+import { Cursor } from "@/components/v2/cursor"
+import { BlogNav } from "@/components/v2/blog/blog-nav"
+import { Footer } from "@/components/v2/footer"
+import { Eyebrow } from "@/components/v2/primitives"
+import { AnimatedArrow } from "@/components/v2/animated-arrow"
 
 // ISR: rebuild at most every 60s. The page HTML is cached at CloudFront edge.
 export const revalidate = 60
@@ -51,14 +52,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 }
 
 interface BlogPostPageProps {
-  params: Promise<{
-    slug: string
-  }>
-}
-
-/** Truncate a string to maxLen chars, adding "…" if cut. */
-function truncate(s: string, maxLen = 20) {
-  return s.length > maxLen ? `${s.slice(0, maxLen - 1)}…` : s
+  params: Promise<{ slug: string }>
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
@@ -71,24 +65,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     console.error(`[blog/${slug}] DB unavailable during render:`, err)
     notFound()
   }
-  if (!db) {
-    notFound()
-  }
+  if (!db) notFound()
   const post = findPublishedPostBySlug(db, slug)
-  if (!post) {
-    notFound()
-  }
+  if (!post) notFound()
 
   const snippetsBySlug = listSnippetsBySlug(db)
 
-  // Series sibling posts (sorted by publishedAt asc) — used for prev/next nav.
-  // Filter to EXACT seriesId match only (not recursive sub-series) so that
-  // prev/next always refers to adjacent posts in the same series level.
+  // Series sibling posts (exact series level) for prev/next nav.
   const seriesPosts = post.seriesId
     ? listPublishedPostsForSeries(db, post.seriesId)
         .filter((p) => p.seriesId === post.seriesId)
         .sort((a, b) => {
-          // Explicit position wins (1-based; 0 = unset)
           const ap = a.position ?? 0
           const bp = b.position ?? 0
           if (ap !== 0 || bp !== 0) {
@@ -108,6 +95,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const immediateSeriesTitle = post.seriesPath.at(-1)?.title ?? ""
   const immediateSeriesNumberFormat = post.seriesPath.at(-1)?.numberFormat ?? null
 
+  const project = projectByBlogSlug(slug)
+  const publishedLabel = post.publishedAt
+    ? new Date(post.publishedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    : "Draft"
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nerosiegfried.com"
   const jsonLd = {
     "@context": "https://schema.org",
@@ -119,140 +111,109 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     datePublished: post.publishedAt ?? post.createdAt,
     dateModified: post.updatedAt ?? post.publishedAt ?? post.createdAt,
     url: `${siteUrl}/blog/${slug}`,
-    image: `${siteUrl}/blog/${slug}/opengraph-image`,
+    image: post.coverImage ?? `${siteUrl}/blog/${slug}/opengraph-image`,
     mainEntityOfPage: { "@type": "WebPage", "@id": `${siteUrl}/blog/${slug}` },
   }
 
+  const extLink = "group inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.12em] transition-colors"
+
   return (
-    <div className="relative flex flex-col min-h-screen overflow-x-hidden bg-background">
-      <Script
-        id="json-ld-post"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      {post.customCss && (
-        <style dangerouslySetInnerHTML={{ __html: scopePostCss(post.customCss) }} />
-      )}
-      {/* Non-sticky top bar — same style as Hero */}
-      <div className="absolute inset-x-0 top-0 z-20">
-        <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-6">
-          <PortfolioLink className="text-sm text-muted-foreground transition-colors hover:text-primary">
-            ← Portfolio
-          </PortfolioLink>
-          <div className="flex items-center gap-1">
-            <InboxButton />
-            <ModeToggle />
-          </div>
-        </div>
-      </div>
+    <>
+      <Script id="json-ld-post" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {post.customCss && <style dangerouslySetInnerHTML={{ __html: scopePostCss(post.customCss) }} />}
+      <Cursor />
+      <BlogNav />
 
-      <main className="container mx-auto px-4 pb-20 pt-28 flex-1">
-        <div className="mx-auto max-w-3xl">
-        {/*
-          Breadcrumb: Blog › [Series₁ (truncated)] › … › Post Title (not truncated, no link)
-          When the post has no series, it's just: Blog › Post Title
-        */}
-        <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-          <BlogLink
-            href="/blog"
-            className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
-          >
-            Blog
-          </BlogLink>
+      <div className="relative bg-background">
+        <div className="mx-3 border-x border-border md:mx-4">
+          <article>
+            {/* Header */}
+            <div className="px-4 pt-28 md:px-6 md:pt-32">
+              {/* Breadcrumb */}
+              <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground">
+                <Link href="/blog" className="transition-colors hover:text-primary">Blog</Link>
+                {post.seriesPath.map((series, i) => (
+                  <span key={series.id} className="flex items-center gap-2">
+                    <span className="text-border">/</span>
+                    <Link
+                      href={`/blog/series/${post.seriesPath.slice(0, i + 1).map((s) => s.slug).join("/")}`}
+                      className="transition-colors hover:text-primary"
+                    >
+                      {series.title}
+                    </Link>
+                  </span>
+                ))}
+              </nav>
 
-          {post.seriesPath.map((series, i) => {
-            const href = `/blog/series/${post.seriesPath
-              .slice(0, i + 1)
-              .map((s) => s.slug)
-              .join("/")}`
-            const isLast = i === post.seriesPath.length - 1
-            return (
-              <span key={series.id} className="flex items-center gap-1.5">
-                <span className="text-border select-none">›</span>
-                {isLast ? (
-                  // Last series segment before the post title: still a link but truncated
-                  <BlogLink
-                    href={href}
-                    className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
-                    title={series.title}
-                  >
-                    {truncate(series.title)}
-                  </BlogLink>
-                ) : (
-                  <BlogLink
-                    href={href}
-                    className="rounded px-1 text-muted-foreground transition-colors hover:text-primary"
-                    title={series.title}
-                  >
-                    {truncate(series.title)}
-                  </BlogLink>
-                )}
-              </span>
-            )
-          })}
+              <div className="mx-auto mt-8 max-w-3xl">
+                <div className="flex items-center gap-4">
+                  <Eyebrow className="text-primary">{post.seriesPath.at(-1)?.title ?? "Article"}</Eyebrow>
+                  <span className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">{publishedLabel}</span>
+                </div>
+                <h1 className="mt-5 font-serif text-4xl leading-[1.08] text-foreground md:text-[3.25rem] md:leading-[1.04]">
+                  {post.title}
+                </h1>
+                {post.excerpt ? (
+                  <p className="mt-6 text-lg leading-relaxed text-muted-foreground">{post.excerpt}</p>
+                ) : null}
 
-          {/* Current page — not a link, full title */}
-          <span className="flex items-center gap-1.5">
-            <span className="text-border select-none">›</span>
-            <span className="rounded px-1 font-medium text-foreground">{post.title}</span>
-          </span>
-        </nav>
-
-        <article>
-          <header className="mb-8 border-b border-border/40 pb-8">
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{post.title}</h1>
-            {post.excerpt && (
-              <p className="mt-3 text-base text-muted-foreground">{post.excerpt}</p>
-            )}
-            {(() => {
-              const project = projectByBlogSlug(slug)
-              return project?.liveUrl ? (
-                <div className="mt-4 flex flex-wrap items-center gap-4">
-                  <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-                    Visit the live site ↗
-                  </a>
-                  {project.githubUrl ? (
-                    <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary">
-                      Repository ↗
-                    </a>
+                <div className="mt-7 flex flex-wrap items-center gap-4">
+                  <PostVoteButton postId={post.id} initialScore={post.upvotes} />
+                  {project?.liveUrl ? (
+                    <div className="inline-flex flex-wrap items-center gap-5 border border-border bg-card/40 px-4 py-2.5">
+                      <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className={`${extLink} text-foreground hover:text-primary`}>
+                        Live site <AnimatedArrow className="text-sm" />
+                      </a>
+                      {project.githubUrl ? (
+                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className={`${extLink} text-muted-foreground hover:text-primary`}>
+                          Repository <AnimatedArrow className="text-sm" />
+                        </a>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
-              ) : null
-            })()}
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-              <time className="text-xs text-muted-foreground">
-                {post.publishedAt
-                  ? new Date(post.publishedAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : "Draft"}
-              </time>
-              <PostVoteButton postId={post.id} initialScore={post.upvotes} />
+              </div>
             </div>
-          </header>
 
-          {seriesPosts.length > 1 && (
-            <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />
-          )}
+            {/* Cover image */}
+            {post.coverImage ? (
+              <div className="mt-10 px-4 md:px-6">
+                <div className="relative mx-auto aspect-[16/9] max-w-5xl overflow-hidden border border-border bg-secondary">
+                  <Image src={post.coverImage} alt={post.title} fill priority sizes="(max-width: 1024px) 100vw, 1024px" className="object-cover" />
+                </div>
+              </div>
+            ) : null}
 
-          <div className="post-body">
-            <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} />
+            {/* Reading column */}
+            <div className="mx-auto max-w-3xl px-4 py-12 md:px-6 md:py-16">
+              {seriesPosts.length > 1 ? (
+                <div className="mb-10">
+                  <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />
+                </div>
+              ) : null}
+
+              <div className="post-body">
+                <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} />
+              </div>
+
+              {seriesPosts.length > 1 ? (
+                <div className="mt-12">
+                  <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />
+                </div>
+              ) : null}
+            </div>
+          </article>
+
+          {/* Comments */}
+          <div id="comments" className="mx-auto max-w-3xl px-4 pb-16 md:px-6">
+            <div className="border-t border-border pt-10">
+              <LazyComments postId={post.id} postSlug={slug} />
+            </div>
           </div>
 
-          {seriesPosts.length > 1 && (
-            <SeriesPostNav posts={seriesPosts} currentSlug={slug} seriesTitle={immediateSeriesTitle} numberFormat={immediateSeriesNumberFormat} seriesId={post.seriesId} />
-          )}
-        </article>
-
-        <div id="comments" className="mt-12 border-t border-border/40 pt-10">
-          <LazyComments postId={post.id} postSlug={slug} />
+          <Footer />
         </div>
-        </div>{/* end max-w-3xl inner column */}
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </>
   )
 }

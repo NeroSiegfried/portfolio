@@ -1,0 +1,150 @@
+"use client"
+
+import { useMemo, useState } from "react"
+import Link from "next/link"
+import { Search, X } from "lucide-react"
+import type { BlogPostSummary } from "@/lib/blog/queries"
+import type { SeriesNode } from "@/lib/blog/types"
+import { Eyebrow } from "@/components/v2/primitives"
+import { PostCard } from "@/components/v2/blog/post-card"
+import { seriesLabel } from "@/components/v2/blog/helpers"
+
+const INITIAL = 6 // posts visible at first (incl. the featured one)
+const STEP = 3 // "Show more" increment
+
+function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2 border border-border bg-card/40 px-3 py-2.5 transition-colors focus-within:border-primary">
+      <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search articles…"
+        className="w-full bg-transparent font-mono text-xs uppercase tracking-[0.1em] text-foreground outline-none placeholder:text-muted-foreground"
+        aria-label="Search articles"
+      />
+      {value ? (
+        <button type="button" onClick={() => onChange("")} aria-label="Clear search" className="text-muted-foreground transition-colors hover:text-foreground">
+          <X className="h-4 w-4" />
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+export function BlogFeed({ posts, seriesTree }: { posts: BlogPostSummary[]; seriesTree: SeriesNode[] }) {
+  const total = posts.length
+  const [q, setQ] = useState("")
+  const [shown, setShown] = useState(INITIAL)
+  const query = q.trim().toLowerCase()
+
+  const filtered = useMemo(() => {
+    if (!query) return posts
+    return posts.filter((p) =>
+      `${p.title} ${p.excerpt ?? ""} ${seriesLabel(p)}`.toLowerCase().includes(query),
+    )
+  }, [posts, query])
+
+  // Stable issue number from the post's position in the full (newest-first) list.
+  const noFor = (p: BlogPostSummary) => `No. ${String(total - posts.indexOf(p)).padStart(3, "0")}`
+
+  if (query) {
+    return (
+      <section className="border-b border-border px-4 py-12 md:px-6 md:py-16">
+        <div className="mb-8 max-w-md">
+          <SearchBox value={q} onChange={setQ} />
+        </div>
+        <p className="mb-8 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
+          {filtered.length} result{filtered.length === 1 ? "" : "s"} for &ldquo;{q}&rdquo;
+        </p>
+        {filtered.length ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((p) => (
+              <PostCard key={p.id} post={p} no={noFor(p)} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground">No posts match your search.</p>
+        )}
+      </section>
+    )
+  }
+
+  const featured = posts[0]
+  const rest = posts.slice(1)
+  const restShown = rest.slice(0, Math.max(0, shown - 1))
+  const remaining = rest.length - restShown.length
+
+  return (
+    <>
+      {/* Editorial hero — tagline + series + search (left), featured card (right). */}
+      <section className="grid gap-10 border-b border-border px-4 py-12 md:grid-cols-2 md:gap-14 md:px-6 md:py-16">
+        <div className="flex flex-col justify-center">
+          <h1 className="font-serif text-3xl leading-[1.12] text-foreground md:text-[2.9rem] md:leading-[1.08]">
+            Build logs &amp; learning notes for curious engineers.
+          </h1>
+          <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground">
+            A running record of what I&rsquo;m building and learning — from databases and DSLs written
+            from scratch to shipped client websites, each documented step by step.
+          </p>
+          <div className="mt-8 max-w-sm">
+            <SearchBox value={q} onChange={setQ} />
+          </div>
+          {seriesTree.length > 0 ? (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {seriesTree.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/blog/series/${s.slug}`}
+                  className="inline-flex items-center border border-border px-3 py-1.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  {s.title}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {featured ? <PostCard post={featured} no={noFor(featured)} size="lg" /> : null}
+      </section>
+
+      {/* Recent — image-led card grid with show more / show all. */}
+      {rest.length > 0 ? (
+        <section className="border-b border-border px-4 py-12 md:px-6 md:py-16">
+          <div className="mb-8 flex items-end justify-between border-b border-border pb-4">
+            <div>
+              <Eyebrow className="mb-2 block">Recent</Eyebrow>
+              <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">Recent posts</h2>
+            </div>
+            <Eyebrow className="hidden sm:block">{restShown.length} / {rest.length}</Eyebrow>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {restShown.map((p) => (
+              <PostCard key={p.id} post={p} no={noFor(p)} />
+            ))}
+          </div>
+
+          {remaining > 0 ? (
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShown((s) => s + STEP)}
+                className="inline-flex items-center gap-2 border border-border px-5 py-3 font-mono text-xs uppercase tracking-[0.14em] text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                Show more <span className="text-muted-foreground">(+{Math.min(STEP, remaining)})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShown(total)}
+                className="inline-flex items-center gap-2 bg-primary px-5 py-3 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Show all ({total})
+              </button>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+    </>
+  )
+}

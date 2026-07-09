@@ -589,8 +589,8 @@ html { scroll-behavior: smooth; }
 .v2-cursor[data-variant="hover"] { width: 44px; height: 44px; }
 /* Over project media: a ring (outline) with a big, sharp up-right arrow (portfoliod).
    Ring border width matches the arrow's stroke; the arrow fills ~65% of the ring. */
-.v2-cursor[data-variant="ring"] { width: 150px; height: 150px; background: transparent; border: 6px solid #fff; }
-.v2-cursor svg { position: absolute; inset: 0; margin: auto; height: 98px; width: 98px; opacity: 0; transition: opacity .2s ease; }
+.v2-cursor[data-variant="ring"] { width: 150px; height: 150px; background: transparent; border: 10px solid #fff; }
+.v2-cursor svg { position: absolute; inset: 0; margin: auto; height: 78px; width: 78px; opacity: 0; transition: opacity .2s ease; }
 .v2-cursor[data-variant="ring"] svg { opacity: 1; }
 /* Trailing label under the ring — the CTA text ("Visit site" / "Read build log") follows the cursor. */
 .v2-cursor-label {
@@ -677,3 +677,30 @@ a:hover .v2-arrow__i--2, button:hover .v2-arrow__i--2, .group:hover .v2-arrow__i
 
 /* Footer wordmark scales to its own container width (cqw), not the viewport. */
 .v2-wordmark { container-type: inline-size; }
+
+/* Blog card hover (reado): the image greys + gains a grey veil while the title
+   gets a highlighter sweep. Driven by the card's Tailwind `group` class. */
+.v2-card-cover { position: relative; overflow: hidden; }
+.v2-card-cover img { transition: transform .7s cubic-bezier(.16,1,.3,1), filter .5s ease; }
+.group:hover .v2-card-cover img { transform: scale(1.05); filter: grayscale(1) brightness(.9); }
+.v2-card-cover::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: hsl(var(--foreground) / 0); transition: background .5s ease;
+}
+.group:hover .v2-card-cover::after { background: hsl(var(--foreground) / 0.1); }
+.v2-hl {
+  background-image: linear-gradient(hsl(var(--primary) / 0.3), hsl(var(--primary) / 0.3));
+  background-repeat: no-repeat; background-position: 0 92%; background-size: 0% 100%;
+  padding: 0 .06em; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  transition: background-size .45s cubic-bezier(.16,1,.3,1);
+}
+.group:hover .v2-hl { background-size: 100% 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .v2-card-cover img, .v2-hl { transition: none; }
+  .group:hover .v2-card-cover img { transform: none; }
+}
+
+/* Interactive dotted-shadow wordmark (reado masthead): the dotted layer trails
+   the cursor (offset set from JS via --dx/--dy). */
+.v2-wordmark-shadow { transform: translate(var(--dx, 9px), var(--dy, 9px)); transition: transform .18s ease-out; }
+@media (prefers-reduced-motion: reduce) { .v2-wordmark-shadow { transform: translate(9px, 9px); transition: none; } }

@@ -90,6 +90,7 @@ function rowToPost(r: Record<string, unknown>): BlogPost {
     title: r.title as string,
     excerpt: (r.excerpt as string) ?? "",
     content: (r.content as string) ?? "",
+    coverImage: (r.cover_image as string) ?? null,
     seriesId: (r.series_id as string) ?? null,
     status: r.status as "draft" | "published",
     authorId: r.author_id as string,
@@ -183,7 +184,7 @@ export const readBlogHomeDb = unstable_cache(
     const [series, posts, postVotes] = await Promise.all([
       pool.query("SELECT * FROM series ORDER BY title"),
       pool.query(
-        `SELECT id, slug, title, excerpt, series_id, status, author_id,
+        `SELECT id, slug, title, excerpt, cover_image, series_id, status, author_id,
                 published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
          FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
       ),
@@ -210,7 +211,7 @@ export const readSeriesDb = unstable_cache(
     const [series, posts, postVotes] = await Promise.all([
       pool.query("SELECT * FROM series ORDER BY title"),
       pool.query(
-        `SELECT id, slug, title, excerpt, series_id, status, author_id,
+        `SELECT id, slug, title, excerpt, cover_image, series_id, status, author_id,
                 published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
          FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
       ),
@@ -245,7 +246,7 @@ export const readBlogPostDb = unstable_cache(
     const [series, siblingPosts, snippets, postVotes] = await Promise.all([
       pool.query("SELECT * FROM series ORDER BY title"),
       pool.query(
-        `SELECT id, slug, title, excerpt, series_id, status, author_id,
+        `SELECT id, slug, title, excerpt, cover_image, series_id, status, author_id,
                 published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
          FROM posts WHERE status='published' AND id != $1
          ORDER BY COALESCE(published_at, created_at) ASC`,
@@ -337,11 +338,11 @@ export async function updateDb<T>(updater: (db: BlogDb) => T): Promise<T> {
     }
     for (const p of db.posts) {
       await client.query(
-        `INSERT INTO posts (id,slug,title,excerpt,content,series_id,status,author_id,created_at,updated_at,published_at,custom_css,position)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10,$11,$12)
+        `INSERT INTO posts (id,slug,title,excerpt,content,series_id,status,author_id,created_at,updated_at,published_at,custom_css,position,cover_image)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10,$11,$12,$13)
          ON CONFLICT (id) DO UPDATE SET
-           slug=$2,title=$3,excerpt=$4,content=$5,series_id=$6,status=$7,author_id=$8,updated_at=NOW(),published_at=$10,custom_css=$11,position=$12`,
-        [p.id, p.slug, p.title, p.excerpt, p.content, p.seriesId, p.status, p.authorId, p.createdAt, p.publishedAt, p.customCss ?? null, p.position ?? 0]
+           slug=$2,title=$3,excerpt=$4,content=$5,series_id=$6,status=$7,author_id=$8,updated_at=NOW(),published_at=$10,custom_css=$11,position=$12,cover_image=$13`,
+        [p.id, p.slug, p.title, p.excerpt, p.content, p.seriesId, p.status, p.authorId, p.createdAt, p.publishedAt, p.customCss ?? null, p.position ?? 0, p.coverImage ?? null]
       )
     }
     for (const s of db.snippets) {

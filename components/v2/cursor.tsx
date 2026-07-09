@@ -67,7 +67,7 @@ export function Cursor() {
       <div ref={dotRef} className="v2-cursor" data-variant="dot" aria-hidden>
         {/* Tight viewBox so the arrow fills the box; sharp (miter/square) edges;
             stroke width tuned to read as regular weight at ~98px and match the ring. */}
-        <svg viewBox="0 0 18 18" fill="none" stroke="#fff" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter">
+        <svg viewBox="0 0 18 18" fill="none" stroke="#fff" strokeWidth="2.3" strokeLinecap="square" strokeLinejoin="miter">
           <path d="M5 1H17V13" />
           <path d="M1 17 17 1" />
         </svg>

@@ -168,6 +168,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
   const [title, setTitle] = useState("")
   const [slug, setSlug] = useState("")
   const [excerpt, setExcerpt] = useState("")
+  const [coverImage, setCoverImage] = useState("")
   const [customCss, setCustomCss] = useState("")
   const [isDraft, setIsDraft] = useState(true)
   const [postSeriesId, setPostSeriesId] = useState("")
@@ -181,6 +182,38 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
   const activeUploadCellRef = useRef<number>(-1)
   const [uploadingCell, setUploadingCell] = useState<number | null>(null)
   const [cellUploadError, setCellUploadError] = useState<string | null>(null)
+
+  // ── Cover image upload (card + article header) ─────────────────────────────
+  const coverFileInputRef = useRef<HTMLInputElement>(null)
+  const [coverUploading, setCoverUploading] = useState(false)
+
+  const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    setCoverUploading(true)
+    setError(null)
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1200, quality: 0.82, skipBelowBytes: 300 * 1024 })
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purpose: "comment", contentType: compressed.type, size: compressed.size }),
+      })
+      if (!res.ok) {
+        const j = (await res.json()) as { error?: string }
+        throw new Error(j.error ?? "Upload failed")
+      }
+      const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl: string; cfUrl: string }
+      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type }, body: compressed })
+      if (!put.ok) throw new Error("Upload failed: could not store file.")
+      setCoverImage(cfUrl)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed")
+    } finally {
+      setCoverUploading(false)
+    }
+  }
 
   const handleCellImageUpload = (i: number) => {
     activeUploadCellRef.current = i
@@ -234,6 +267,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
     setTitle(next?.title ?? "")
     setSlug(next?.slug ?? "")
     setExcerpt(next?.excerpt ?? "")
+    setCoverImage(next?.coverImage ?? "")
     setCustomCss(next?.customCss ?? "")
     setIsDraft((next?.status ?? "draft") === "draft")
     setPostSeriesId(next?.seriesId ?? "")
@@ -252,6 +286,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
       body: JSON.stringify({
         id: postId || undefined,
         title, slug, excerpt, content,
+        coverImage: coverImage || null,
         customCss: customCss || null,
         status: isDraft ? "draft" : "published",
         seriesId: postSeriesId || null,
@@ -501,6 +536,41 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
                 value={excerpt}
                 onChange={(e) => setExcerpt(e.target.value)}
               />
+
+              {/* Cover image — used as the card image and the article header image. */}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                  placeholder="Cover image URL (card + article header — optional)"
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                />
+                <input
+                  ref={coverFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleCoverFileChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => coverFileInputRef.current?.click()}
+                  disabled={coverUploading}
+                  className="shrink-0 rounded-md border px-3 py-2 text-sm"
+                >
+                  {coverUploading ? "↑ uploading…" : "📷 upload"}
+                </button>
+                {coverImage ? (
+                  <button type="button" onClick={() => setCoverImage("")} className="shrink-0 rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                    clear
+                  </button>
+                ) : null}
+              </div>
+              {coverImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={coverImage} alt="Cover preview" className="h-28 w-auto rounded-md border object-cover" />
+              ) : null}
+
               <textarea
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono resize-y"
                 placeholder="Custom CSS for this post (optional — scoped to the post page)"

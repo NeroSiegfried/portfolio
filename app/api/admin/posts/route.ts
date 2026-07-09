@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     slug?: string
     excerpt?: string
     content?: string
+    coverImage?: string | null
     customCss?: string | null
     seriesId?: string | null
     status?: BlogPostStatus
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
       title,
       excerpt: payload.excerpt?.trim() ?? "",
       content: payload.content ?? "",
+      coverImage: payload.coverImage?.trim() || null,
       customCss: payload.customCss ?? null,
       seriesId: payload.seriesId ?? null,
       position: payload.position ?? current?.position ?? 0,
