@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import Link from "next/link"
 import type { BlogPostSummary } from "@/lib/blog/queries"
 import type { SeriesNode } from "@/lib/blog/types"
@@ -57,7 +58,9 @@ export function BlogIndex({ posts, seriesTree }: { posts: BlogPostSummary[]; ser
         </section>
       ) : (
         <>
-          <BlogFeed posts={posts} seriesTree={seriesTree} />
+          <Suspense fallback={<div className="min-h-[60vh]" />}>
+            <BlogFeed posts={posts} seriesTree={seriesTree} />
+          </Suspense>
 
           {/* Archive by year. */}
           <section className="px-4 py-12 md:px-6 md:py-16">

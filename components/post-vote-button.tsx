@@ -76,26 +76,24 @@ export default function PostVoteButton({
 
   return (
     <div>
-      <div className="flex items-center gap-2.5">
-        <button
-          type="button"
-          onClick={vote}
-          disabled={isPending}
-          className={[
-            "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
-            voted
-              ? "border-secondary bg-secondary/10 text-secondary"
-              : "border-border/60 text-muted-foreground hover:border-secondary/70 hover:text-secondary active:bg-secondary/10",
-          ].join(" ")}
-        >
-          <ThumbsUp className="h-3.5 w-3.5" />
-          {voted ? "Upvoted" : "Upvote"}
-        </button>
-        <span className="text-sm tabular-nums text-muted-foreground">{score}</span>
-      </div>
+      <button
+        type="button"
+        onClick={vote}
+        disabled={isPending}
+        className={[
+          "group inline-flex items-center gap-2.5 border px-3.5 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors disabled:opacity-50",
+          voted
+            ? "border-primary/60 bg-primary/10 text-primary"
+            : "border-border text-muted-foreground hover:border-primary hover:text-primary",
+        ].join(" ")}
+      >
+        <ThumbsUp className={["h-3.5 w-3.5 transition-transform", voted ? "" : "group-hover:-translate-y-0.5"].join(" ")} />
+        <span>{voted ? "Upvoted" : "Upvote"}</span>
+        <span className="border-l border-border pl-2.5 tabular-nums">{score}</span>
+      </button>
       {/* Fixed height to prevent layout shift */}
       <div className="mt-1.5 h-4">
-        {error && <p className="text-xs text-muted-foreground">{error}</p>}
+        {error && <p className="font-mono text-[0.7rem] text-muted-foreground">{error}</p>}
       </div>
     </div>
   )

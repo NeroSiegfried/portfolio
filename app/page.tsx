@@ -11,6 +11,7 @@ import { LatestPosts, type LatestPost } from "@/components/v2/latest-posts"
 import { Faq } from "@/components/v2/faq"
 import { Contact } from "@/components/v2/contact"
 import { Footer } from "@/components/v2/footer"
+import { Reveal } from "@/components/v2/reveal"
 import { readBlogHomeDb } from "@/lib/blog/store"
 import { listPublishedPosts } from "@/lib/blog/queries"
 
@@ -53,14 +54,16 @@ export default async function Home() {
           tight margin lines that run all the way through the footer. */}
       <div className="relative z-10 bg-background">
         <div className="mx-3 border-x border-border md:mx-4">
-          <Stats />
-          <About />
-          <Services />
+          {/* Scroll reveals wrap only non-sticky sections — Projects and Faq hold
+              `md:sticky` children, which a transformed ancestor would break. */}
+          <Reveal><Stats /></Reveal>
+          <Reveal><About /></Reveal>
+          <Reveal><Services /></Reveal>
           <Projects />
-          <TechStack />
-          <LatestPosts posts={latest} />
+          <Reveal><TechStack /></Reveal>
+          <Reveal><LatestPosts posts={latest} /></Reveal>
           <Faq />
-          <Contact />
+          <Reveal><Contact /></Reveal>
           <Footer />
         </div>
       </div>

@@ -15,14 +15,15 @@ export function Wordmark({ text = "WRITING" }: { text?: string }) {
     const el = ref.current
     if (!el || !window.matchMedia("(pointer: fine)").matches) return
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    // Subtle parallax (reado uses ~±3px): a small offset on top of the base shadow.
     const onMove = (e: MouseEvent) => {
       const r = el.getBoundingClientRect()
       const cx = r.left + r.width / 2
       const cy = r.top + r.height / 2
       const nx = Math.max(-1, Math.min(1, (e.clientX - cx) / (r.width / 2)))
       const ny = Math.max(-1, Math.min(1, (e.clientY - cy) / (r.height / 2)))
-      el.style.setProperty("--dx", `${nx * 16}px`)
-      el.style.setProperty("--dy", `${ny * 11}px`)
+      el.style.setProperty("--dx", `${6 + nx * 3.5}px`)
+      el.style.setProperty("--dy", `${7 + ny * 3.5}px`)
     }
     window.addEventListener("mousemove", onMove, { passive: true })
     return () => window.removeEventListener("mousemove", onMove)
@@ -32,8 +33,9 @@ export function Wordmark({ text = "WRITING" }: { text?: string }) {
     <div ref={ref} className="relative">
       <svg viewBox="0 0 1000 250" preserveAspectRatio="xMidYMid meet" className="w-full select-none" aria-hidden>
         <defs>
-          <pattern id="v2-wordmark-dots" width="7" height="7" patternUnits="userSpaceOnUse">
-            <circle cx="1.5" cy="1.5" r="1.5" className="fill-primary" />
+          {/* Fine, dense halftone — small tile + small dots (reado). */}
+          <pattern id="v2-wordmark-dots" width="3.6" height="3.6" patternUnits="userSpaceOnUse">
+            <circle cx="1.8" cy="1.8" r="0.8" className="fill-primary" />
           </pattern>
         </defs>
         <text

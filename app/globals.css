@@ -702,5 +702,12 @@ a:hover .v2-arrow__i--2, button:hover .v2-arrow__i--2, .group:hover .v2-arrow__i
 
 /* Interactive dotted-shadow wordmark (reado masthead): the dotted layer trails
    the cursor (offset set from JS via --dx/--dy). */
-.v2-wordmark-shadow { transform: translate(var(--dx, 9px), var(--dy, 9px)); transition: transform .18s ease-out; }
-@media (prefers-reduced-motion: reduce) { .v2-wordmark-shadow { transform: translate(9px, 9px); transition: none; } }
+/* Page-transition wipe: covers the viewport then retracts top→bottom (origin bottom). */
+.v2-page-wipe {
+  position: fixed; inset: 0; z-index: 100; pointer-events: none;
+  background: hsl(var(--primary)); transform-origin: bottom;
+}
+@media (prefers-reduced-motion: reduce) { .v2-page-wipe { display: none; } }
+
+.v2-wordmark-shadow { transform: translate(var(--dx, 6px), var(--dy, 7px)); transition: transform .3s cubic-bezier(.22,1,.36,1); }
+@media (prefers-reduced-motion: reduce) { .v2-wordmark-shadow { transform: translate(6px, 7px); transition: none; } }

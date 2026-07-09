@@ -908,7 +908,10 @@ export default function BlogComments({
 
   return (
     <section id="comments">
-      <h2 className="mb-6 text-xl font-bold tracking-tight">Discussion</h2>
+      <div className="mb-7 border-b border-border pb-4">
+        <span className="mb-2 block font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">Discussion</span>
+        <h2 className="font-serif text-2xl leading-tight tracking-tight text-foreground md:text-3xl">Join the conversation</h2>
+      </div>
 
       {!currentUser ? (
         <div className="mb-8">

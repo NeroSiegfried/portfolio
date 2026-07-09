@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Plus } from "lucide-react"
 import { faqs } from "@/lib/portfolio-data"
 import { Eyebrow } from "@/components/v2/primitives"
+import { Reveal } from "@/components/v2/reveal"
 import { cn } from "@/lib/utils"
 
 export function Faq() {
@@ -24,7 +25,7 @@ export function Faq() {
           </p>
         </div>
 
-        <div className="border-t border-border md:border-t-0">
+        <Reveal className="border-t border-border md:border-t-0">
           {faqs.map((f, i) => {
             const isOpen = open === i
             return (
@@ -48,7 +49,7 @@ export function Faq() {
               </div>
             )
           })}
-        </div>
+        </Reveal>
       </div>
     </section>
   )
