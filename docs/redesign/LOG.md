@@ -146,3 +146,20 @@ Owner review flagged several gaps vs. the referenced templates. Addressed:
 - Silenced Tailwind ambiguity: dropped `ease-[cubic-bezier(...)]` from the thumbnail push-forward (default ease is fine; the marker keeps its cubic-bezier via `.v2-thumb-marker` CSS).
 - Verified with a local `next build`: `/blog` prerenders static, `/v1/blog` unchanged, no errors/ambiguity warnings.
 - **Still TODO in Phase 4:** post page (serif title + reading column, snippets inline, comments/votes/series nav), series pages, features page — all reado-styled while preserving data/auth.
+
+## 2026-07-09 — Session (cont.): owner feedback round 2 (portfolio fixes + real Reado study + blog rebuild)
+
+Owner rejected the first blog index as lazy (uniform text-box grid, invented orange pill, no images/animation, didn't reflect Reado). Re-captured Reado with Puppeteer (`scripts/redesign-capture.mjs` → screens/reado) and studied it: giant masthead wordmark, inverted black category bar, serif hero + featured card, **image-led cards with squared tags**, editor's choice, varied sections.
+
+Portfolio fixes:
+- **Nav alignment:** SiteNav + BlogNav insets `inset-x-4/sm:6/lg:8` → `inset-x-3 md:inset-x-4` so the floating bar aligns exactly with the `mx-3/md:mx-4` content frame.
+- **Nav vertical centering:** `.v2-slide` `vertical-align: bottom` → `middle`; nav links/wordmark `inline-flex items-center`.
+- **Equal spacings:** About (`px-5 py-16 md:px-8 md:py-24`) + tech-stack (`py-16/24`) → the standard `px-4 py-14 md:px-6 md:py-20`.
+- **Footer wordmark:** replaced the `cqw` span (short + still truncating) with an **SVG `<text textLength=1000 lengthAdjust=spacingAndGlyphs>`** that fills the container width exactly (never truncates), much taller; cursive centred at ~half height. Fill via `fill-[hsl(var(--foreground)/0.07)]` (token has no `<alpha-value>`).
+- **Script font:** Dancing Script → **Great Vibes** (elegant signature) in `app/layout.tsx`.
+- **Projects cursor arrow:** ring border `3→6px`; arrow svg `64→98px` (~65% of the 150px ring); tight `0 0 18 18` viewBox so the glyph fills the box; sharp edges (`stroke-linecap: square`, `stroke-linejoin: miter`); `strokeWidth 1` ≈ 6px render = ring border width.
+
+Blog index REBUILD (`components/v2/blog/blog-index.tsx` + new `post-cover.tsx`), verified via local `next start` + Puppeteer screenshots:
+- Giant **WRITING** masthead (SVG fill-width) → **inverted category bar** (`bg-foreground text-background`, series + diamond markers) → **editorial hero** (serif tagline + series tags | featured image-led card) → **image-led card grid** → archive by year.
+- **PostCover**: on-brand typographic cover (oversized faint **per-post monogram** from title initials — ST/DS/SB/CS… — + accent tick + hover scale), since posts have no photos (Reado mixes photographic + typographic covers).
+- **Squared tags** (Reado) replace the invented rounded orange pill; serif titles; `AnimatedArrow` read links.

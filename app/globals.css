@@ -587,9 +587,10 @@ html { scroll-behavior: smooth; }
   will-change: transform;
 }
 .v2-cursor[data-variant="hover"] { width: 44px; height: 44px; }
-/* Over project media: a bold ring (outline) with a big, prominent up-right arrow (portfoliod). */
-.v2-cursor[data-variant="ring"] { width: 150px; height: 150px; background: transparent; border: 3px solid #fff; }
-.v2-cursor svg { position: absolute; inset: 0; margin: auto; height: 64px; width: 64px; opacity: 0; transition: opacity .2s ease; }
+/* Over project media: a ring (outline) with a big, sharp up-right arrow (portfoliod).
+   Ring border width matches the arrow's stroke; the arrow fills ~65% of the ring. */
+.v2-cursor[data-variant="ring"] { width: 150px; height: 150px; background: transparent; border: 6px solid #fff; }
+.v2-cursor svg { position: absolute; inset: 0; margin: auto; height: 98px; width: 98px; opacity: 0; transition: opacity .2s ease; }
 .v2-cursor[data-variant="ring"] svg { opacity: 1; }
 /* Trailing label under the ring — the CTA text ("Visit site" / "Read build log") follows the cursor. */
 .v2-cursor-label {
@@ -603,7 +604,7 @@ html { scroll-behavior: smooth; }
 @media (pointer: coarse) { .v2-cursor, .v2-cursor-label { display: none; } }
 
 /* Hover text-slide: label slides up to reveal an identical copy. */
-.v2-slide { position: relative; display: inline-flex; overflow: hidden; vertical-align: bottom; line-height: 1.15; }
+.v2-slide { position: relative; display: inline-flex; overflow: hidden; vertical-align: middle; line-height: 1.15; }
 .v2-slide > span { position: relative; display: block; transition: transform .45s cubic-bezier(.16,1,.3,1); }
 .v2-slide > span::after {
   content: attr(data-text); position: absolute; left: 0; top: 100%; width: 100%;

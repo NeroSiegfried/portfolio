@@ -34,7 +34,7 @@ export function BlogNav() {
   return (
     <header
       className={cn(
-        "fixed inset-x-4 top-4 z-50 border border-border bg-card transition-transform duration-300 sm:inset-x-6 lg:inset-x-8",
+        "fixed inset-x-3 top-4 z-50 border border-border bg-card transition-transform duration-300 md:inset-x-4",
         hidden ? "-translate-y-[160%]" : "translate-y-0",
       )}
     >

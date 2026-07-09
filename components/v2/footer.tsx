@@ -37,16 +37,25 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Signature block (banter): transparent block wordmark + cursive on top; the
-          block wordmark sizes to this container's width (cqw), so it never truncates. */}
-      <div className="v2-wordmark relative mt-14 flex items-center justify-center overflow-hidden py-4">
-        <span
-          aria-hidden
-          className="pointer-events-none select-none whitespace-nowrap font-display text-[14cqw] font-bold uppercase leading-none tracking-tighter text-foreground/[0.06]"
-        >
-          Victor Nabasu
-        </span>
-        <span className="absolute font-script leading-none text-foreground text-[clamp(2.5rem,9vw,7rem)]">
+      {/* Signature block (banter): a tall block wordmark that fills the container
+          width EXACTLY via SVG (textLength) — so it never truncates regardless of
+          the outer margins — with an elegant cursive signature centred on top at
+          roughly half its height. */}
+      <div className="v2-wordmark relative mt-14 flex items-center justify-center py-2">
+        <svg viewBox="0 0 1000 230" preserveAspectRatio="xMidYMid meet" className="w-full select-none" aria-hidden>
+          <text
+            x="500"
+            y="180"
+            textAnchor="middle"
+            textLength={1000}
+            lengthAdjust="spacingAndGlyphs"
+            fontSize={220}
+            className="fill-[hsl(var(--foreground)/0.07)] font-display font-bold"
+          >
+            VICTOR NABASU
+          </text>
+        </svg>
+        <span className="absolute font-script leading-none text-foreground text-[clamp(2rem,7cqw,5.5rem)]">
           Victor Nabasu
         </span>
       </div>

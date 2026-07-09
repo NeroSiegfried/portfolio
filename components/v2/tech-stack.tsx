@@ -58,7 +58,7 @@ export function TechStack() {
   }, [])
 
   return (
-    <section id="stack" className="scroll-mt-16 overflow-hidden border-t border-border px-4 py-16 md:px-6 md:py-24">
+    <section id="stack" className="scroll-mt-16 overflow-hidden border-t border-border px-4 py-14 md:px-6 md:py-20">
       <div className="flex items-end justify-between gap-6 border-b border-border pb-5">
         <div>
           <Eyebrow className="mb-3 block">Stack</Eyebrow>

@@ -9,7 +9,7 @@ import { useBasePath, withBase } from "@/lib/base-path"
 export function About() {
   const basePath = useBasePath()
   return (
-    <section id="about" className="scroll-mt-16 border-t border-border px-5 py-16 md:px-8 md:py-24">
+    <section id="about" className="scroll-mt-16 border-t border-border px-4 py-14 md:px-6 md:py-20">
       <div className="w-full">
         <div className="flex items-center justify-between border-b border-border pb-5">
           <Eyebrow>About</Eyebrow>
