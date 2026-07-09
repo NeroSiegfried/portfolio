@@ -19,7 +19,7 @@ export function TechStack() {
           {loop.map((t, i) => (
             <div
               key={`${t.name}-${i}`}
-              className="tech-item flex w-32 shrink-0 flex-col items-center gap-3 rounded-xl border border-border/60 px-4 py-6"
+              className="tech-item flex w-32 shrink-0 flex-col items-center gap-3 border border-border/60 px-4 py-6"
             >
               <div className="relative h-10 w-10">
                 <Image src={t.logo} alt={t.name} fill sizes="40px" className="tech-logo object-contain" />

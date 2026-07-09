@@ -36,9 +36,9 @@ export function Contact() {
   }
 
   const field =
-    "w-full rounded-lg border border-border bg-transparent px-4 py-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+    "w-full border border-border bg-transparent px-4 py-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
   const social =
-    "rounded-full border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors hover:border-primary hover:text-primary"
+    "border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors hover:border-primary hover:text-primary"
 
   return (
     <section id="contact" className="scroll-mt-20 border-t border-border px-6 py-20 md:py-28">
@@ -81,7 +81,7 @@ export function Contact() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground transition-transform hover:scale-[1.02] disabled:opacity-60"
+              className="inline-flex items-center gap-2 bg-primary px-6 py-3.5 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground disabled:opacity-60"
             >
               {submitting ? "Sending…" : (<>Send message <Send className="h-4 w-4" /></>)}
             </button>

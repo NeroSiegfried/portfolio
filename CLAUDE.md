@@ -36,9 +36,13 @@ Redesign portfolio + blog to be less basic, keeping (and extending) current func
 The **current (v1) design is preserved as a live copy at `/v1`** (portfolio) and `/v1/blog/**`, fully dynamic, sharing the same DB/auth/APIs. New design lives at `/`. The new site references it as **"v1"**. Every existing URL must keep working; any route renamed in v2 gets a 301 redirect. See TODO Phase 1.
 
 ## Hard rules (owner constraints — do not violate)
-- **NEVER use inline `style={}` for static styling.** Keep HTML / CSS / behaviour separate. Inline is allowed ONLY for genuinely computed values (e.g. a `transform: scale()` from a ResizeObserver) and prefer feeding those through CSS custom properties. No static colors/spacing/typography inline, ever.
-- **Do not free-hand designs.** Recreate the template patterns as closely as possible. Minimise boxes/cards — only use them where a primary template uses them tastefully.
-- Analyse templates with a **real renderer** (Puppeteer + Chrome, both installed) — screenshot at multiple viewports + extract computed styles. Never guess a template's look.
+- **THIS IS A GROUND-UP REDESIGN, NOT A RESKIN.** Do NOT keep the current site's section structure/components and just swap colors + fonts. Rethink each page's *composition, layout, and interaction* from the templates. Ignore the current site's styling entirely — take only the **information/content** from it and re-present it in the new style, even if that means a completely different structure. (Session-1 mistake: the first v2 portfolio was a reskin — rejected.)
+- **Recreate the templates' INTERACTION layer, not just static looks.** Inspect and reproduce: custom **cursors** and per-section cursor behavior, **hover** effects (magnetic buttons, image zoom/reveal, text-swap/marquee-on-hover, link underlines), **scroll** motion (reveals, parallax, pinned/sticky, horizontal scroll), **icon/logo animations**, marquees, and page-load reveals. A redesign without these is incomplete.
+- **Match the templates' SHAPE language: mostly SQUARED.** portfolie/banter/portfoliob use small radii (2–11px) — do not pill everything. Pills only where a template genuinely uses them.
+- **Device responsiveness showcase:** do NOT use the CSS-rendered device frames. Present responsiveness as an **edited image "spread"** per project (like a blog-post image showing the product across viewports). Projects become image-led.
+- **The accordion is NOT required** — don't retain it just because v1 had it.
+- **NEVER use inline `style={}` for static styling.** Keep HTML/CSS/behaviour separate. Inline allowed ONLY for genuinely computed values (e.g. ResizeObserver scale); prefer CSS custom properties. No static colors/spacing/typography inline, ever.
+- Analyse templates with a **real renderer** (Puppeteer + Chrome). Beyond screenshots + computed tokens, actively probe interactions: detect custom-cursor DOM, diff computed styles before/after `page.hover()`, capture hover-state screenshots, inspect transition/animation/transform usage. Never guess.
 - **Get sign-off on `DESIGN-SPEC.md` before building the redesign.**
 
 ## Workflow

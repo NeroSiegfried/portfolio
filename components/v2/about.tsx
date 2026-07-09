@@ -28,7 +28,7 @@ export function About() {
         </motion.p>
 
         <div className="mt-14 grid gap-10 md:grid-cols-[320px_1fr] md:gap-16">
-          <div className="relative aspect-square w-full max-w-xs overflow-hidden rounded-xl md:max-w-none">
+          <div className="v2-media relative aspect-square w-full max-w-xs overflow-hidden border border-border md:max-w-none">
             <Image src="/victor-nabasu.jpg" alt="Victor Nabasu" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover" />
           </div>
           <div className="space-y-5 text-base leading-relaxed text-muted-foreground">

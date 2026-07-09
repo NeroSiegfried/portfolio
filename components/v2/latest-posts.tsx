@@ -37,7 +37,7 @@ export function LatestPosts({ posts }: { posts: LatestPost[] }) {
             </span>
           }
         />
-        <div className="mt-10 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
+        <div className="mt-10 grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-3">
           {posts.slice(0, 3).map((post, i) => (
             <motion.div
               key={post.slug}

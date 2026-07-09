@@ -569,3 +569,47 @@ html { scroll-behavior: smooth; }
   to { transform: translateX(-50%); }
 }
 @media (prefers-reduced-motion: reduce) { .v2-marquee { animation: none; } }
+
+/* ═══════════════════════════════════════════════════════════════
+   V2 INTERACTIONS — custom cursor, hover text-slide, media zoom
+═══════════════════════════════════════════════════════════════ */
+
+/* Custom cursor (pointer:fine only). .v2-cursor-scope hides the native cursor. */
+@media (pointer: fine) {
+  .v2-cursor-scope, .v2-cursor-scope * { cursor: none !important; }
+}
+.v2-cursor {
+  position: fixed; top: 0; left: 0; z-index: 9999;
+  height: 12px; width: 12px; border-radius: 9999px;
+  background: #fff; mix-blend-mode: difference; pointer-events: none;
+  transform: translate3d(var(--cx, -100px), var(--cy, -100px), 0) translate(-50%, -50%);
+  transition: width .28s cubic-bezier(.16,1,.3,1), height .28s cubic-bezier(.16,1,.3,1), opacity .2s ease;
+  will-change: transform;
+}
+.v2-cursor[data-hover="true"] { width: 52px; height: 52px; }
+.v2-cursor-label {
+  position: fixed; top: 0; left: 0; z-index: 10000; pointer-events: none;
+  transform: translate3d(var(--cx, -100px), var(--cy, -100px), 0) translate(-50%, -50%);
+  font-family: var(--font-mono), monospace; font-size: .6rem; letter-spacing: .12em;
+  text-transform: uppercase; color: #fff; mix-blend-mode: difference;
+  opacity: 0; transition: opacity .2s ease;
+}
+.v2-cursor-label[data-show="true"] { opacity: 1; }
+@media (pointer: coarse) { .v2-cursor, .v2-cursor-label { display: none; } }
+
+/* Hover text-slide: label slides up to reveal an identical copy. */
+.v2-slide { position: relative; display: inline-flex; overflow: hidden; vertical-align: bottom; line-height: 1.15; }
+.v2-slide > span { position: relative; display: block; transition: transform .45s cubic-bezier(.16,1,.3,1); }
+.v2-slide > span::after {
+  content: attr(data-text); position: absolute; left: 0; top: 100%; width: 100%;
+}
+.v2-slide:hover > span,
+a:hover .v2-slide > span,
+button:hover .v2-slide > span { transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce) { .v2-slide > span { transition: none; } }
+
+/* Media zoom on hover (image-led project spreads). */
+.v2-media { overflow: hidden; }
+.v2-media img { transition: transform .7s cubic-bezier(.16,1,.3,1); }
+.v2-media:hover img { transform: scale(1.035); }
+@media (prefers-reduced-motion: reduce) { .v2-media img, .v2-media:hover img { transition: none; transform: none; } }

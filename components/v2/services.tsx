@@ -18,11 +18,11 @@ export function Services() {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
             >
-              <div className="flex items-center gap-3">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
-                <h3 className="font-display text-xl font-semibold tracking-tight">{s.title}</h3>
+              <div className="flex items-baseline gap-4 border-t border-border pt-5">
+                <span className="font-mono text-xs text-primary">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="font-display text-xl font-semibold tracking-tight md:text-2xl">{s.title}</h3>
               </div>
-              <p className="mt-3 pl-5 font-mono text-sm leading-relaxed text-muted-foreground">{s.description}</p>
+              <p className="mt-3 pl-8 font-mono text-sm leading-relaxed text-muted-foreground">{s.description}</p>
             </motion.div>
           ))}
         </div>

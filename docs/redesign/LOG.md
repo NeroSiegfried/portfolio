@@ -111,3 +111,15 @@ Instead of physically copying ~20 components into `components/v1/`, I used a **`
 ### Next
 - Commit + push + CLI preview deploy → owner review of portfolio.
 - Then Phase 4: blog redesign (reado-style, serif titles, preserve snippets/comments/series). Then Phase 5 QA/redirects, Phase 6 ship.
+
+## 2026-07-09 — Session 1 (cont.): portfolio REDESIGN (first v2 was a reskin — rejected)
+
+- Owner rejected the first v2 portfolio as a reskin (kept old structure, no interactions, over-pilled, kept accordion + CSS device frames). Ran a real-browser INTERACTION inspection (`scratchpad/inspect.mjs`): custom cursor (portfoliod: `cursor:none` + 16px `mix-blend-mode:difference` follower), hover text-slide (duplicated labels), broad `mix-blend-mode:difference`, squared radii (0–10px), numbered items. Findings recorded in DESIGN-SPEC "INTERACTION SPEC". Saved memory `redesign-not-reskin`.
+- **Rebuilt** the portfolio ground-up:
+  - New interaction primitives: `components/v2/cursor.tsx` (blend-difference dot, lerp-follow, grows over interactive, `data-cursor-label` support, pointer:fine only), `hover-slide.tsx` (CSS text-slide), `reveal.tsx` (`Reveal` fade/rise + `RevealLines` mask-reveal; both support `mount` for above-the-fold).
+  - Globals: `.v2-cursor*`, `.v2-slide`, `.v2-media` (image zoom) CSS.
+  - Rewrote hero (mask-reveal oversized name, role marquee, text-slide CTAs), projects (image-led numbered blocks using generated **spreads**, hover-zoom + "View" cursor label, NO accordion / NO device frames), site-nav (text-slide links), services (numbered), and squared everything (removed rounded-full/xl on nav toggle, contact, tech, latest, about).
+  - **Project spreads**: `scripts/generate-spreads.mjs` (sharp) composes `public/projects/{11,10,9,1}-spread.png` (desktop + overlapped phone, squared, transparent) — replaces CSS device frames.
+  - Deleted `components/v2/device-showcase.tsx` (no longer used).
+  - Fixed above-the-fold reveal bug (hero name stayed clipped): `mount` triggers `animate` instead of `whileInView`.
+- Verified on dev: `/` 200, hero renders with custom cursor + marquee, project spreads show (Derivian/Stitch Bloom), squared, dark+light.
