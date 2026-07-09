@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Plus } from "lucide-react"
 import { faqs } from "@/lib/portfolio-data"
-import { SectionHead } from "@/components/v2/primitives"
+import { Eyebrow } from "@/components/v2/primitives"
 import { cn } from "@/lib/utils"
 
 export function Faq() {
@@ -11,9 +11,20 @@ export function Faq() {
 
   return (
     <section className="border-t border-border px-4 py-14 md:px-6 md:py-20">
-      <div className="w-full max-w-4xl">
-        <SectionHead eyebrow="FAQ" label="Good to know" title="Frequently asked" />
-        <div className="mt-6">
+      {/* Two columns so the section fills the full width: sticky heading left, list right. */}
+      <div className="grid gap-10 md:grid-cols-[minmax(260px,32%)_1fr] md:gap-16">
+        <div className="md:sticky md:top-24 md:self-start">
+          <Eyebrow className="mb-3 block">FAQ</Eyebrow>
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl md:text-[2.75rem] md:leading-[1.05]">
+            Frequently asked
+          </h2>
+          <p className="mt-5 max-w-xs font-mono text-sm leading-relaxed text-muted-foreground">
+            Good to know before we start. Still curious?{" "}
+            <a href="#contact" className="text-primary underline-offset-4 hover:underline">Get in touch</a>.
+          </p>
+        </div>
+
+        <div className="border-t border-border md:border-t-0">
           {faqs.map((f, i) => {
             const isOpen = open === i
             return (

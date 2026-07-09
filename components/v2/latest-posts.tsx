@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowUpRight } from "lucide-react"
 import { SectionHead } from "@/components/v2/primitives"
+import { AnimatedArrow } from "@/components/v2/animated-arrow"
 import { useBasePath, withBase } from "@/lib/base-path"
 
 export interface LatestPost {
@@ -59,7 +59,7 @@ export function LatestPosts({ posts }: { posts: LatestPost[] }) {
                   <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{post.excerpt}</p>
                 ) : null}
                 <span className="mt-auto flex items-center gap-1.5 pt-6 font-mono text-xs uppercase tracking-[0.12em] text-primary">
-                  Read <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  Read <AnimatedArrow className="text-sm" />
                 </span>
               </Link>
             </motion.div>
@@ -70,7 +70,7 @@ export function LatestPosts({ posts }: { posts: LatestPost[] }) {
             href={withBase(basePath, "/blog")}
             className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-primary"
           >
-            View all posts <ArrowUpRight className="h-3.5 w-3.5" />
+            View all posts <AnimatedArrow className="text-sm" />
           </Link>
         </div>
       </div>

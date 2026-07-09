@@ -1,12 +1,15 @@
 "use client"
 
 import Link from "next/link"
+import { AnimatedArrow } from "@/components/v2/animated-arrow"
 import { useBasePath, withBase } from "@/lib/base-path"
+import { cn } from "@/lib/utils"
 
 export function Footer() {
   const basePath = useBasePath()
   const year = new Date().getFullYear()
   const link = "transition-colors hover:text-primary"
+  const extLink = cn(link, "inline-flex w-fit items-center gap-1.5")
   const col = "flex flex-col gap-2.5 font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground"
 
   return (
@@ -25,20 +28,21 @@ export function Footer() {
           <span>London, UK</span>
         </div>
         <div className={col}>
-          <a href="https://github.com/NeroSiegfried" target="_blank" rel="noopener noreferrer" className={link}>GitHub ↗</a>
-          <a href="https://www.linkedin.com/in/victor-nabasu-8b5223212/" target="_blank" rel="noopener noreferrer" className={link}>LinkedIn ↗</a>
-          <a href="https://x.com/NeroSiegfried" target="_blank" rel="noopener noreferrer" className={link}>X / Twitter ↗</a>
+          <a href="https://github.com/NeroSiegfried" target="_blank" rel="noopener noreferrer" className={extLink}>GitHub <AnimatedArrow /></a>
+          <a href="https://www.linkedin.com/in/victor-nabasu-8b5223212/" target="_blank" rel="noopener noreferrer" className={extLink}>LinkedIn <AnimatedArrow /></a>
+          <a href="https://x.com/NeroSiegfried" target="_blank" rel="noopener noreferrer" className={extLink}>X / Twitter <AnimatedArrow /></a>
         </div>
         <div className={col}>
-          <Link href={withBase(basePath, "/v1")} className={link}>Previous site (v1) ↗</Link>
+          <Link href={withBase(basePath, "/v1")} className={extLink}>Previous site (v1) <AnimatedArrow /></Link>
         </div>
       </div>
 
-      {/* Signature block (banter): transparent block wordmark + cursive on top, fits any width. */}
-      <div className="relative mt-14 flex items-center justify-center overflow-hidden py-4">
+      {/* Signature block (banter): transparent block wordmark + cursive on top; the
+          block wordmark sizes to this container's width (cqw), so it never truncates. */}
+      <div className="v2-wordmark relative mt-14 flex items-center justify-center overflow-hidden py-4">
         <span
           aria-hidden
-          className="pointer-events-none select-none whitespace-nowrap font-display text-[13vw] font-bold uppercase leading-none tracking-tighter text-foreground/[0.06]"
+          className="pointer-events-none select-none whitespace-nowrap font-display text-[14cqw] font-bold uppercase leading-none tracking-tighter text-foreground/[0.06]"
         >
           Victor Nabasu
         </span>

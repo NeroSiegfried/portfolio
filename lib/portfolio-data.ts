@@ -43,6 +43,7 @@ export const projects: Project[] = [
     showcaseMode: "web",
     liveUrl: "https://sunabtelecomservices.com/",
     githubUrl: "https://github.com/NeroSiegfried/sunab-telecommunications",
+    blogPostSlug: "sunab-build-log",
   },
   {
     id: 10,

@@ -21,17 +21,17 @@ export function About() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mt-10 max-w-4xl font-display text-2xl font-medium leading-[1.25] tracking-tight sm:text-3xl md:text-[2.5rem] md:leading-[1.15]"
+          className="mt-10 max-w-5xl font-display text-2xl font-medium leading-[1.25] tracking-tight sm:text-3xl md:text-[2.5rem] md:leading-[1.15]"
         >
           I&rsquo;m a full-stack developer and software engineer in London, turning complex problems
           into elegant, production-ready code.
         </motion.p>
 
-        <div className="mt-12 grid gap-8 md:grid-cols-[minmax(0,340px)_1fr] md:gap-14 lg:gap-20">
+        <div className="mt-12 grid gap-8 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)_minmax(0,220px)] md:gap-12 lg:gap-16">
           <div className="v2-media relative aspect-[4/5] w-full max-w-xs overflow-hidden border border-border md:max-w-none">
-            <Image src="/victor-nabasu.jpg" alt="Victor Nabasu" fill sizes="(max-width: 768px) 80vw, 340px" className="object-cover object-top" />
+            <Image src="/victor-nabasu.jpg" alt="Victor Nabasu" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover object-top" />
           </div>
-          <div className="max-w-xl space-y-5 text-base leading-relaxed text-muted-foreground md:pt-2">
+          <div className="space-y-5 text-base leading-relaxed text-muted-foreground md:pt-2">
             <p>
               I&rsquo;ve worked on projects ranging from satellite modeling to domain-specific
               languages and AI-powered web apps. In my free time I leetcode, play Japanese RPGs, and
@@ -51,6 +51,20 @@ export function About() {
               have an interesting project or role in mind, let&rsquo;s connect.
             </p>
           </div>
+          {/* Meta column — fills the right third with quick facts. */}
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-6 self-start border-t border-border pt-6 font-mono text-xs md:grid-cols-1 md:border-l md:border-t-0 md:pl-6 md:pt-2">
+            {[
+              { k: "Now", v: "Open to roles" },
+              { k: "Based", v: "London, UK" },
+              { k: "Focus", v: "Full-stack · systems" },
+              { k: "Education", v: "MSc Adv. SW Eng · KCL" },
+            ].map((m) => (
+              <div key={m.k}>
+                <dt className="uppercase tracking-[0.14em] text-muted-foreground">{m.k}</dt>
+                <dd className="mt-1 text-foreground">{m.v}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </div>
     </section>

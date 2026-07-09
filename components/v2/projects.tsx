@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type CSSProperties } from "react"
 import Image from "next/image"
-import { ArrowUpRight } from "lucide-react"
 import { featuredProjects, type Project } from "@/lib/portfolio-data"
 import { Eyebrow } from "@/components/v2/primitives"
+import { AnimatedArrow } from "@/components/v2/animated-arrow"
 import { useBasePath, withBase } from "@/lib/base-path"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +13,9 @@ function coverFor(p: Project): string | null {
   if (p.pictureSlides?.length) return p.pictureSlides[0]
   return null
 }
+
+// Thumbnail column geometry: each thumb is 64px tall with a 12px gap → 76px pitch.
+const THUMB_PITCH = 76
 
 export function Projects() {
   const projects = featuredProjects
@@ -57,27 +60,32 @@ export function Projects() {
             {String(active + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
           </p>
 
-          {/* vertical thumbnails; the square sits to the side of the active one */}
-          <div className="mt-5 hidden flex-col gap-3 md:flex">
+          {/* Vertical thumbnails; the active one pushes right, and a single persistent
+              rotating marker slides down to sit just past it (so it's never covered). */}
+          <div className="relative mt-5 hidden flex-col gap-3 md:flex">
             {projects.map((p, i) => {
               const c = coverFor(p)
               const on = i === active
               return (
-                <div key={p.id} className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    aria-label={`View ${p.title}`}
-                    onClick={() => scrollTo(i)}
-                    className={cn("relative block h-16 w-16 shrink-0 overflow-hidden border bg-secondary transition-colors", on ? "border-primary" : "border-border")}
-                  >
-                    {c ? <Image src={c} alt="" fill sizes="64px" className="object-cover object-top" /> : null}
-                  </button>
-                  {on ? (
-                    <span className="v2-square block h-4 w-4 shrink-0 bg-primary" style={{ transform: `rotate(${active * 45}deg)` }} aria-hidden />
-                  ) : null}
-                </div>
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-label={`View ${p.title}`}
+                  onClick={() => scrollTo(i)}
+                  className={cn(
+                    "relative block h-16 w-16 shrink-0 overflow-hidden border bg-secondary transition-[transform,border-color] duration-500 ease-[cubic-bezier(.16,1,.3,1)]",
+                    on ? "translate-x-3 border-primary" : "border-border",
+                  )}
+                >
+                  {c ? <Image src={c} alt="" fill sizes="64px" className="object-cover object-top" /> : null}
+                </button>
               )
             })}
+            <span
+              aria-hidden
+              className="v2-thumb-marker"
+              style={{ "--mk-y": `${active * THUMB_PITCH}px`, "--mk-rot": `${active * 45}deg` } as CSSProperties}
+            />
           </div>
         </div>
 
@@ -87,6 +95,7 @@ export function Projects() {
             const cover = coverFor(p)
             const hasArticle = Boolean(p.blogPostSlug)
             const href = hasArticle ? withBase(basePath, `/blog/${p.blogPostSlug}`) : (p.liveUrl ?? p.githubUrl ?? "#")
+            const cta = hasArticle ? "Read build log" : "Visit site"
             return (
               <div key={p.id} ref={(el) => { itemRefs.current[i] = el }} data-idx={i} className="border-b border-border last:border-b-0 md:border-b-0">
                 <a
@@ -94,6 +103,8 @@ export function Projects() {
                   target={hasArticle ? undefined : "_blank"}
                   rel="noopener noreferrer"
                   data-cursor
+                  data-cursor-label={cta}
+                  aria-label={`${p.title} — ${cta.toLowerCase()}`}
                   className="v2-work-item block aspect-[4/3] w-full sm:aspect-[16/10] md:aspect-[3/2]"
                 >
                   {cover ? (
@@ -103,18 +114,16 @@ export function Projects() {
                       <span className="text-center font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">{p.technologies.join("  ·  ")}</span>
                     </div>
                   )}
-                  <span className="absolute left-4 top-3 font-mono text-xs text-white mix-blend-difference">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="v2-work-scrim" aria-hidden />
+                  <span className="absolute left-4 top-3 z-10 font-mono text-xs text-white mix-blend-difference">{String(i + 1).padStart(2, "0")}</span>
 
-                  <div className="v2-work-cap absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/85 via-black/50 to-transparent px-6 pb-6 pt-16 md:block">
-                    <div className="flex items-end justify-between gap-4">
-                      <div>
-                        <h3 className="font-display text-3xl font-semibold tracking-tight text-white">{p.title}</h3>
-                        <p className="mt-1.5 font-mono text-xs uppercase tracking-[0.12em] text-white/70">{p.technologies.slice(0, 4).join(" · ")}</p>
-                      </div>
-                      <span className="mb-1 inline-flex shrink-0 items-center gap-1.5 font-mono text-xs uppercase tracking-[0.12em] text-white">
-                        {hasArticle ? "Read build log" : "Visit site"} <ArrowUpRight className="h-4 w-4" />
-                      </span>
-                    </div>
+                  {/* Top-left: project name slides in from the left. */}
+                  <div className="v2-work-tl absolute left-4 top-9 z-10 hidden max-w-[85%] md:block">
+                    <h3 className="font-display text-3xl font-semibold tracking-tight text-white lg:text-4xl">{p.title}</h3>
+                  </div>
+                  {/* Bottom-right: description slides in from the right. */}
+                  <div className="v2-work-br absolute bottom-5 right-5 z-10 hidden max-w-sm text-right md:block">
+                    <p className="line-clamp-4 text-sm leading-relaxed text-white/85">{p.description}</p>
                   </div>
                 </a>
 
@@ -122,7 +131,7 @@ export function Projects() {
                   <h3 className="font-display text-2xl font-semibold tracking-tight">{p.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.description}</p>
                   <span className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.12em] text-primary">
-                    {hasArticle ? "Read build log" : "Visit site"} <ArrowUpRight className="h-3.5 w-3.5" />
+                    {cta} <AnimatedArrow className="text-sm" />
                   </span>
                 </div>
               </div>

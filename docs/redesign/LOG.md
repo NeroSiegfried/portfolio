@@ -123,3 +123,15 @@ Instead of physically copying ~20 components into `components/v1/`, I used a **`
   - Deleted `components/v2/device-showcase.tsx` (no longer used).
   - Fixed above-the-fold reveal bug (hero name stayed clipped): `mount` triggers `animate` instead of `whileInView`.
 - Verified on dev: `/` 200, hero renders with custom cursor + marquee, project spreads show (Derivian/Stitch Bloom), squared, dark+light.
+
+## 2026-07-09 — Session (cont.): owner-feedback polish (cursor, Work, arrows, layout, build logs)
+
+Owner review flagged several gaps vs. the referenced templates. Addressed:
+- **Cursor (portfoliod):** ring 96→150px, border 2→3px, arrow 38→64px + strokeWidth 3. The project-media CTA now **trails the cursor** as text (`.v2-cursor-label`, set from `data-cursor-label` on the `[data-cursor]` link) — "Visit site" / "Read build log". Removed that CTA from the Work caption.
+- **Work text animation:** replaced the single bottom slide-up caption (`.v2-work-cap`, removed) with **title top-left (slides in from left, `.v2-work-tl`)** + **description bottom-right (slides in from right, `.v2-work-br`)** + a hover scrim (`.v2-work-scrim`).
+- **Rotating marker:** was re-mounted per active-change (so it never animated). Now a **single persistent** `.v2-thumb-marker` positioned by CSS vars (`--mk-y = active*76px` pitch, `--mk-rot = active*45deg`) with a transform transition, and the **active thumbnail pushes right** (`translate-x-3`); marker sits at `left:88px` so the pushed thumb never covers it.
+- **Arrows:** new `components/v2/animated-arrow.tsx` (`AnimatedArrow`) replicating stitch-bloom `btn-split` diagonal slide (visible arrow exits top-right, duplicate enters bottom-left) via `.v2-arrow*` CSS keyed off `a:hover`/`button:hover`/`.group:hover`. Applied to Work (mobile), latest-posts, footer links.
+- **Left-aligned sections:** FAQ → two-column (sticky heading left, list right); About → added a right meta column (Now/Based/Focus/Education) + widened the statement (max-w-4xl→5xl) so the right third isn't empty.
+- **Footer wordmark truncation:** it sized off `13vw` (viewport). Wrapper is now a container (`.v2-wordmark { container-type: inline-size }`) and the block wordmark uses `text-[14cqw]` — sizes to the parent container width, so it no longer truncates.
+- **Build logs (auto):** `lib/blog/hooks.ts` was dead + wrong-schema (camelCase cols, `draft`, non-admin author). Rewrote it schema-correct/idempotent, and added the real mechanism `scripts/seed-build-logs.mjs` (idempotent; `--dry-run`). Build logs = published posts in the `portfolio-projects` series, admin `monad`; the `[slug]` page already renders live/repo links via `projectByBlogSlug`. Added `blogPostSlug: "sunab-build-log"` to Sunab and **ran the seed** → created the published `sunab-build-log` post (owner approved the live-DB write). Re-runs are no-ops.
+- Typechecked all changed files (no new errors). Not yet committed/pushed.

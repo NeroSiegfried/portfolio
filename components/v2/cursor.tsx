@@ -4,18 +4,22 @@ import { useEffect, useRef } from "react"
 
 /**
  * Custom cursor (portfoliod): a small filled dot by default, a slightly larger
- * dot over links/buttons, and a ring with an up-right arrow over project media
- * ([data-cursor]). mix-blend-difference so it inverts over any background.
- * Disabled on touch; native cursor hidden via `.v2-cursor-scope` on <html>.
+ * dot over links/buttons, and a large ring with a bold up-right arrow over
+ * project media ([data-cursor]). Over media it also shows a trailing label
+ * (from `data-cursor-label`, e.g. "Visit site" / "Read build log") that follows
+ * the cursor. mix-blend-difference so it inverts over any background. Disabled
+ * on touch; native cursor hidden via `.v2-cursor-scope` on <html>.
  */
 export function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null)
+  const labelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!window.matchMedia("(pointer: fine)").matches) return
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     const dot = dotRef.current
-    if (!dot) return
+    const label = labelRef.current
+    if (!dot || !label) return
 
     document.documentElement.classList.add("v2-cursor-scope")
     let raf = 0
@@ -28,7 +32,15 @@ export function Cursor() {
       tx = e.clientX
       ty = e.clientY
       const el = (e.target as HTMLElement)?.closest?.("a, button, [role=button], [data-cursor], input, textarea, select") as HTMLElement | null
-      dot.dataset.variant = el ? (el.hasAttribute("data-cursor") ? "ring" : "hover") : "dot"
+      const isRing = !!el?.hasAttribute("data-cursor")
+      dot.dataset.variant = el ? (isRing ? "ring" : "hover") : "dot"
+      const text = isRing ? el?.getAttribute("data-cursor-label") ?? "" : ""
+      if (text) {
+        label.textContent = text
+        label.dataset.show = "true"
+      } else {
+        label.dataset.show = "false"
+      }
     }
     const loop = () => {
       const ease = reduce ? 1 : 0.2
@@ -36,6 +48,8 @@ export function Cursor() {
       y += (ty - y) * ease
       dot.style.setProperty("--cx", `${x}px`)
       dot.style.setProperty("--cy", `${y}px`)
+      label.style.setProperty("--cx", `${x}px`)
+      label.style.setProperty("--cy", `${y}px`)
       raf = requestAnimationFrame(loop)
     }
 
@@ -49,11 +63,14 @@ export function Cursor() {
   }, [])
 
   return (
-    <div ref={dotRef} className="v2-cursor" data-variant="dot" aria-hidden>
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M7 17 17 7" />
-        <path d="M8 7h9v9" />
-      </svg>
-    </div>
+    <>
+      <div ref={dotRef} className="v2-cursor" data-variant="dot" aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 17 17 7" />
+          <path d="M8 7h9v9" />
+        </svg>
+      </div>
+      <div ref={labelRef} className="v2-cursor-label" data-show="false" aria-hidden />
+    </>
   )
 }
