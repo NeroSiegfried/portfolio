@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { requireAdminUser } from "@/lib/blog/auth"
 import { readDb } from "@/lib/blog/store"
-import AdminDashboard from "@/components/admin-dashboard"
+import AdminDashboard, { type AdminComment, type AdminUser } from "@/components/admin-dashboard"
 
 export const dynamic = "force-dynamic"
 
@@ -13,20 +13,49 @@ export default async function AdminDashboardPage() {
 
   const db = await readDb()
 
-  return (
-    <main className="container mx-auto px-4 py-10">
-      <header className="mb-8 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold">Blog Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Logged in as {admin.username}.</p>
-      </header>
+  // Resolve author + post for each comment server-side (moderation list).
+  const postById = new Map(db.posts.map((p) => [p.id, p]))
+  const userById = new Map(db.users.map((u) => [u.id, u]))
+  const comments: AdminComment[] = [...db.comments]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((c) => {
+      const post = postById.get(c.postId)
+      const author = userById.get(c.userId)
+      return {
+        id: c.id,
+        postId: c.postId,
+        postTitle: post?.title ?? "(unknown post)",
+        postSlug: post?.slug ?? "",
+        authorName: author?.displayName ?? author?.username ?? "(unknown)",
+        authorUsername: author?.username ?? "",
+        content: c.content,
+        createdAt: c.createdAt,
+        hidden: c.hidden ?? false,
+      }
+    })
 
-      <div className="max-w-3xl mx-auto">
-        <AdminDashboard
-          posts={[...db.posts].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))}
-          series={[...db.series].sort((a, b) => a.title.localeCompare(b.title))}
-          snippets={[...db.snippets].sort((a, b) => a.title.localeCompare(b.title))}
-        />
-      </div>
-    </main>
+  // Blocked first, then alphabetical. Strip passwordHash — never send it to the client.
+  const users: AdminUser[] = [...db.users]
+    .sort((a, b) => (a.blocked === b.blocked ? a.username.localeCompare(b.username) : a.blocked ? -1 : 1))
+    .map((u) => ({
+      id: u.id,
+      username: u.username,
+      displayName: u.displayName,
+      email: u.email,
+      role: u.role,
+      blocked: u.blocked,
+      avatarUrl: u.avatarUrl,
+      createdAt: u.createdAt,
+    }))
+
+  return (
+    <AdminDashboard
+      posts={[...db.posts].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))}
+      series={[...db.series].sort((a, b) => a.title.localeCompare(b.title))}
+      snippets={[...db.snippets].sort((a, b) => a.title.localeCompare(b.title))}
+      comments={comments}
+      users={users}
+      adminName={admin.username}
+    />
   )
 }

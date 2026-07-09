@@ -3,27 +3,61 @@
 import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  FileText, Layers, Code2, MessageSquare, Users, LogOut, ExternalLink,
+  Eye, EyeOff, Trash2, Plus, Ban, ShieldCheck, ArrowLeft, Upload,
+} from "lucide-react"
 import BlogMarkdown from "@/components/blog-markdown"
 import type { BlogPost, BlogSeries, BlogSnippet } from "@/lib/blog/types"
 import { compressImage } from "@/lib/compress-image"
+import { cn } from "@/lib/utils"
+
+// ── Shared control classes (v2: squared, mono labels, primary accents) ──────────
+const input = "w-full border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+const monoInput = cn(input, "font-mono")
+const btn = "inline-flex items-center justify-center gap-2 border border-border px-4 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+const btnPrimary = "inline-flex items-center justify-center gap-2 bg-primary px-5 py-2.5 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+const btnDanger = "inline-flex items-center justify-center gap-2 border border-destructive/50 px-4 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+const eyebrow = "font-mono text-[0.7rem] uppercase tracking-[0.16em] text-muted-foreground"
+
+// ── Public prop shapes (author/post resolved server-side; no passwordHash) ──────
+export interface AdminComment {
+  id: string
+  postId: string
+  postTitle: string
+  postSlug: string
+  authorName: string
+  authorUsername: string
+  content: string
+  createdAt: string
+  hidden: boolean
+}
+export interface AdminUser {
+  id: string
+  username: string
+  displayName: string | null
+  email: string
+  role: "admin" | "user"
+  blocked: boolean
+  avatarUrl: string | null
+  createdAt: string
+}
 
 interface AdminDashboardProps {
   posts: BlogPost[]
   series: BlogSeries[]
   snippets: BlogSnippet[]
+  comments: AdminComment[]
+  users: AdminUser[]
+  adminName: string
 }
+
+type Section = "posts" | "series" | "snippets" | "comments" | "users"
 
 // ── Series tree picker ──────────────────────────────────────────────────────────
 
 function SeriesTreeNode({
-  node,
-  all,
-  selectedId,
-  onSelect,
-  excludeId,
-  depth = 0,
+  node, all, selectedId, onSelect, excludeId, depth = 0,
 }: {
   node: BlogSeries
   all: BlogSeries[]
@@ -35,8 +69,8 @@ function SeriesTreeNode({
   if (node.id === excludeId) return null
   const children = all.filter((s) => s.parentId === node.id && s.id !== excludeId)
   return (
-    <div style={{ paddingLeft: depth ? "1rem" : 0 }}>
-      <label className="flex items-center gap-2 py-0.5 cursor-pointer hover:text-foreground text-sm">
+    <div className={depth ? "pl-4" : undefined}>
+      <label className="flex cursor-pointer items-center gap-2 py-0.5 text-sm hover:text-foreground">
         <input
           type="radio"
           name="seriesParent"
@@ -48,25 +82,14 @@ function SeriesTreeNode({
         {node.title}
       </label>
       {children.map((child) => (
-        <SeriesTreeNode
-          key={child.id}
-          node={child}
-          all={all}
-          selectedId={selectedId}
-          onSelect={onSelect}
-          excludeId={excludeId}
-          depth={depth + 1}
-        />
+        <SeriesTreeNode key={child.id} node={child} all={all} selectedId={selectedId} onSelect={onSelect} excludeId={excludeId} depth={depth + 1} />
       ))}
     </div>
   )
 }
 
 function SeriesTreePicker({
-  allSeries,
-  value,
-  onChange,
-  excludeId,
+  allSeries, value, onChange, excludeId,
 }: {
   allSeries: BlogSeries[]
   value: string
@@ -75,8 +98,8 @@ function SeriesTreePicker({
 }) {
   const roots = allSeries.filter((s) => !s.parentId && s.id !== excludeId)
   return (
-    <div className="rounded-md border bg-muted/20 p-3 max-h-52 overflow-y-auto text-sm">
-      <label className="flex items-center gap-2 py-0.5 cursor-pointer hover:text-foreground mb-1">
+    <div className="max-h-52 overflow-y-auto border border-border bg-muted/20 p-3 text-sm">
+      <label className="mb-1 flex cursor-pointer items-center gap-2 py-0.5 hover:text-foreground">
         <input
           type="radio"
           name="seriesParent"
@@ -85,17 +108,10 @@ function SeriesTreePicker({
           onChange={() => onChange("")}
           className="accent-primary"
         />
-        <span className="text-muted-foreground italic">No parent (root series)</span>
+        <span className="italic text-muted-foreground">No parent (root series)</span>
       </label>
       {roots.map((root) => (
-        <SeriesTreeNode
-          key={root.id}
-          node={root}
-          all={allSeries}
-          selectedId={value}
-          onSelect={onChange}
-          excludeId={excludeId}
-        />
+        <SeriesTreeNode key={root.id} node={root} all={allSeries} selectedId={value} onSelect={onChange} excludeId={excludeId} />
       ))}
     </div>
   )
@@ -157,10 +173,11 @@ draw();`,
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function AdminDashboard({ posts, series, snippets }: AdminDashboardProps) {
+export default function AdminDashboard({ posts, series, snippets, comments, users, adminName }: AdminDashboardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [section, setSection] = useState<Section>("posts")
 
   // ── Posts ──────────────────────────────────────────────────────────────────
 
@@ -256,10 +273,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
     }
   }
 
-  const snippetsBySlug = useMemo(
-    () => new Map(snippets.map((s) => [s.slug, s])),
-    [snippets]
-  )
+  const snippetsBySlug = useMemo(() => new Map(snippets.map((s) => [s.slug, s])), [snippets])
 
   const loadPost = (nextId: string) => {
     const next = posts.find((p) => p.id === nextId) ?? null
@@ -386,6 +400,7 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
   const [snippetCss, setSnippetCss] = useState("body { font-family: sans-serif; }")
   const [snippetJs, setSnippetJs] = useState("console.log('snippet loaded')")
   const [snippetTemplate, setSnippetTemplate] = useState("regular")
+  const [codeTab, setCodeTab] = useState<"html" | "css" | "js">("html")
 
   const loadSnippet = (nextId: string) => {
     const next = snippets.find((s) => s.id === nextId) ?? null
@@ -442,6 +457,79 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
     startTransition(() => router.refresh())
   }
 
+  // ── Moderation: comments ─────────────────────────────────────────────────────
+  const [commentFilter, setCommentFilter] = useState<"all" | "visible" | "hidden">("all")
+  const [commentQuery, setCommentQuery] = useState("")
+  const [modBusy, setModBusy] = useState<string | null>(null)
+
+  const filteredComments = useMemo(() => {
+    const q = commentQuery.trim().toLowerCase()
+    return comments.filter((c) => {
+      if (commentFilter === "visible" && c.hidden) return false
+      if (commentFilter === "hidden" && !c.hidden) return false
+      if (q && !`${c.content} ${c.authorName} ${c.authorUsername} ${c.postTitle}`.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [comments, commentFilter, commentQuery])
+
+  const setCommentHidden = async (id: string, hidden: boolean) => {
+    setModBusy(id)
+    setError(null)
+    try {
+      // Soft-hide is a DELETE; unhide is a PATCH { hidden: false } (mirrors the public thread).
+      const res = hidden
+        ? await fetch(`/api/blog/comments/${id}`, { method: "DELETE" })
+        : await fetch(`/api/blog/comments/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hidden: false }),
+          })
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Action failed.")
+      startTransition(() => router.refresh())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed.")
+    } finally {
+      setModBusy(null)
+    }
+  }
+
+  const hardDeleteComment = async (id: string) => {
+    if (!confirm("Permanently delete this comment and its replies? This cannot be undone.")) return
+    setModBusy(id)
+    setError(null)
+    try {
+      const res = await fetch(`/api/blog/comments/${id}?hard=1`, { method: "DELETE" })
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Delete failed.")
+      startTransition(() => router.refresh())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed.")
+    } finally {
+      setModBusy(null)
+    }
+  }
+
+  // ── Moderation: users ─────────────────────────────────────────────────────────
+  const [userQuery, setUserQuery] = useState("")
+  const filteredUsers = useMemo(() => {
+    const q = userQuery.trim().toLowerCase()
+    if (!q) return users
+    return users.filter((u) => `${u.username} ${u.displayName ?? ""} ${u.email}`.toLowerCase().includes(q))
+  }, [users, userQuery])
+
+  const setUserBlocked = async (id: string, blocked: boolean) => {
+    setModBusy(id)
+    setError(null)
+    try {
+      const res = await fetch(`/api/blog/admin/users/${id}/block`, { method: blocked ? "POST" : "DELETE" })
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Action failed.")
+      startTransition(() => router.refresh())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed.")
+    } finally {
+      setModBusy(null)
+    }
+  }
+
   // ── Logout ─────────────────────────────────────────────────────────────────
 
   const logout = async () => {
@@ -450,491 +538,430 @@ export default function AdminDashboard({ posts, series, snippets }: AdminDashboa
     router.push("/control")
   }
 
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+
+  const hiddenCount = comments.filter((c) => c.hidden).length
+  const nav: { id: Section; label: string; icon: typeof FileText; count: number }[] = [
+    { id: "posts", label: "Posts", icon: FileText, count: posts.length },
+    { id: "series", label: "Series", icon: Layers, count: series.length },
+    { id: "snippets", label: "Snippets", icon: Code2, count: snippets.length },
+    { id: "comments", label: "Comments", icon: MessageSquare, count: comments.length },
+    { id: "users", label: "Users", icon: Users, count: users.length },
+  ]
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full">
-      {/* Top navigation */}
-      <div className="flex items-center justify-between mb-8">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          ← Back to site
-        </Link>
-        <button
-          type="button"
-          onClick={logout}
-          className="text-sm text-muted-foreground hover:text-destructive transition-colors"
-        >
-          Sign out
-        </button>
-      </div>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
+        <div className="flex items-center justify-between px-4 py-3.5 md:px-6">
+          <div className="flex items-baseline gap-3">
+            <span className="font-display text-lg font-semibold tracking-tight">Control</span>
+            <span className={cn(eyebrow, "hidden sm:inline")}>Dashboard</span>
+          </div>
+          <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="hidden sm:inline">@{adminName}</span>
+            <Link href="/" className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground">
+              <ExternalLink className="h-3.5 w-3.5" /> <span className="hidden sm:inline">View site</span>
+            </Link>
+            <button type="button" onClick={logout} className="inline-flex items-center gap-1.5 transition-colors hover:text-destructive">
+              <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Sign out</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
-      {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
-
-      <Tabs defaultValue="posts" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="posts">Posts</TabsTrigger>
-          <TabsTrigger value="series">Series</TabsTrigger>
-          <TabsTrigger value="snippets">Snippets</TabsTrigger>
-        </TabsList>
-
-        {/* ── Posts ── */}
-        <TabsContent value="posts">
-          {showPreview ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:flex-row md:gap-10 md:px-6 md:py-10">
+        {/* Sidebar nav */}
+        <aside className="md:w-56 md:shrink-0">
+          <nav className="flex gap-2 overflow-x-auto pb-1 md:sticky md:top-24 md:flex-col md:gap-1 md:overflow-visible md:pb-0">
+            {nav.map((s) => {
+              const Icon = s.icon
+              const active = section === s.id
+              return (
                 <button
+                  key={s.id}
                   type="button"
-                  onClick={() => setShowPreview(false)}
-                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => setSection(s.id)}
+                  className={cn(
+                    "group inline-flex shrink-0 items-center gap-2.5 border px-3.5 py-2.5 font-mono text-xs uppercase tracking-[0.12em] transition-colors md:w-full",
+                    active
+                      ? "border-primary/60 bg-primary/10 text-primary"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                  )}
                 >
-                  ← Back to editor
+                  <Icon className="h-4 w-4" />
+                  {s.label}
+                  <span className={cn("ml-auto tabular-nums", active ? "text-primary/70" : "text-muted-foreground/60")}>{s.count}</span>
                 </button>
-                <span className="font-medium">{title || "Untitled"}</span>
-                {isDraft && (
-                  <span className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 rounded px-1.5 py-0.5 text-xs">
-                    Draft
-                  </span>
-                )}
-              </div>
-              <div className="prose prose-neutral dark:prose-invert max-w-none">
-                <BlogMarkdown markdown={content} snippetsBySlug={snippetsBySlug} />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <select
-                  className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
-                  value={postId}
-                  onChange={(e) => loadPost(e.target.value)}
-                >
-                  <option value="">— New post —</option>
-                  {posts.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title} {p.status === "draft" ? "(draft)" : ""}
-                    </option>
-                  ))}
-                </select>
-                <Button variant="ghost" size="sm" onClick={() => loadPost("")}>New</Button>
-              </div>
+              )
+            })}
+          </nav>
+        </aside>
 
-              <input
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                placeholder="Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <input
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono"
-                placeholder="slug-here"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-              />
-              <input
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                placeholder="Excerpt (shown in listings)"
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-              />
+        {/* Main panel */}
+        <main className="min-w-0 flex-1">
+          {error ? (
+            <div className="mb-5 border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">{error}</div>
+          ) : null}
 
-              {/* Cover image — used as the card image and the article header image. */}
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2 text-sm"
-                  placeholder="Cover image URL (card + article header — optional)"
-                  value={coverImage}
-                  onChange={(e) => setCoverImage(e.target.value)}
-                />
-                <input
-                  ref={coverFileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  onChange={handleCoverFileChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => coverFileInputRef.current?.click()}
-                  disabled={coverUploading}
-                  className="shrink-0 rounded-md border px-3 py-2 text-sm"
-                >
-                  {coverUploading ? "↑ uploading…" : "📷 upload"}
-                </button>
-                {coverImage ? (
-                  <button type="button" onClick={() => setCoverImage("")} className="shrink-0 rounded-md border px-3 py-2 text-sm text-muted-foreground">
-                    clear
+          {/* ── Posts ── */}
+          {section === "posts" && (
+            showPreview ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <button type="button" onClick={() => setShowPreview(false)} className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground">
+                    <ArrowLeft className="h-4 w-4" /> Back to editor
                   </button>
-                ) : null}
+                  <span className="font-medium">{title || "Untitled"}</span>
+                  {isDraft && <span className="border border-border bg-muted px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Draft</span>}
+                </div>
+                <div className="prose prose-neutral max-w-none dark:prose-invert">
+                  <BlogMarkdown markdown={content} snippetsBySlug={snippetsBySlug} />
+                </div>
               </div>
-              {coverImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverImage} alt="Cover preview" className="h-28 w-auto rounded-md border object-cover" />
-              ) : null}
+            ) : (
+              <div className="space-y-4">
+                <div className="mb-1 flex items-end justify-between border-b border-border pb-4">
+                  <div>
+                    <span className={cn(eyebrow, "mb-2 block")}>Posts</span>
+                    <h2 className="font-serif text-2xl tracking-tight md:text-3xl">{postId ? "Edit post" : "New post"}</h2>
+                  </div>
+                </div>
 
-              <textarea
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono resize-y"
-                placeholder="Custom CSS for this post (optional — scoped to the post page)"
-                rows={3}
-                value={customCss}
-                onChange={(e) => setCustomCss(e.target.value)}
-              />
-
-              <div className="flex items-center gap-6 text-sm flex-wrap">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isDraft}
-                    onChange={(e) => setIsDraft(e.target.checked)}
-                    className="accent-primary"
-                  />
-                  <span>Draft (unpublished)</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Series:</span>
-                  <select
-                    className="rounded-md border bg-background px-3 py-2 text-sm"
-                    value={postSeriesId}
-                    onChange={(e) => setPostSeriesId(e.target.value)}
-                  >
-                    <option value="">None</option>
-                    {series.map((s) => (
-                      <option key={s.id} value={s.id}>{s.title}</option>
+                <div className="flex items-center gap-3">
+                  <select className={input} value={postId} onChange={(e) => loadPost(e.target.value)}>
+                    <option value="">— New post —</option>
+                    {posts.map((p) => (
+                      <option key={p.id} value={p.id}>{p.title} {p.status === "draft" ? "(draft)" : ""}</option>
                     ))}
                   </select>
+                  <button type="button" onClick={() => loadPost("")} className={btn}><Plus className="h-3.5 w-3.5" /> New</button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Order:</span>
-                  <input
-                    type="number"
-                    min={0}
-                    className="w-16 rounded-md border bg-background px-2 py-2 text-sm"
-                    title="Series position (0 = unset, 1 = first, 2 = second, …)"
-                    placeholder="0"
-                    value={postPosition}
-                    onChange={(e) => setPostPosition(Number(e.target.value))}
-                  />
+
+                <input className={input} placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+                <input className={monoInput} placeholder="slug-here" value={slug} onChange={(e) => setSlug(e.target.value)} />
+                <input className={input} placeholder="Excerpt (shown in listings)" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
+
+                {/* Cover image — used as the card image and the article header image. */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <input className={cn(input, "min-w-0 flex-1")} placeholder="Cover image URL (card + article header — optional)" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} />
+                  <input ref={coverFileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleCoverFileChange} />
+                  <button type="button" onClick={() => coverFileInputRef.current?.click()} disabled={coverUploading} className={btn}>
+                    <Upload className="h-3.5 w-3.5" /> {coverUploading ? "Uploading…" : "Upload"}
+                  </button>
+                  {coverImage ? (
+                    <button type="button" onClick={() => setCoverImage("")} className={btn}>Clear</button>
+                  ) : null}
+                </div>
+                {coverImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coverImage} alt="Cover preview" className="h-28 w-auto border border-border object-cover" />
+                ) : null}
+
+                <textarea className={cn(monoInput, "resize-y")} placeholder="Custom CSS for this post (optional — scoped to the post page)" rows={3} value={customCss} onChange={(e) => setCustomCss(e.target.value)} />
+
+                <div className="flex flex-wrap items-center gap-6 text-sm">
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" checked={isDraft} onChange={(e) => setIsDraft(e.target.checked)} className="accent-primary" />
+                    <span>Draft (unpublished)</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className={eyebrow}>Series</span>
+                    <select className={input} value={postSeriesId} onChange={(e) => setPostSeriesId(e.target.value)}>
+                      <option value="">None</option>
+                      {series.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={eyebrow}>Order</span>
+                    <input type="number" min={0} className={cn(input, "w-16")} title="Series position (0 = unset, 1 = first, …)" placeholder="0" value={postPosition} onChange={(e) => setPostPosition(Number(e.target.value))} />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1.5 text-xs text-muted-foreground">
+                    Notebook editor — each block is a separate markdown cell. Embed snippets with{" "}
+                    <code className="bg-muted px-1 text-xs">{`{{snippet:slug}}`}</code>
+                    {" or "}
+                    <code className="bg-muted px-1 text-xs">{`{{snippet:slug wide}}`}</code>
+                  </p>
+
+                  <input ref={cellFileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleCellFileChange} />
+                  {cellUploadError && <p className="text-xs text-destructive">{cellUploadError}</p>}
+
+                  <div className="space-y-2">
+                    <button type="button" onClick={() => setCells((prev) => ["", ...prev])} className="w-full border border-dashed border-border/50 py-1.5 text-xs text-muted-foreground/60 transition-colors hover:border-primary/40 hover:bg-muted/30 hover:text-primary">
+                      + cell
+                    </button>
+
+                    {cells.map((cell, i) => (
+                      <div key={i} className="group relative border border-border bg-background transition-colors focus-within:border-primary/60">
+                        <div className="flex items-center justify-between px-2 pb-0 pt-1.5">
+                          <span className="select-none font-mono text-[10px] text-muted-foreground/50">[{i + 1}]</span>
+                          <div className="flex items-center gap-2">
+                            <button type="button" title="Upload image" onClick={() => handleCellImageUpload(i)} disabled={uploadingCell !== null}
+                              className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground/50 opacity-0 transition-colors hover:text-primary disabled:opacity-30 group-hover:opacity-100">
+                              {uploadingCell === i ? "Uploading…" : "Image"}
+                            </button>
+                            {cells.length > 1 && (
+                              <button type="button" onClick={() => setCells((prev) => prev.filter((_, idx) => idx !== i))}
+                                className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground/50 opacity-0 transition-colors hover:text-destructive group-hover:opacity-100" title="Remove cell">
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <textarea
+                          className="min-h-[80px] w-full resize-none bg-transparent px-3 py-2 font-mono text-sm leading-relaxed outline-none"
+                          rows={Math.max(3, cell.split("\n").length + 1)}
+                          value={cell}
+                          onChange={(e) => setCells((prev) => prev.map((c, idx) => (idx === i ? e.target.value : c)))}
+                          placeholder={i === 0 ? "# Start writing…" : "Continue…"}
+                          spellCheck={false}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && e.shiftKey) {
+                              e.preventDefault()
+                              setCells((prev) => [...prev.slice(0, i + 1), "", ...prev.slice(i + 1)])
+                            }
+                          }}
+                        />
+                        {cell.trim() && (
+                          <div className="prose prose-sm max-w-none border-t border-border/60 px-3 py-3 text-sm dark:prose-invert">
+                            <BlogMarkdown markdown={cell} snippetsBySlug={snippetsBySlug} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    <button type="button" onClick={() => setCells((prev) => [...prev, ""])} className="w-full border border-dashed border-border/50 py-1.5 text-xs text-muted-foreground/60 transition-colors hover:border-primary/40 hover:bg-muted/30 hover:text-primary">
+                      + cell
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+                  <button type="button" onClick={savePost} disabled={isPending} className={btnPrimary}>{isPending ? "Saving…" : "Save post"}</button>
+                  <button type="button" onClick={() => setShowPreview(true)} disabled={!content} className={btn}><Eye className="h-3.5 w-3.5" /> Preview</button>
+                  {postId && (
+                    <button type="button" onClick={deletePost} disabled={isPending} className={cn(btnDanger, "ml-auto")}><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+                  )}
                 </div>
               </div>
+            )
+          )}
+
+          {/* ── Series ── */}
+          {section === "series" && (
+            <div className="space-y-4">
+              <div className="mb-1 flex items-end justify-between border-b border-border pb-4">
+                <div>
+                  <span className={cn(eyebrow, "mb-2 block")}>Series</span>
+                  <h2 className="font-serif text-2xl tracking-tight md:text-3xl">{seriesId ? "Edit series" : "New series"}</h2>
+                </div>
+                <button type="button" onClick={() => loadSeries("")} className={btn}><Plus className="h-3.5 w-3.5" /> New</button>
+              </div>
+
+              {series.length > 0 && (
+                <div>
+                  <p className={cn(eyebrow, "mb-2")}>Existing series</p>
+                  <div className="divide-y divide-border border border-border">
+                    {series.map((s) => (
+                      <button key={s.id} type="button" onClick={() => loadSeries(s.id)}
+                        className={cn("flex w-full items-center justify-between px-4 py-2.5 text-left text-sm transition-colors hover:bg-muted/40", seriesId === s.id && "bg-muted/60 font-medium")}>
+                        <span>{s.title}</span>
+                        <span className="font-mono text-xs uppercase tracking-[0.1em] text-muted-foreground">{s.type}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <input className={input} placeholder="Series title" value={seriesTitle} onChange={(e) => setSeriesTitle(e.target.value)} />
+              <input className={monoInput} placeholder="series-slug" value={seriesSlug} onChange={(e) => setSeriesSlug(e.target.value)} />
+              <textarea className={cn(input, "resize-y")} rows={3} placeholder="Description" value={seriesDescription} onChange={(e) => setSeriesDescription(e.target.value)} />
+              <input className={input} placeholder="Type (course, book, webnovel, general…)" value={seriesType} onChange={(e) => setSeriesType(e.target.value)} />
 
               <div>
-                <p className="mb-1.5 text-xs text-muted-foreground">
-                  Notebook editor — each block is a separate markdown cell. Embed snippets with{" "}
-                  <code className="text-xs bg-muted px-1 rounded">{`{{snippet:slug}}`}</code>
-                  {" or "}
-                  <code className="text-xs bg-muted px-1 rounded">{`{{snippet:slug wide}}`}</code>
-                </p>
-
-                {/* ── Notebook cells ── */}
-                {/* Hidden file input for image uploads */}
-                <input
-                  ref={cellFileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  onChange={handleCellFileChange}
-                />
-                {cellUploadError && (
-                  <p className="text-xs text-destructive">{cellUploadError}</p>
-                )}
-
-                <div className="space-y-2">
-                  {/* Insert before first cell */}
-                  <button
-                    type="button"
-                    onClick={() => setCells((prev) => ["", ...prev])}
-                    className="w-full py-1 text-xs text-muted-foreground/50 hover:text-primary hover:bg-muted/30 rounded transition-colors border border-dashed border-border/30 hover:border-primary/40"
-                  >
-                    + cell
-                  </button>
-
-                  {cells.map((cell, i) => (
-                    <div key={i} className="group relative rounded-md border border-border/60 bg-background focus-within:border-primary/60 transition-colors">
-                      {/* Cell number badge */}
-                      <div className="flex items-center justify-between px-2 pt-1.5 pb-0">
-                        <span className="text-[10px] text-muted-foreground/40 select-none font-mono">
-                          [{i + 1}]
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            title="Upload image"
-                            onClick={() => handleCellImageUpload(i)}
-                            disabled={uploadingCell !== null}
-                            className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-30"
-                          >
-                            {uploadingCell === i ? "↑ uploading…" : "📷 image"}
-                          </button>
-                          {cells.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => setCells((prev) => prev.filter((_, idx) => idx !== i))}
-                              className="text-[10px] text-muted-foreground/40 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                              title="Remove cell"
-                            >
-                              ✕ remove
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Editor textarea */}
-                      <textarea
-                        className="w-full bg-transparent px-3 py-2 text-sm font-mono leading-relaxed resize-none outline-none min-h-[80px]"
-                        rows={Math.max(3, cell.split("\n").length + 1)}
-                        value={cell}
-                        onChange={(e) => setCells((prev) => prev.map((c, idx) => idx === i ? e.target.value : c))}
-                        placeholder={i === 0 ? "# Start writing…" : "Continue…"}
-                        spellCheck={false}
-                        onKeyDown={(e) => {
-                          // Shift+Enter inserts a new cell below
-                          if (e.key === "Enter" && e.shiftKey) {
-                            e.preventDefault()
-                            setCells((prev) => [...prev.slice(0, i + 1), "", ...prev.slice(i + 1)])
-                          }
-                        }}
-                      />
-
-                      {/* Live markdown preview */}
-                      {cell.trim() && (
-                        <div className="border-t border-border/40 px-3 py-3 prose prose-sm dark:prose-invert max-w-none text-sm">
-                          <BlogMarkdown markdown={cell} snippetsBySlug={snippetsBySlug} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Insert after last cell */}
-                  <button
-                    type="button"
-                    onClick={() => setCells((prev) => [...prev, ""])}
-                    className="w-full py-1 text-xs text-muted-foreground/50 hover:text-primary hover:bg-muted/30 rounded transition-colors border border-dashed border-border/30 hover:border-primary/40"
-                  >
-                    + cell
-                  </button>
-                </div>
+                <p className={cn(eyebrow, "mb-1.5")}>Parent series</p>
+                <SeriesTreePicker allSeries={series} value={seriesParentId} onChange={setSeriesParentId} excludeId={seriesId || undefined} />
               </div>
 
-              <div className="flex items-center gap-3 flex-wrap">
-                <Button onClick={savePost} disabled={isPending}>Save Post</Button>
-                <Button variant="outline" onClick={() => setShowPreview(true)} disabled={!content}>
-                  Preview
-                </Button>
-                {postId && (
-                  <Button
-                    variant="ghost"
-                    onClick={deletePost}
-                    disabled={isPending}
-                    className="text-destructive hover:text-destructive ml-auto"
-                  >
-                    Delete Post
-                  </Button>
-                )}
+              <input className={input} placeholder="Theme class (optional, e.g. theme-arc)" value={seriesThemeClass} onChange={(e) => setSeriesThemeClass(e.target.value)} />
+              <input className={input} placeholder="Number format (optional) — e.g. Project {n}, Chapter {roman}" value={seriesNumberFormat} onChange={(e) => setSeriesNumberFormat(e.target.value)} />
+
+              <div className="flex items-center gap-3 border-t border-border pt-4">
+                <button type="button" onClick={saveSeries} disabled={isPending} className={btnPrimary}>{isPending ? "Saving…" : "Save series"}</button>
+                {seriesId && <button type="button" onClick={deleteSeries} disabled={isPending} className={cn(btnDanger, "ml-auto")}><Trash2 className="h-3.5 w-3.5" /> Delete</button>}
               </div>
             </div>
           )}
-        </TabsContent>
 
-        {/* ── Series ── */}
-        <TabsContent value="series">
-          <div className="space-y-4">
-            {series.length > 0 && (
+          {/* ── Snippets ── */}
+          {section === "snippets" && (
+            <div className="space-y-4">
+              <div className="mb-1 flex items-end justify-between border-b border-border pb-4">
+                <div>
+                  <span className={cn(eyebrow, "mb-2 block")}>Snippets</span>
+                  <h2 className="font-serif text-2xl tracking-tight md:text-3xl">{snippetId ? "Edit snippet" : "New snippet"}</h2>
+                </div>
+                <button type="button" onClick={() => loadSnippet("")} className={btn}><Plus className="h-3.5 w-3.5" /> New</button>
+              </div>
+
+              <select className={input} value={snippetId} onChange={(e) => loadSnippet(e.target.value)}>
+                <option value="">— New snippet —</option>
+                {snippets.map((s) => <option key={s.id} value={s.id}>{s.title} ({s.slug})</option>)}
+              </select>
+
+              <input className={input} placeholder="Snippet title" value={snippetTitle} onChange={(e) => setSnippetTitle(e.target.value)} />
+              <input className={monoInput} placeholder="snippet-slug" value={snippetSlug} onChange={(e) => setSnippetSlug(e.target.value)} />
+              <input className={input} placeholder="Description (optional)" value={snippetDescription} onChange={(e) => setSnippetDescription(e.target.value)} />
+
+              {/* Template generator */}
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <span className={eyebrow}>Template</span>
+                <select className={input} value={snippetTemplate} onChange={(e) => setSnippetTemplate(e.target.value)}>
+                  <option value="regular">Regular</option>
+                  <option value="multi-tab">Multi-tab</option>
+                  <option value="full-bleed">Full-bleed canvas</option>
+                </select>
+                <button type="button" onClick={applyTemplate} className={btn}>Use template</button>
+              </div>
+
+              {/* Code editor tabs */}
               <div>
-                <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Existing series</p>
-                <div className="divide-y divide-border/40 rounded-md border overflow-hidden">
-                  {series.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => loadSeries(s.id)}
-                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted/40 transition-colors flex items-center justify-between${
-                        seriesId === s.id ? " bg-muted/60 font-medium" : ""
-                      }`}
-                    >
-                      <span>{s.title}</span>
-                      <span className="text-xs text-muted-foreground">{s.type}</span>
+                <div className="flex border-b border-border">
+                  {(["html", "css", "js"] as const).map((t) => (
+                    <button key={t} type="button" onClick={() => setCodeTab(t)}
+                      className={cn("-mb-px border-b-2 px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors",
+                        codeTab === t ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>
+                      {t}
                     </button>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => loadSeries("")}
-                  className="mt-2 text-sm text-primary hover:underline"
-                >
-                  + New series
-                </button>
+                {codeTab === "html" && <textarea className={cn(monoInput, "mt-2 resize-y text-xs leading-relaxed")} rows={18} value={snippetHtml} onChange={(e) => setSnippetHtml(e.target.value)} spellCheck={false} />}
+                {codeTab === "css" && <textarea className={cn(monoInput, "mt-2 resize-y text-xs leading-relaxed")} rows={18} value={snippetCss} onChange={(e) => setSnippetCss(e.target.value)} spellCheck={false} />}
+                {codeTab === "js" && <textarea className={cn(monoInput, "mt-2 resize-y text-xs leading-relaxed")} rows={18} value={snippetJs} onChange={(e) => setSnippetJs(e.target.value)} spellCheck={false} />}
               </div>
-            )}
 
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="Series title"
-              value={seriesTitle}
-              onChange={(e) => setSeriesTitle(e.target.value)}
-            />
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono"
-              placeholder="series-slug"
-              value={seriesSlug}
-              onChange={(e) => setSeriesSlug(e.target.value)}
-            />
-            <textarea
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm resize-y"
-              rows={3}
-              placeholder="Description"
-              value={seriesDescription}
-              onChange={(e) => setSeriesDescription(e.target.value)}
-            />
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="Type (course, book, webnovel, general…)"
-              value={seriesType}
-              onChange={(e) => setSeriesType(e.target.value)}
-            />
-
-            <div>
-              <p className="mb-1.5 text-xs text-muted-foreground">Parent series</p>
-              <SeriesTreePicker
-                allSeries={series}
-                value={seriesParentId}
-                onChange={setSeriesParentId}
-                excludeId={seriesId || undefined}
-              />
+              <div className="flex items-center gap-3 border-t border-border pt-4">
+                <button type="button" onClick={saveSnippet} disabled={isPending} className={btnPrimary}>{isPending ? "Saving…" : "Save snippet"}</button>
+                {snippetId && <button type="button" onClick={deleteSnippet} disabled={isPending} className={cn(btnDanger, "ml-auto")}><Trash2 className="h-3.5 w-3.5" /> Delete</button>}
+              </div>
             </div>
+          )}
 
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="Theme class (optional, e.g. theme-arc)"
-              value={seriesThemeClass}
-              onChange={(e) => setSeriesThemeClass(e.target.value)}
-            />
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="Number format (optional) — e.g. Project {n}, Chapter {roman}, Part {ROMAN}"
-              value={seriesNumberFormat}
-              onChange={(e) => setSeriesNumberFormat(e.target.value)}
-            />
+          {/* ── Comments moderation ── */}
+          {section === "comments" && (
+            <div className="space-y-4">
+              <div className="mb-1 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+                <div>
+                  <span className={cn(eyebrow, "mb-2 block")}>Moderation</span>
+                  <h2 className="font-serif text-2xl tracking-tight md:text-3xl">Comments</h2>
+                </div>
+                <span className={eyebrow}>{comments.length} total · {hiddenCount} hidden</span>
+              </div>
 
-            <div className="flex items-center gap-3">
-              <Button onClick={saveSeries} disabled={isPending}>Save Series</Button>
-              {seriesId && (
-                <Button
-                  variant="ghost"
-                  onClick={deleteSeries}
-                  disabled={isPending}
-                  className="text-destructive hover:text-destructive ml-auto"
-                >
-                  Delete Series
-                </Button>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* ── Snippets ── */}
-        <TabsContent value="snippets">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <select
-                className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
-                value={snippetId}
-                onChange={(e) => loadSnippet(e.target.value)}
-              >
-                <option value="">— New snippet —</option>
-                {snippets.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.title} ({s.slug})
-                  </option>
+              <div className="flex flex-wrap items-center gap-2">
+                {(["all", "visible", "hidden"] as const).map((f) => (
+                  <button key={f} type="button" onClick={() => setCommentFilter(f)}
+                    className={cn("border px-3 py-1.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] transition-colors",
+                      commentFilter === f ? "border-primary/60 bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground")}>
+                    {f}
+                  </button>
                 ))}
-              </select>
-              <Button variant="ghost" size="sm" onClick={() => loadSnippet("")}>New</Button>
-            </div>
+                <input className={cn(input, "ml-auto max-w-xs")} placeholder="Search comments…" value={commentQuery} onChange={(e) => setCommentQuery(e.target.value)} />
+              </div>
 
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="Snippet title"
-              value={snippetTitle}
-              onChange={(e) => setSnippetTitle(e.target.value)}
-            />
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono"
-              placeholder="snippet-slug"
-              value={snippetSlug}
-              onChange={(e) => setSnippetSlug(e.target.value)}
-            />
-            <input
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              placeholder="Description (optional)"
-              value={snippetDescription}
-              onChange={(e) => setSnippetDescription(e.target.value)}
-            />
-
-            {/* Template generator */}
-            <div className="flex items-center gap-3 text-sm flex-wrap">
-              <span className="text-muted-foreground">Template:</span>
-              <select
-                className="rounded-md border bg-background px-3 py-2 text-sm"
-                value={snippetTemplate}
-                onChange={(e) => setSnippetTemplate(e.target.value)}
-              >
-                <option value="regular">Regular</option>
-                <option value="multi-tab">Multi-tab</option>
-                <option value="full-bleed">Full-bleed canvas</option>
-              </select>
-              <Button variant="outline" size="sm" onClick={applyTemplate}>Use Template</Button>
-            </div>
-
-            {/* Tabbed code editor */}
-            <Tabs defaultValue="html" className="w-full">
-              <TabsList>
-                <TabsTrigger value="html">HTML</TabsTrigger>
-                <TabsTrigger value="css">CSS</TabsTrigger>
-                <TabsTrigger value="js">JS</TabsTrigger>
-              </TabsList>
-              <TabsContent value="html">
-                <textarea
-                  className="w-full rounded-md border bg-background px-3 py-2 text-xs font-mono leading-relaxed resize-y"
-                  rows={18}
-                  value={snippetHtml}
-                  onChange={(e) => setSnippetHtml(e.target.value)}
-                  spellCheck={false}
-                />
-              </TabsContent>
-              <TabsContent value="css">
-                <textarea
-                  className="w-full rounded-md border bg-background px-3 py-2 text-xs font-mono leading-relaxed resize-y"
-                  rows={18}
-                  value={snippetCss}
-                  onChange={(e) => setSnippetCss(e.target.value)}
-                  spellCheck={false}
-                />
-              </TabsContent>
-              <TabsContent value="js">
-                <textarea
-                  className="w-full rounded-md border bg-background px-3 py-2 text-xs font-mono leading-relaxed resize-y"
-                  rows={18}
-                  value={snippetJs}
-                  onChange={(e) => setSnippetJs(e.target.value)}
-                  spellCheck={false}
-                />
-              </TabsContent>
-            </Tabs>
-
-            <div className="flex items-center gap-3">
-              <Button onClick={saveSnippet} disabled={isPending}>Save Snippet</Button>
-              {snippetId && (
-                <Button
-                  variant="ghost"
-                  onClick={deleteSnippet}
-                  disabled={isPending}
-                  className="text-destructive hover:text-destructive ml-auto"
-                >
-                  Delete Snippet
-                </Button>
+              {filteredComments.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">No comments match.</p>
+              ) : (
+                <ul className="divide-y divide-border border border-border">
+                  {filteredComments.map((c) => (
+                    <li key={c.id} className={cn("p-4", c.hidden && "bg-muted/20")}>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">{c.authorName}</span>
+                        <span className="text-muted-foreground/60">@{c.authorUsername}</span>
+                        <span>·</span>
+                        <span>{fmtDate(c.createdAt)}</span>
+                        {c.hidden && <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em]">hidden</span>}
+                        <Link href={`/blog/${c.postSlug}#comment-${c.id}`} className="ml-auto inline-flex items-center gap-1 font-mono uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-primary">
+                          {c.postTitle} <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap break-words text-sm text-foreground/90">{c.content}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {c.hidden ? (
+                          <button type="button" onClick={() => setCommentHidden(c.id, false)} disabled={modBusy === c.id} className={cn(btn, "px-3 py-1.5")}>
+                            <Eye className="h-3.5 w-3.5" /> Unhide
+                          </button>
+                        ) : (
+                          <button type="button" onClick={() => setCommentHidden(c.id, true)} disabled={modBusy === c.id} className={cn(btn, "px-3 py-1.5")}>
+                            <EyeOff className="h-3.5 w-3.5" /> Hide
+                          </button>
+                        )}
+                        <button type="button" onClick={() => hardDeleteComment(c.id)} disabled={modBusy === c.id} className={cn(btnDanger, "px-3 py-1.5")}>
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+          )}
+
+          {/* ── Users ── */}
+          {section === "users" && (
+            <div className="space-y-4">
+              <div className="mb-1 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+                <div>
+                  <span className={cn(eyebrow, "mb-2 block")}>Moderation</span>
+                  <h2 className="font-serif text-2xl tracking-tight md:text-3xl">Users</h2>
+                </div>
+                <input className={cn(input, "max-w-xs")} placeholder="Search users…" value={userQuery} onChange={(e) => setUserQuery(e.target.value)} />
+              </div>
+
+              {filteredUsers.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">No users match.</p>
+              ) : (
+                <ul className="divide-y divide-border border border-border">
+                  {filteredUsers.map((u) => (
+                    <li key={u.id} className="flex flex-wrap items-center gap-3 p-4">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary font-semibold text-secondary-foreground">
+                        {(u.displayName ?? u.username).charAt(0).toUpperCase()}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2 text-sm font-medium">
+                          {u.displayName ?? u.username}
+                          {u.role === "admin" && <span className="inline-flex items-center gap-1 border border-primary/50 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-primary"><ShieldCheck className="h-3 w-3" /> admin</span>}
+                          {u.blocked && <span className="border border-destructive/50 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-destructive">blocked</span>}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">@{u.username} · {u.email}</p>
+                      </div>
+                      <div className="ml-auto">
+                        {u.role === "admin" ? (
+                          <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-muted-foreground/60">—</span>
+                        ) : u.blocked ? (
+                          <button type="button" onClick={() => setUserBlocked(u.id, false)} disabled={modBusy === u.id} className={cn(btn, "px-3 py-1.5")}>
+                            <ShieldCheck className="h-3.5 w-3.5" /> Unblock
+                          </button>
+                        ) : (
+                          <button type="button" onClick={() => setUserBlocked(u.id, true)} disabled={modBusy === u.id} className={cn(btnDanger, "px-3 py-1.5")}>
+                            <Ban className="h-3.5 w-3.5" /> Block
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   )
 }
