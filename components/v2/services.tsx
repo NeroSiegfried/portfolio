@@ -6,8 +6,8 @@ import { SectionHead } from "@/components/v2/primitives"
 
 export function Services() {
   return (
-    <section className="border-t border-border px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-6xl">
+    <section className="border-t border-border px-5 py-16 md:px-8 md:py-24">
+      <div className="w-full">
         <SectionHead eyebrow="What I do" label="Services" title="How I can help" />
         <div className="mt-12 grid gap-x-12 gap-y-12 sm:grid-cols-2">
           {services.map((s, i) => (

@@ -26,8 +26,8 @@ export function LatestPosts({ posts }: { posts: LatestPost[] }) {
   if (!posts?.length) return null
 
   return (
-    <section className="border-t border-border px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-6xl">
+    <section className="border-t border-border px-5 py-16 md:px-8 md:py-24">
+      <div className="w-full">
         <SectionHead
           eyebrow="Writing"
           label="From the blog"

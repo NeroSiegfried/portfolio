@@ -47,7 +47,8 @@ export default async function Home() {
       {isVercel && <Analytics />}
       <Cursor />
       <SiteNav />
-      <main className="flex-1">
+      {/* Frame: vertical rules mark the (tight) margins; sections add top rules. */}
+      <main className="mx-4 flex-1 border-x border-border sm:mx-6 lg:mx-8">
         <Hero />
         <Stats />
         <About />

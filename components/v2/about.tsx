@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Eyebrow } from "@/components/v2/primitives"
@@ -9,8 +8,8 @@ import { useBasePath, withBase } from "@/lib/base-path"
 export function About() {
   const basePath = useBasePath()
   return (
-    <section id="about" className="scroll-mt-24 border-t border-border px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-6xl">
+    <section id="about" className="scroll-mt-16 border-t border-border px-5 py-16 md:px-8 md:py-24">
+      <div className="w-full">
         <div className="flex items-center justify-between border-b border-border pb-5">
           <Eyebrow>About</Eyebrow>
           <Eyebrow className="hidden sm:block">Who I am</Eyebrow>
@@ -27,11 +26,8 @@ export function About() {
           into elegant, production-ready code.
         </motion.p>
 
-        <div className="mt-14 grid gap-10 md:grid-cols-[320px_1fr] md:gap-16">
-          <div className="v2-media relative aspect-square w-full max-w-xs overflow-hidden border border-border md:max-w-none">
-            <Image src="/victor-nabasu.jpg" alt="Victor Nabasu" fill sizes="(max-width: 768px) 80vw, 320px" className="object-cover" />
-          </div>
-          <div className="space-y-5 text-base leading-relaxed text-muted-foreground">
+        <div className="mt-12 flex md:justify-end">
+          <div className="max-w-xl space-y-5 text-base leading-relaxed text-muted-foreground">
             <p>
               I&rsquo;ve worked on projects ranging from satellite modeling to domain-specific
               languages and AI-powered web apps. In my free time I leetcode, play Japanese RPGs, and

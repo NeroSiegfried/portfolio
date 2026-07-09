@@ -10,8 +10,8 @@ export function Faq() {
   const [open, setOpen] = useState<number | null>(0)
 
   return (
-    <section className="border-t border-border px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-3xl">
+    <section className="border-t border-border px-5 py-16 md:px-8 md:py-24">
+      <div className="w-full max-w-4xl">
         <SectionHead eyebrow="FAQ" label="Good to know" title="Frequently asked" />
         <div className="mt-6">
           {faqs.map((f, i) => {

@@ -5,8 +5,8 @@ import { stats } from "@/lib/portfolio-data"
 
 export function Stats() {
   return (
-    <section className="border-t border-border px-6">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
+    <section className="border-t border-border px-5 md:px-8">
+      <div className="grid grid-cols-2 md:grid-cols-4">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}

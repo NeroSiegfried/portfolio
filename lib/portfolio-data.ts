@@ -180,7 +180,7 @@ export const stats: Stat[] = [
   { value: "11+", label: "Projects shipped" },
   { value: "8+", label: "Languages" },
   { value: "MSc", label: "Adv. Software Eng · KCL" },
-  { value: "∞", label: "CS-from-scratch quest" },
+  { value: "LDN", label: "London · in-person & remote" },
 ]
 
 export interface Service {

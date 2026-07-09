@@ -613,3 +613,21 @@ button:hover .v2-slide > span { transform: translateY(-100%); }
 .v2-media img { transition: transform .7s cubic-bezier(.16,1,.3,1); }
 .v2-media:hover img { transform: scale(1.035); }
 @media (prefers-reduced-motion: reduce) { .v2-media img, .v2-media:hover img { transition: none; transform: none; } }
+
+/* ── V2 layout frame + accents ── */
+/* Rotating square accent (portfolie). */
+@keyframes v2-spin { to { transform: rotate(360deg); } }
+.v2-spin-square { animation: v2-spin 14s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .v2-spin-square { animation: none; } }
+
+/* Column-guide grid: faint vertical rules between cells + under the row. */
+.v2-grid-lines > * { border-top: 1px solid hsl(var(--border)); }
+
+/* Contain the tech marquee inside its column with edge fades. */
+.v2-marquee-mask { position: relative; overflow: hidden; }
+.v2-marquee-mask::before,
+.v2-marquee-mask::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 12%; z-index: 2; pointer-events: none;
+}
+.v2-marquee-mask::before { left: 0; background: linear-gradient(to right, hsl(var(--background)), transparent); }
+.v2-marquee-mask::after { right: 0; background: linear-gradient(to left, hsl(var(--background)), transparent); }

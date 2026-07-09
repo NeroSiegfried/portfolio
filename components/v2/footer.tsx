@@ -9,8 +9,8 @@ export function Footer() {
   const link = "transition-colors hover:text-primary"
 
   return (
-    <footer className="border-t border-border px-6 pb-10 pt-16">
-      <div className="mx-auto max-w-6xl">
+    <footer className="border-t border-border px-5 pb-10 pt-16 md:px-8">
+      <div className="w-full">
         <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
           <div>
             <a href="#top" className="font-display text-4xl font-semibold tracking-tight md:text-6xl">
