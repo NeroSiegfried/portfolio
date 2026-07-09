@@ -586,7 +586,11 @@ html { scroll-behavior: smooth; }
   transition: width .28s cubic-bezier(.16,1,.3,1), height .28s cubic-bezier(.16,1,.3,1), opacity .2s ease;
   will-change: transform;
 }
-.v2-cursor[data-hover="true"] { width: 52px; height: 52px; }
+.v2-cursor[data-variant="hover"] { width: 42px; height: 42px; }
+/* Over project media: a ring (outline) with an up-right arrow (portfoliod). */
+.v2-cursor[data-variant="ring"] { width: 66px; height: 66px; background: transparent; border: 1.5px solid #fff; }
+.v2-cursor svg { position: absolute; inset: 0; margin: auto; height: 20px; width: 20px; opacity: 0; transition: opacity .2s ease; }
+.v2-cursor[data-variant="ring"] svg { opacity: 1; }
 .v2-cursor-label {
   position: fixed; top: 0; left: 0; z-index: 10000; pointer-events: none;
   transform: translate3d(var(--cx, -100px), var(--cy, -100px), 0) translate(-50%, -50%);
@@ -631,3 +635,18 @@ button:hover .v2-slide > span { transform: translateY(-100%); }
 }
 .v2-marquee-mask::before { left: 0; background: linear-gradient(to right, hsl(var(--background)), transparent); }
 .v2-marquee-mask::after { right: 0; background: linear-gradient(to left, hsl(var(--background)), transparent); }
+
+/* Project image: shrinks on hover while its caption slides up (single image, no clone). */
+.v2-work-item { position: relative; overflow: hidden; background: hsl(var(--secondary)); }
+.v2-work-item img { transition: transform .6s cubic-bezier(.16,1,.3,1); }
+.v2-work-item:hover img { transform: scale(.94); }
+.v2-work-cap { transform: translateY(101%); transition: transform .5s cubic-bezier(.16,1,.3,1); }
+.v2-work-item:hover .v2-work-cap { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .v2-work-item img, .v2-work-cap { transition: none; }
+  .v2-work-item:hover img { transform: none; }
+  .v2-work-item:hover .v2-work-cap { transform: none; }
+}
+
+/* Square that turns 45° each time the active project changes (rotation set inline). */
+.v2-square { transition: transform .6s cubic-bezier(.16,1,.3,1); }

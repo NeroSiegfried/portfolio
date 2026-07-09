@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { ArrowDown, ArrowUpRight } from "lucide-react"
 import { Eyebrow } from "@/components/v2/primitives"
@@ -14,16 +13,20 @@ export function Hero() {
   const basePath = useBasePath()
   return (
     <section id="top" className="relative min-h-screen overflow-hidden">
-      {/* Large headshot bleeding to the right frame edge; left edge faded into the page. */}
+      {/* Placeholder for the hero visual (bleeds to the right frame edge, faded left). */}
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] md:block lg:w-[42%]">
-        <Image
-          src="/victor-nabasu.jpg"
-          alt="Victor Nabasu"
-          fill
-          priority
-          sizes="46vw"
-          className="object-cover object-top [mask-image:linear-gradient(to_right,transparent,black_22%)]"
-        />
+        <div className="relative h-full w-full overflow-hidden border-l border-dashed border-border bg-secondary [mask-image:linear-gradient(to_right,transparent,black_24%)]">
+          <div className="absolute inset-0 flex items-center justify-end p-10">
+            <p className="max-w-[16rem] text-right font-mono text-[0.7rem] uppercase leading-relaxed tracking-[0.14em] text-muted-foreground">
+              Placeholder — hero visual
+              <span className="mt-3 block normal-case tracking-normal opacity-70">
+                A bold, editorially-lit portrait or an abstract tech image (light-trails / fibre
+                optics / circuitry), high-contrast with one dominant accent — full-bleed behind the
+                name.
+              </span>
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Rotating square accent (portfolie). */}

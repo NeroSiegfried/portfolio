@@ -6,7 +6,7 @@ import sharp from "sharp"
 import fs from "fs"
 
 const DIR = "public/projects"
-const WEB_PROJECT_IDS = [11, 10, 9, 1]
+const WEB_PROJECT_IDS = [11, 12, 10, 9, 1]
 const W = 1600
 const H = 1000
 

@@ -35,6 +35,16 @@ export const projects: Project[] = [
     waitFor: 3,
   },
   {
+    id: 12,
+    title: "Sunab Telecommunications",
+    description:
+      "Marketing site for a Nigerian telecoms company that connects mobile network operators — interconnection and clearing-house solutions for stable routing, accurate billing and consistent service across Nigeria and beyond.",
+    technologies: ["React", "Vite", "Tailwind CSS", "React Router"],
+    showcaseMode: "web",
+    liveUrl: "https://sunabtelecomservices.com/",
+    githubUrl: "https://github.com/NeroSiegfried/sunab-telecommunications",
+  },
+  {
     id: 10,
     title: "Stitch Bloom",
     description: "A custom web application and showcase for the Stitch Bloom brand.",
@@ -142,6 +152,16 @@ export const projects: Project[] = [
     blogPostSlug: "model-surveillance-satellite",
   },
 ]
+
+/** The website projects shown in the Work section (most recent first). */
+export const featuredProjects: Project[] = [11, 12, 10, 9]
+  .map((id) => projects.find((p) => p.id === id))
+  .filter((p): p is Project => Boolean(p))
+
+/** slug -> project, for the blog post page to surface Live Site / Portfolio links. */
+export function projectByBlogSlug(slug: string): Project | undefined {
+  return projects.find((p) => p.blogPostSlug === slug)
+}
 
 export interface TechItem {
   name: string

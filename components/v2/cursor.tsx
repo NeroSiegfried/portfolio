@@ -3,25 +3,21 @@
 import { useEffect, useRef } from "react"
 
 /**
- * Custom blend-difference cursor (portfoliod pattern): a small dot that tracks
- * the mouse with slight lag, grows over interactive elements, and shows a mono
- * label when the hovered element sets `data-cursor-label`. Native cursor is
- * hidden via `.v2-cursor-scope` on <html>. Disabled on touch + reduced-motion.
+ * Custom cursor (portfoliod): a small filled dot by default, a slightly larger
+ * dot over links/buttons, and a ring with an up-right arrow over project media
+ * ([data-cursor]). mix-blend-difference so it inverts over any background.
+ * Disabled on touch; native cursor hidden via `.v2-cursor-scope` on <html>.
  */
 export function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null)
-  const labelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const fine = window.matchMedia("(pointer: fine)").matches
+    if (!window.matchMedia("(pointer: fine)").matches) return
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (!fine) return
     const dot = dotRef.current
-    const label = labelRef.current
     if (!dot) return
 
     document.documentElement.classList.add("v2-cursor-scope")
-
     let raf = 0
     let x = -100
     let y = -100
@@ -31,25 +27,15 @@ export function Cursor() {
     const onMove = (e: MouseEvent) => {
       tx = e.clientX
       ty = e.clientY
-      const el = (e.target as HTMLElement)?.closest?.("a, button, [role=button], [data-cursor]") as HTMLElement | null
-      dot.dataset.hover = String(!!el)
-      const lbl = el?.getAttribute("data-cursor-label")
-      if (label) {
-        label.dataset.show = String(!!lbl)
-        label.textContent = lbl ?? ""
-      }
+      const el = (e.target as HTMLElement)?.closest?.("a, button, [role=button], [data-cursor], input, textarea, select") as HTMLElement | null
+      dot.dataset.variant = el ? (el.hasAttribute("data-cursor") ? "ring" : "hover") : "dot"
     }
-
     const loop = () => {
       const ease = reduce ? 1 : 0.2
       x += (tx - x) * ease
       y += (ty - y) * ease
       dot.style.setProperty("--cx", `${x}px`)
       dot.style.setProperty("--cy", `${y}px`)
-      if (label) {
-        label.style.setProperty("--cx", `${tx}px`)
-        label.style.setProperty("--cy", `${ty + 34}px`)
-      }
       raf = requestAnimationFrame(loop)
     }
 
@@ -63,9 +49,11 @@ export function Cursor() {
   }, [])
 
   return (
-    <>
-      <div ref={dotRef} className="v2-cursor" aria-hidden />
-      <div ref={labelRef} className="v2-cursor-label" aria-hidden />
-    </>
+    <div ref={dotRef} className="v2-cursor" data-variant="dot" aria-hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 17 17 7" />
+        <path d="M8 7h9v9" />
+      </svg>
+    </div>
   )
 }

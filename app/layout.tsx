@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Inter_Tight, Nanum_Myeongjo, Geist_Mono } from "next/font/google"
+import { Inter, Inter_Tight, Nanum_Myeongjo, Geist_Mono, Dancing_Script } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -17,8 +17,10 @@ const nanumMyeongjo = Nanum_Myeongjo({
 })
 // Monospace eyebrow / micro labels.
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" })
+// Cursive signature (footer wordmark).
+const dancingScript = Dancing_Script({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-script", display: "swap" })
 
-const fontVars = `${inter.variable} ${interTight.variable} ${nanumMyeongjo.variable} ${geistMono.variable}`
+const fontVars = `${inter.variable} ${interTight.variable} ${nanumMyeongjo.variable} ${geistMono.variable} ${dancingScript.variable}`
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nerosiegfried.com"
 

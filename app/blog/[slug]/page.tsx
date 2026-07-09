@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import Script from "next/script"
 import { readBlogPostDb, getPostVote } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
+import { projectByBlogSlug } from "@/lib/portfolio-data"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
 import { scopePostCss } from "@/lib/blog/scope-css"
@@ -203,6 +204,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {post.excerpt && (
               <p className="mt-3 text-base text-muted-foreground">{post.excerpt}</p>
             )}
+            {(() => {
+              const project = projectByBlogSlug(slug)
+              return project?.liveUrl ? (
+                <div className="mt-4 flex flex-wrap items-center gap-4">
+                  <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                    Visit the live site ↗
+                  </a>
+                  {project.githubUrl ? (
+                    <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary">
+                      Repository ↗
+                    </a>
+                  ) : null}
+                </div>
+              ) : null
+            })()}
             <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
               <time className="text-xs text-muted-foreground">
                 {post.publishedAt
