@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Eyebrow } from "@/components/v2/primitives"
@@ -26,8 +27,11 @@ export function About() {
           into elegant, production-ready code.
         </motion.p>
 
-        <div className="mt-12 flex md:justify-end">
-          <div className="max-w-xl space-y-5 text-base leading-relaxed text-muted-foreground">
+        <div className="mt-12 grid gap-8 md:grid-cols-[minmax(0,340px)_1fr] md:gap-14 lg:gap-20">
+          <div className="v2-media relative aspect-[4/5] w-full max-w-xs overflow-hidden border border-border md:max-w-none">
+            <Image src="/victor-nabasu.jpg" alt="Victor Nabasu" fill sizes="(max-width: 768px) 80vw, 340px" className="object-cover object-top" />
+          </div>
+          <div className="max-w-xl space-y-5 text-base leading-relaxed text-muted-foreground md:pt-2">
             <p>
               I&rsquo;ve worked on projects ranging from satellite modeling to domain-specific
               languages and AI-powered web apps. In my free time I leetcode, play Japanese RPGs, and

@@ -47,19 +47,23 @@ export default async function Home() {
       {isVercel && <Analytics />}
       <Cursor />
       <SiteNav />
-      {/* Frame: vertical rules mark the (tight) margins; sections add top rules. */}
-      <main className="mx-4 flex-1 border-x border-border sm:mx-6 lg:mx-8">
-        <Hero />
-        <Stats />
-        <About />
-        <Services />
-        <Projects />
-        <TechStack />
-        <LatestPosts posts={latest} />
-        <Faq />
-        <Contact />
-      </main>
-      <Footer />
+      {/* Full-bleed sticky hero — the framed content below slides up over it. */}
+      <Hero />
+      {/* Opaque layer covers the hero as it scrolls over; inner frame draws the
+          tight margin lines that run all the way through the footer. */}
+      <div className="relative z-10 bg-background">
+        <div className="mx-3 border-x border-border md:mx-4">
+          <Stats />
+          <About />
+          <Services />
+          <Projects />
+          <TechStack />
+          <LatestPosts posts={latest} />
+          <Faq />
+          <Contact />
+          <Footer />
+        </div>
+      </div>
     </>
   )
 }

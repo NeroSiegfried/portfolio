@@ -41,7 +41,7 @@ export function Contact() {
     "border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors hover:border-primary hover:text-primary"
 
   return (
-    <section id="contact" className="scroll-mt-16 border-t border-border px-5 py-16 md:px-8 md:py-24">
+    <section id="contact" className="scroll-mt-16 border-t border-border px-4 py-14 md:px-6 md:py-20">
       <div className="w-full">
         <Eyebrow>Contact</Eyebrow>
         <h2 className="mt-5 max-w-3xl font-display text-4xl font-semibold tracking-tight md:text-6xl md:leading-[1.02]">

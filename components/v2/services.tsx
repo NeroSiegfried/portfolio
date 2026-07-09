@@ -6,7 +6,7 @@ import { SectionHead } from "@/components/v2/primitives"
 
 export function Services() {
   return (
-    <section className="border-t border-border px-5 py-16 md:px-8 md:py-24">
+    <section className="border-t border-border px-4 py-14 md:px-6 md:py-20">
       <div className="w-full">
         <SectionHead eyebrow="What I do" label="Services" title="How I can help" />
         <div className="mt-12 grid gap-x-12 gap-y-12 sm:grid-cols-2">

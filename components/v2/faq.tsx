@@ -10,7 +10,7 @@ export function Faq() {
   const [open, setOpen] = useState<number | null>(0)
 
   return (
-    <section className="border-t border-border px-5 py-16 md:px-8 md:py-24">
+    <section className="border-t border-border px-4 py-14 md:px-6 md:py-20">
       <div className="w-full max-w-4xl">
         <SectionHead eyebrow="FAQ" label="Good to know" title="Frequently asked" />
         <div className="mt-6">

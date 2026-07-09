@@ -50,7 +50,7 @@ export function Cursor() {
 
   return (
     <div ref={dotRef} className="v2-cursor" data-variant="dot" aria-hidden>
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 17 17 7" />
         <path d="M8 7h9v9" />
       </svg>

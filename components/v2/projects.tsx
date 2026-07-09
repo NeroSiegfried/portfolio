@@ -20,7 +20,6 @@ export function Projects() {
   const [active, setActive] = useState(0)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  // Scroll-driven active project (updates the sticky metadata + rotating square).
   useEffect(() => {
     const io = new IntersectionObserver(
       (entries) => {
@@ -38,14 +37,14 @@ export function Projects() {
 
   return (
     <section id="work" className="scroll-mt-16 border-t border-border">
-      <div className="flex items-center justify-between border-b border-border px-5 py-4 md:px-8">
+      <div className="flex items-center justify-between border-b border-border px-4 py-4 md:px-6">
         <Eyebrow>Work</Eyebrow>
         <Eyebrow>{projects.length} Selected projects</Eyebrow>
       </div>
 
       <div className="grid md:grid-cols-[minmax(280px,32%)_1fr]">
-        {/* LEFT — sticky metadata (no project names, just thumbnails) */}
-        <div className="border-border px-5 py-10 md:sticky md:top-20 md:self-start md:border-r md:px-8 md:py-14">
+        {/* LEFT — sticky metadata: title, subtitle, counter, vertical thumbnails + square */}
+        <div className="border-border px-4 py-10 md:sticky md:top-24 md:self-start md:border-r md:px-6 md:py-14">
           <h2 className="font-display text-4xl font-semibold tracking-tight md:text-6xl">Selected work</h2>
           <div className="mt-6 flex gap-4">
             <span className="w-[3px] shrink-0 bg-primary" aria-hidden />
@@ -54,33 +53,36 @@ export function Projects() {
             </p>
           </div>
 
-          <div className="mt-8 flex items-center gap-4">
-            <span className="v2-square block h-4 w-4 shrink-0 bg-primary" style={{ transform: `rotate(${active * 45}deg)` }} aria-hidden />
-            <span className="font-mono text-xs tracking-[0.1em] text-muted-foreground">
-              {String(active + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
-            </span>
-          </div>
+          <p className="mt-8 font-mono text-xs tracking-[0.1em] text-muted-foreground">
+            {String(active + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
+          </p>
 
-          <div className="mt-6 hidden flex-wrap gap-2 md:flex">
+          {/* vertical thumbnails; the square sits to the side of the active one */}
+          <div className="mt-5 hidden flex-col gap-3 md:flex">
             {projects.map((p, i) => {
               const c = coverFor(p)
+              const on = i === active
               return (
-                <button
-                  key={p.id}
-                  type="button"
-                  aria-label={`View ${p.title}`}
-                  onClick={() => scrollTo(i)}
-                  className={cn("relative block h-14 w-14 overflow-hidden border bg-secondary transition-colors", i === active ? "border-primary" : "border-border")}
-                >
-                  {c ? <Image src={c} alt="" fill sizes="56px" className="object-cover object-top" /> : null}
-                </button>
+                <div key={p.id} className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    aria-label={`View ${p.title}`}
+                    onClick={() => scrollTo(i)}
+                    className={cn("relative block h-16 w-16 shrink-0 overflow-hidden border bg-secondary transition-colors", on ? "border-primary" : "border-border")}
+                  >
+                    {c ? <Image src={c} alt="" fill sizes="64px" className="object-cover object-top" /> : null}
+                  </button>
+                  {on ? (
+                    <span className="v2-square block h-4 w-4 shrink-0 bg-primary" style={{ transform: `rotate(${active * 45}deg)` }} aria-hidden />
+                  ) : null}
+                </div>
               )
             })}
           </div>
         </div>
 
-        {/* RIGHT — long list of hero images that scroll normally */}
-        <div className="flex flex-col">
+        {/* RIGHT — scrolling list of hero images, with margin between them */}
+        <div className="flex flex-col md:gap-6 md:p-5">
           {projects.map((p, i) => {
             const cover = coverFor(p)
             const hasArticle = Boolean(p.blogPostSlug)
@@ -103,7 +105,6 @@ export function Projects() {
                   )}
                   <span className="absolute left-4 top-3 font-mono text-xs text-white mix-blend-difference">{String(i + 1).padStart(2, "0")}</span>
 
-                  {/* hover caption (desktop) — slides up as the image shrinks */}
                   <div className="v2-work-cap absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/85 via-black/50 to-transparent px-6 pb-6 pt-16 md:block">
                     <div className="flex items-end justify-between gap-4">
                       <div>
@@ -117,8 +118,7 @@ export function Projects() {
                   </div>
                 </a>
 
-                {/* static caption (mobile — no hover) */}
-                <div className="px-5 py-5 md:hidden">
+                <div className="px-4 py-5 md:hidden">
                   <h3 className="font-display text-2xl font-semibold tracking-tight">{p.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.description}</p>
                   <span className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.12em] text-primary">

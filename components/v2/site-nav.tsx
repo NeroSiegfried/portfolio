@@ -42,8 +42,8 @@ export function SiteNav() {
         hidden && !open ? "-translate-y-[160%]" : "translate-y-0",
       )}
     >
-      <div className="grid grid-cols-2 items-center px-4 py-3 md:grid-cols-3 md:px-6">
-        <a href="#top" className="justify-self-start font-display text-base font-semibold tracking-tight text-card-foreground">
+      <div className="grid grid-cols-2 items-center px-5 py-4 md:grid-cols-3 md:px-7 md:py-[1.15rem]">
+        <a href="#top" className="justify-self-start font-display text-lg font-semibold tracking-tight text-card-foreground">
           <HoverSlide>Victor Nabasu</HoverSlide>
         </a>
 
