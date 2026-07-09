@@ -73,7 +73,7 @@ export function Projects() {
                   aria-label={`View ${p.title}`}
                   onClick={() => scrollTo(i)}
                   className={cn(
-                    "relative block h-16 w-16 shrink-0 overflow-hidden border bg-secondary transition-[transform,border-color] duration-500 ease-[cubic-bezier(.16,1,.3,1)]",
+                    "relative block h-16 w-16 shrink-0 overflow-hidden border bg-secondary transition-[transform,border-color] duration-500",
                     on ? "translate-x-3 border-primary" : "border-border",
                   )}
                 >

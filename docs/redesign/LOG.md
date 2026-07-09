@@ -134,4 +134,15 @@ Owner review flagged several gaps vs. the referenced templates. Addressed:
 - **Left-aligned sections:** FAQ → two-column (sticky heading left, list right); About → added a right meta column (Now/Based/Focus/Education) + widened the statement (max-w-4xl→5xl) so the right third isn't empty.
 - **Footer wordmark truncation:** it sized off `13vw` (viewport). Wrapper is now a container (`.v2-wordmark { container-type: inline-size }`) and the block wordmark uses `text-[14cqw]` — sizes to the parent container width, so it no longer truncates.
 - **Build logs (auto):** `lib/blog/hooks.ts` was dead + wrong-schema (camelCase cols, `draft`, non-admin author). Rewrote it schema-correct/idempotent, and added the real mechanism `scripts/seed-build-logs.mjs` (idempotent; `--dry-run`). Build logs = published posts in the `portfolio-projects` series, admin `monad`; the `[slug]` page already renders live/repo links via `projectByBlogSlug`. Added `blogPostSlug: "sunab-build-log"` to Sunab and **ran the seed** → created the published `sunab-build-log` post (owner approved the live-DB write). Re-runs are no-ops.
-- Typechecked all changed files (no new errors). Not yet committed/pushed.
+- Typechecked all changed files (no new errors). Committed (`d5f8343`) + pushed; CLI preview deploy: https://portfolio-ez2wpbtl7-nerosiegfrieds-projects.vercel.app
+
+## 2026-07-09 — Session (cont.): Phase 4 kickoff — reado-style blog index
+
+- Rebuilt the **/blog index** reado-style (new files; v1 blog under `/v1/blog` untouched — it's a separate route copy on the frozen components):
+  - `components/v2/blog/blog-nav.tsx` (client): fixed scroll-aware bar mirroring the portfolio SiteNav frame — back-to-portfolio · "Writing" wordmark · InboxButton + v2 ModeToggle.
+  - `components/v2/blog/blog-index.tsx` (**server** component; safe — only imports pure `Eyebrow`/`AnimatedArrow`/`Link`): masthead wordmark + intro → series/category bar (top-level series → `/blog/series/[slug]`) → **featured** latest post → **numbered** card grid (`No. NNN`, serif titles, series pills, `AnimatedArrow`) → **archive grouped by year**. Preserves series links + full chronological archive.
+  - `app/blog/page.tsx`: swapped to Cursor + BlogNav + BlogIndex + v2 Footer inside the same `mx-3 border-x` frame as home; kept metadata, `revalidate=60`, DB try/catch fallback, `AdminEntryHotkey`.
+- Fixed shared v2 Footer section anchors (`#work`/`#about`/`#contact`) → home-absolute Links (`/#work`…) so the footer is correct on both home and /blog (v2 footer only ever renders at base "").
+- Silenced Tailwind ambiguity: dropped `ease-[cubic-bezier(...)]` from the thumbnail push-forward (default ease is fine; the marker keeps its cubic-bezier via `.v2-thumb-marker` CSS).
+- Verified with a local `next build`: `/blog` prerenders static, `/v1/blog` unchanged, no errors/ambiguity warnings.
+- **Still TODO in Phase 4:** post page (serif title + reading column, snippets inline, comments/votes/series nav), series pages, features page — all reado-styled while preserving data/auth.

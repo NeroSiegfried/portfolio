@@ -17,10 +17,10 @@ export function Footer() {
       {/* Columns collapse to a single column on small screens. */}
       <div className="grid grid-cols-1 gap-8 min-[520px]:grid-cols-2 md:grid-cols-4">
         <nav className={col}>
-          <a href="#work" className={link}>Work</a>
-          <a href="#about" className={link}>About</a>
+          <Link href={`${withBase(basePath, "/")}#work`} className={link}>Work</Link>
+          <Link href={`${withBase(basePath, "/")}#about`} className={link}>About</Link>
           <Link href={withBase(basePath, "/blog")} className={link}>Blog</Link>
-          <a href="#contact" className={link}>Contact</a>
+          <Link href={`${withBase(basePath, "/")}#contact`} className={link}>Contact</Link>
         </nav>
         <div className={col}>
           <a href="mailto:victornabasu@yahoo.com" className={link}>victornabasu@yahoo.com</a>
