@@ -656,6 +656,50 @@ button:hover .v2-slide > span { transform: translateY(-100%); }
   .v2-work-item:hover .v2-work-tl, .v2-work-item:hover .v2-work-br { transform: none; }
 }
 
+/* ── Isometric project mockup ────────────────────────────────────────────────
+   Screenshots at different viewports sit on a shared axonometric plane over an
+   isometric line grid, oversized + offset so they spill past the frame (clipped
+   by .v2-work-item's overflow). The card group tilts as one, so every shot aligns
+   to the same grid; the grid lines run parallel to the plane. */
+.v2-iso { position: absolute; inset: 0; overflow: hidden; background: hsl(var(--secondary)); }
+
+/* Isometric line grid (two families at ±30°) that fade toward the edges. */
+.v2-iso__grid {
+  position: absolute; inset: -30%;
+  background-image:
+    repeating-linear-gradient(30deg,  hsl(var(--foreground) / 0.10) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(150deg, hsl(var(--foreground) / 0.10) 0 1px, transparent 1px 42px);
+  -webkit-mask-image: radial-gradient(135% 120% at 55% 42%, #000 42%, transparent 100%);
+  mask-image: radial-gradient(135% 120% at 55% 42%, #000 42%, transparent 100%);
+}
+
+/* Shared axonometric tilt for the whole group. */
+.v2-iso__stage {
+  position: absolute; inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(15deg) rotateZ(-24deg);
+}
+
+.v2-iso__card {
+  position: absolute; overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  box-shadow: 0 28px 55px -20px rgba(0, 0, 0, 0.6);
+}
+/* Oversized + edge-bleeding placements; translateZ lifts the smaller devices
+   forward so they layer over the desktop shot. */
+.v2-iso__card--desktop { width: 72%; aspect-ratio: 16 / 10; left: -5%; top: 6%; }
+.v2-iso__card--tablet  { width: 33%; aspect-ratio: 3 / 4; right: 1%; top: 24%; transform: translateZ(70px); }
+.v2-iso__card--mobile  { width: 15.5%; aspect-ratio: 9 / 19; right: 19%; bottom: -9%; transform: translateZ(135px); }
+
+@media (max-width: 767px) {
+  /* Flatter + tighter on small screens so it still reads inside the card. */
+  .v2-iso__stage { transform: rotateX(12deg) rotateZ(-18deg); }
+  .v2-iso__card--desktop { width: 82%; left: -6%; top: 8%; }
+  .v2-iso__card--tablet  { width: 36%; right: 0%; top: 30%; }
+  .v2-iso__card--mobile  { width: 18%; right: 14%; bottom: -6%; }
+}
+
 /* Rotating marker beside the active thumbnail. It's a single persistent element so
    its vertical move + 45°-per-step rotation animate; position/rotation via CSS vars. */
 .v2-thumb-marker {

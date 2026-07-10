@@ -1,25 +1,21 @@
 import { ArrowDown } from "lucide-react"
 import { Eyebrow } from "@/components/v2/primitives"
 import { RevealLines } from "@/components/v2/reveal"
+import { HeroBackdrop } from "@/components/v2/hero-backdrop"
+
+// Full-bleed hero slideshow — cross-fades every 5s. To test more options, drop a
+// file into /public/hero and add its path here; the rotation extends automatically.
+const HERO_IMAGES = ["/hero/hero-1.jpg", "/hero/hero-2.jpg"]
 
 /**
  * Full-bleed sticky hero (portfolie): a minimal heading + subheading over a
- * full-bleed image; the framed content below scrolls up and slides over it.
- * The image is a placeholder for now (see the note).
+ * full-bleed image slideshow; the framed content below scrolls up and slides
+ * over it.
  */
 export function Hero() {
   return (
     <section id="top" className="sticky top-0 h-screen w-full overflow-hidden bg-secondary">
-      {/* Placeholder for the full-bleed hero visual. */}
-      <div className="absolute inset-0 flex items-start justify-center p-10 pt-32">
-        <p className="max-w-md text-center font-mono text-[0.7rem] uppercase leading-relaxed tracking-[0.14em] text-muted-foreground">
-          Placeholder — full-bleed hero image
-          <span className="mt-3 block normal-case tracking-normal opacity-70">
-            A bold, editorially-lit portrait or an abstract tech visual (light-trails / fibre optics
-            / circuitry), high-contrast with one dominant accent — sits full-bleed behind the name.
-          </span>
-        </p>
-      </div>
+      <HeroBackdrop images={HERO_IMAGES} />
 
       {/* Legibility gradient for the heading. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { featuredProjects, type Project } from "@/lib/portfolio-data"
 import { Eyebrow } from "@/components/v2/primitives"
 import { AnimatedArrow } from "@/components/v2/animated-arrow"
+import { IsometricMockup, type IsoShot } from "@/components/v2/isometric-mockup"
 import { useBasePath, withBase } from "@/lib/base-path"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +13,34 @@ function coverFor(p: Project): string | null {
   if (p.showcaseMode === "web") return `/projects/${p.id}-spread.jpg`
   if (p.pictureSlides?.length) return p.pictureSlides[0]
   return null
+}
+
+/**
+ * Isometric mockup shots per project (desktop / tablet / mobile viewport
+ * screenshots in /public/projects). Add an entry — or extra shots — and that
+ * project's card becomes an isometric spread; projects without one fall back to
+ * the flat spread image.
+ */
+const ISO_SHOTS: Record<number, IsoShot[]> = {
+  11: [
+    { src: "/projects/11-macbook.png", kind: "desktop" },
+    { src: "/projects/11-ipad.png", kind: "tablet" },
+    { src: "/projects/11-iphone.png", kind: "mobile" },
+  ],
+  12: [
+    { src: "/projects/12-studio.png", kind: "desktop" },
+    { src: "/projects/12-iphone.png", kind: "mobile" },
+  ],
+  10: [
+    { src: "/projects/10-macbook.png", kind: "desktop" },
+    { src: "/projects/10-ipad.png", kind: "tablet" },
+    { src: "/projects/10-iphone.png", kind: "mobile" },
+  ],
+  9: [
+    { src: "/projects/9-macbook.png", kind: "desktop" },
+    { src: "/projects/9-ipad.png", kind: "tablet" },
+    { src: "/projects/9-iphone.png", kind: "mobile" },
+  ],
 }
 
 // Thumbnail column geometry: each thumb is 64px tall with a 12px gap → 76px pitch.
@@ -93,6 +122,7 @@ export function Projects() {
         <div className="flex flex-col md:gap-6 md:p-5">
           {projects.map((p, i) => {
             const cover = coverFor(p)
+            const iso = ISO_SHOTS[p.id]
             const hasArticle = Boolean(p.blogPostSlug)
             const href = hasArticle ? withBase(basePath, `/blog/${p.blogPostSlug}`) : (p.liveUrl ?? p.githubUrl ?? "#")
             const cta = hasArticle ? "Read build log" : "Visit site"
@@ -107,7 +137,9 @@ export function Projects() {
                   aria-label={`${p.title} — ${cta.toLowerCase()}`}
                   className="v2-work-item block aspect-[4/3] w-full sm:aspect-[16/10] md:aspect-[3/2]"
                 >
-                  {cover ? (
+                  {iso ? (
+                    <IsometricMockup shots={iso} />
+                  ) : cover ? (
                     <Image src={cover} alt={`${p.title} — preview`} fill priority={i === 0} sizes="(max-width: 768px) 100vw, 66vw" className="object-cover object-top" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center p-8">
