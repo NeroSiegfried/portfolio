@@ -1,0 +1,62 @@
+[
+  {
+    "file": "home-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 0,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "home-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 0,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "home-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 0,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "home-wide.jpg",
+    "viewport": "wide",
+    "distance": 0,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "section0-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "section1-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "section2-wide.jpg",
+    "viewport": "wide",
+    "distance": 1,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "section3-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "section4-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://thestitchbloom.com/"
+  },
+  {
+    "file": "section5-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://thestitchbloom.com/"
+  }
+]

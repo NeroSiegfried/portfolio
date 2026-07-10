@@ -176,7 +176,11 @@ export async function readDb(): Promise<BlogDb> {
   }
 }
 
-const CACHE_TTL = 60 // seconds
+// Aggressive: the DB is hit at most once an hour per cache key. Content edits
+// don't wait for this — every write goes through updateDb, which calls
+// revalidateTag("blog-data") to bust all four caches immediately. The TTL is
+// only a safety-net backstop (e.g. for vote-count drift, which isn't tagged).
+const CACHE_TTL = 3600 // seconds
 
 export const readBlogHomeDb = unstable_cache(
   async (): Promise<BlogDb> => {

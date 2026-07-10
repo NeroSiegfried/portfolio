@@ -1,0 +1,80 @@
+[
+  {
+    "file": "home-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 0,
+    "page": "https://www.derivian.co.uk"
+  },
+  {
+    "file": "home-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 0,
+    "page": "https://www.derivian.co.uk"
+  },
+  {
+    "file": "home-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 0,
+    "page": "https://www.derivian.co.uk"
+  },
+  {
+    "file": "home-wide.jpg",
+    "viewport": "wide",
+    "distance": 0,
+    "page": "https://www.derivian.co.uk"
+  },
+  {
+    "file": "about-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/about"
+  },
+  {
+    "file": "about-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/about"
+  },
+  {
+    "file": "about-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/about"
+  },
+  {
+    "file": "services-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/services"
+  },
+  {
+    "file": "services-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/services"
+  },
+  {
+    "file": "services-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/services"
+  },
+  {
+    "file": "blog-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/blog"
+  },
+  {
+    "file": "blog-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/blog"
+  },
+  {
+    "file": "blog-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://www.derivian.co.uk/blog"
+  }
+]

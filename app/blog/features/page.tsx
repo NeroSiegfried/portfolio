@@ -13,8 +13,9 @@ import { Footer } from "@/components/v2/footer"
 import { Eyebrow } from "@/components/v2/primitives"
 import { ArrowLeft } from "lucide-react"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 60
+// ISR/static so the CDN can serve it and Link can prefetch it. Cached up to an
+// hour; content edits bust it via revalidateTag("blog-data") in updateDb.
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: "Features Demo",

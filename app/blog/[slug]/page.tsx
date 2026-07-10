@@ -3,7 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from "next"
 import Script from "next/script"
-import { readBlogPostDb } from "@/lib/blog/store"
+import { readBlogPostDb, readBlogHomeDb } from "@/lib/blog/store"
 import { findPublishedPostBySlug, listPublishedPosts, listSnippetsBySlug, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import { projectByBlogSlug } from "@/lib/portfolio-data"
 import BlogMarkdown from "@/components/blog-markdown"
@@ -18,8 +18,21 @@ import { AnimatedArrow } from "@/components/v2/animated-arrow"
 import { PostPager } from "@/components/v2/blog/post-pager"
 import { PostSidebar } from "@/components/v2/blog/post-sidebar"
 
-// ISR: rebuild at most every 60s. The page HTML is cached at CloudFront edge.
-export const revalidate = 60
+// ISR: every published post is prerendered at build (generateStaticParams) and
+// served as static HTML from the CDN edge — so navigation is instant and fully
+// prefetchable. Cached up to an hour; edits bust it instantly via
+// revalidateTag("blog-data") in updateDb. New slugs render on-demand then cache.
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  try {
+    const db = await readBlogHomeDb()
+    return listPublishedPosts(db).map((p) => ({ slug: p.slug }))
+  } catch {
+    // DB unreachable at build → fall back to fully on-demand rendering.
+    return []
+  }
+}
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params

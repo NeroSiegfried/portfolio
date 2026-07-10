@@ -207,24 +207,37 @@ export const stats: Stat[] = [
 export interface Service {
   title: string
   description: string
+  /** Optional wide image (portfoliod-style). When unset, a styled placeholder
+   *  renders `imageAlt` as the caption so you can drop a real image in later. */
+  image?: string
+  /** Description of the ideal image for this service (also used as alt text). */
+  imageAlt: string
 }
 
 export const services: Service[] = [
   {
     title: "Full-stack web",
     description: "End-to-end product builds with React, Next.js and TypeScript — from data model to polished, responsive UI.",
+    imageAlt:
+      "A polished web product on screen — a clean Next.js dashboard or landing page rendered on a MacBook, warm editorial lighting.",
   },
   {
     title: "APIs & backends",
     description: "Typed APIs, auth, and PostgreSQL data layers; serverless on Vercel or containers where it fits.",
+    imageAlt:
+      "A dark developer scene — a terminal / API client showing structured JSON beside a Postgres schema diagram; typed data flowing.",
   },
   {
     title: "Systems & fundamentals",
     description: "Low-level work in C and Python — databases from scratch, DSLs, networking and image processing.",
+    imageAlt:
+      "A low-level close-up — a terminal compiling C / a gdb session, or a macro shot of a circuit board; the machine underneath.",
   },
   {
     title: "AI-assisted delivery",
     description: "Pragmatic use of AI APIs and tooling to ship faster without losing control of the architecture.",
+    imageAlt:
+      "A code editor with an AI assistant panel (Cursor / Copilot) suggesting code inline, a subtle accent glow — human-directed AI.",
   },
 ]
 

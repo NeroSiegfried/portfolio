@@ -2,8 +2,8 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { Eyebrow } from "@/components/v2/primitives"
+import { ScrollColorText } from "@/components/v2/scroll-color-text"
 import { useBasePath, withBase } from "@/lib/base-path"
 
 export function About() {
@@ -16,16 +16,9 @@ export function About() {
           <Eyebrow className="hidden sm:block">Who I am</Eyebrow>
         </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mt-10 max-w-5xl font-display text-2xl font-medium leading-[1.25] tracking-tight sm:text-3xl md:text-[2.5rem] md:leading-[1.15]"
-        >
-          I&rsquo;m a full-stack developer and software engineer in London, turning complex problems
-          into elegant, production-ready code.
-        </motion.p>
+        <ScrollColorText className="mt-10 max-w-5xl font-display text-2xl font-medium leading-[1.25] tracking-tight sm:text-3xl md:text-[2.5rem] md:leading-[1.15]">
+          {"I’m a full-stack developer and software engineer in London, turning complex problems into elegant, production-ready code."}
+        </ScrollColorText>
 
         <div className="mt-12 grid gap-8 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)_minmax(0,220px)] md:gap-12 lg:gap-16">
           <div className="v2-media relative aspect-[4/5] w-full max-w-xs overflow-hidden border border-border md:max-w-none">

@@ -15,8 +15,9 @@ import { Reveal } from "@/components/v2/reveal"
 import { readBlogHomeDb } from "@/lib/blog/store"
 import { listPublishedPosts } from "@/lib/blog/queries"
 
-// ISR: the home now surfaces the 3 latest blog posts.
-export const revalidate = 60
+// ISR: the home surfaces the 3 latest blog posts. Cached for up to an hour, but
+// publishing a post busts it instantly via revalidateTag("blog-data") in updateDb.
+export const revalidate = 3600
 
 const isVercel = !!process.env.VERCEL
 

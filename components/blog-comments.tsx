@@ -250,6 +250,35 @@ function ImageChips({
 // when the comment content itself changes — not when parent state (textarea
 // text, pending images, etc.) updates on every keystroke.
 
+/**
+ * Comment image with graceful fallback. Some older comments reference temporary
+ * `uploads/` S3 objects that were cleaned up by the bucket lifecycle rule before
+ * the permanentize-on-create step existed, so they 404. Rather than show the
+ * browser's broken-image icon + alt text, we swap in a tasteful placeholder.
+ */
+function CommentImage({ src, alt }: { src?: string; alt?: string }) {
+  const [failed, setFailed] = useState(false)
+  if (!src) return null
+  if (failed) {
+    return (
+      <span className="my-1 inline-flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+        <ImageIcon className="h-4 w-4 shrink-0 opacity-50" />
+        {alt ? alt : "Image no longer available"}
+      </span>
+    )
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return (
+    <img
+      src={src}
+      alt={alt ?? ""}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="max-h-64 max-w-full rounded-md object-contain my-1"
+    />
+  )
+}
+
 const CommentContent = memo(function CommentContent({ content }: { content: string }) {
   return (
     <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none
@@ -266,8 +295,7 @@ const CommentContent = memo(function CommentContent({ content }: { content: stri
           a: ({ href, children }) => (
             <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
           ),
-          img: ({ src, alt }) =>
-            src ? <img src={src} alt={alt ?? ""} className="max-h-64 max-w-full rounded-md object-contain my-1" /> : null,
+          img: ({ src, alt }) => <CommentImage src={typeof src === "string" ? src : undefined} alt={alt} />,
         }}
       >
         {content}

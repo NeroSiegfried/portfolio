@@ -646,9 +646,11 @@ button:hover .v2-slide > span { transform: translateY(-100%); }
 .v2-work-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.42); opacity: 0; transition: opacity .5s cubic-bezier(.16,1,.3,1); }
 .v2-work-item:hover .v2-work-scrim { opacity: 1; }
 /* Title (top-left) slides in from the left; description (bottom-right) slides in from the right. */
-.v2-work-tl { transform: translateX(-2.75rem); opacity: 0; transition: transform .55s cubic-bezier(.16,1,.3,1), opacity .55s ease; }
+/* Title/description slide in from fully OUTSIDE the (overflow-hidden) work item:
+   translateX by their own width + their inset, so they start entirely off-frame. */
+.v2-work-tl { transform: translateX(calc(-100% - 1rem)); opacity: 0; transition: transform .6s cubic-bezier(.16,1,.3,1), opacity .5s ease; }
 .v2-work-item:hover .v2-work-tl { transform: translateX(0); opacity: 1; }
-.v2-work-br { transform: translateX(2.75rem); opacity: 0; transition: transform .55s cubic-bezier(.16,1,.3,1), opacity .55s ease; }
+.v2-work-br { transform: translateX(calc(100% + 1.25rem)); opacity: 0; transition: transform .6s cubic-bezier(.16,1,.3,1), opacity .5s ease; }
 .v2-work-item:hover .v2-work-br { transform: translateX(0); opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .v2-work-item img, .v2-work-scrim, .v2-work-tl, .v2-work-br { transition: none; }
@@ -656,48 +658,52 @@ button:hover .v2-slide > span { transform: translateY(-100%); }
   .v2-work-item:hover .v2-work-tl, .v2-work-item:hover .v2-work-br { transform: none; }
 }
 
-/* ── Isometric project mockup ────────────────────────────────────────────────
-   Screenshots at different viewports sit on a shared axonometric plane over an
-   isometric line grid, oversized + offset so they spill past the frame (clipped
-   by .v2-work-item's overflow). The card group tilts as one, so every shot aligns
-   to the same grid; the grid lines run parallel to the plane. */
-.v2-iso { position: absolute; inset: 0; overflow: hidden; background: hsl(var(--secondary)); }
+/* Service (What I do) media placeholder — abstract on-brand stand-in until a
+   real wide image is supplied: big faint number over an accent-tinted iso grid. */
+.v2-service-ph {
+  container-type: inline-size;
+  background:
+    radial-gradient(130% 150% at 82% 8%, hsl(var(--primary) / 0.20), transparent 62%),
+    repeating-linear-gradient(30deg,  hsl(var(--foreground) / 0.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(150deg, hsl(var(--foreground) / 0.05) 0 1px, transparent 1px 34px),
+    hsl(var(--secondary));
+}
+.v2-service-ph__num {
+  position: absolute; right: 0.12em; bottom: -0.14em; line-height: 1;
+  font-family: var(--font-display), sans-serif; font-weight: 700; letter-spacing: -0.03em;
+  font-size: clamp(4rem, 34cqw, 13rem);
+  color: hsl(var(--foreground) / 0.06);
+}
 
-/* Isometric line grid (two families at ±30°) that fade toward the edges. */
-.v2-iso__grid {
-  position: absolute; inset: -30%;
+/* ── Isometric masonry mockup ─────────────────────────────────────────────────
+   Project screenshots (home centred, deeper pages outward) at four viewports are
+   packed onto ONE grid: every tile spans an integer number of cells, tiles are
+   ≥1 cell apart, and edges land on grid lines — so they sit flush on the drawn
+   isometric lines. The whole grid tilts onto an axonometric plane and scales as
+   one unit on scroll (tiles stay static). Oversized so it spills past the frame
+   (clipped by .v2-work-item's overflow). */
+.v2-mason { position: absolute; inset: 0; overflow: hidden; background: hsl(var(--secondary)); }
+.v2-mason__scale { position: absolute; inset: 0; display: grid; place-items: center; transform-origin: center; }
+.v2-mason__plane {
+  --cell: 40px;
+  display: grid;
+  grid-template-columns: repeat(var(--cw), var(--cell));
+  grid-template-rows: repeat(var(--ch), var(--cell));
+  transform: rotateX(51deg) rotateZ(-43deg) scale(1.08);
+  transform-origin: center;
+  /* one grid line per cell → tile edges (integer cells) sit flush on the lines */
   background-image:
-    repeating-linear-gradient(30deg,  hsl(var(--foreground) / 0.10) 0 1px, transparent 1px 42px),
-    repeating-linear-gradient(150deg, hsl(var(--foreground) / 0.10) 0 1px, transparent 1px 42px);
-  -webkit-mask-image: radial-gradient(135% 120% at 55% 42%, #000 42%, transparent 100%);
-  mask-image: radial-gradient(135% 120% at 55% 42%, #000 42%, transparent 100%);
+    repeating-linear-gradient(0deg,  hsl(var(--foreground) / 0.14) 0 1px, transparent 1px var(--cell)),
+    repeating-linear-gradient(90deg, hsl(var(--foreground) / 0.14) 0 1px, transparent 1px var(--cell));
 }
-
-/* Shared axonometric tilt for the whole group. */
-.v2-iso__stage {
-  position: absolute; inset: 0;
-  transform-style: preserve-3d;
-  transform: rotateX(15deg) rotateZ(-24deg);
-}
-
-.v2-iso__card {
-  position: absolute; overflow: hidden;
-  border: 1px solid hsl(var(--border));
+.v2-mason__tile {
+  position: relative; overflow: hidden;
+  border: 1px solid hsl(var(--foreground) / 0.22);
   background: hsl(var(--background));
-  box-shadow: 0 28px 55px -20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 16px 34px -16px rgba(0, 0, 0, 0.55);
 }
-/* Oversized + edge-bleeding placements; translateZ lifts the smaller devices
-   forward so they layer over the desktop shot. */
-.v2-iso__card--desktop { width: 72%; aspect-ratio: 16 / 10; left: -5%; top: 6%; }
-.v2-iso__card--tablet  { width: 33%; aspect-ratio: 3 / 4; right: 1%; top: 24%; transform: translateZ(70px); }
-.v2-iso__card--mobile  { width: 15.5%; aspect-ratio: 9 / 19; right: 19%; bottom: -9%; transform: translateZ(135px); }
-
 @media (max-width: 767px) {
-  /* Flatter + tighter on small screens so it still reads inside the card. */
-  .v2-iso__stage { transform: rotateX(12deg) rotateZ(-18deg); }
-  .v2-iso__card--desktop { width: 82%; left: -6%; top: 8%; }
-  .v2-iso__card--tablet  { width: 36%; right: 0%; top: 30%; }
-  .v2-iso__card--mobile  { width: 18%; right: 14%; bottom: -6%; }
+  .v2-mason__plane { --cell: 24px; transform: rotateX(49deg) rotateZ(-39deg) scale(1.02); }
 }
 
 /* Rotating marker beside the active thumbnail. It's a single persistent element so
@@ -721,6 +727,10 @@ a:hover .v2-arrow__i--2, button:hover .v2-arrow__i--2, .group:hover .v2-arrow__i
 .v2-arrow--left .v2-arrow__i--2 { transform: translate(100%, 0); }
 a:hover .v2-arrow--left .v2-arrow__i--1, button:hover .v2-arrow--left .v2-arrow__i--1, .group:hover .v2-arrow--left .v2-arrow__i--1 { transform: translate(-100%, 0); }
 a:hover .v2-arrow--left .v2-arrow__i--2, button:hover .v2-arrow--left .v2-arrow__i--2, .group:hover .v2-arrow--left .v2-arrow__i--2 { transform: translate(0, 0); }
+/* Forward/right variant: the arrow slides out to the right, a copy slides in from the left. */
+.v2-arrow--right .v2-arrow__i--2 { transform: translate(-100%, 0); }
+a:hover .v2-arrow--right .v2-arrow__i--1, button:hover .v2-arrow--right .v2-arrow__i--1, .group:hover .v2-arrow--right .v2-arrow__i--1 { transform: translate(100%, 0); }
+a:hover .v2-arrow--right .v2-arrow__i--2, button:hover .v2-arrow--right .v2-arrow__i--2, .group:hover .v2-arrow--right .v2-arrow__i--2 { transform: translate(0, 0); }
 @media (prefers-reduced-motion: reduce) { .v2-arrow__i { transition: none; } }
 
 /* Footer wordmark scales to its own container width (cqw), not the viewport. */
@@ -750,12 +760,15 @@ a:hover .v2-arrow--left .v2-arrow__i--2, button:hover .v2-arrow--left .v2-arrow_
 
 /* Interactive dotted-shadow wordmark (reado masthead): the dotted layer trails
    the cursor (offset set from JS via --dx/--dy). */
-/* Page-transition wipe: covers the viewport then retracts top→bottom (origin bottom). */
-.v2-page-wipe {
-  position: fixed; inset: 0; z-index: 100; pointer-events: none;
-  background: hsl(var(--background)); transform-origin: bottom;
+/* Page-transition curtain: a solid accent screen that sweeps down to cover the
+   old page top→bottom, then continues down and off to reveal the new one. Driven
+   by `components/v2/page-transition.tsx`; sits above the nav, below the cursor. */
+.v2-curtain {
+  position: fixed; inset: 0; z-index: 200;
+  background: hsl(var(--primary)); will-change: transform;
 }
-@media (prefers-reduced-motion: reduce) { .v2-page-wipe { display: none; } }
+.v2-curtain--idle { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .v2-curtain { display: none; } }
 
 .v2-wordmark-shadow { transform: translate(var(--dx, 6px), var(--dy, 7px)); transition: transform .3s cubic-bezier(.22,1,.36,1); }
 @media (prefers-reduced-motion: reduce) { .v2-wordmark-shadow { transform: translate(6px, 7px); transition: none; } }

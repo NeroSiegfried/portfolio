@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter, Inter_Tight, Nanum_Myeongjo, Geist_Mono, Great_Vibes } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { PageTransition } from "@/components/v2/page-transition"
 
 // Body sans (unchanged from v1). Display + serif + mono added for v2.
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" })
@@ -63,6 +64,9 @@ export default function RootLayout({
       <body className={`${fontVars} font-sans antialiased min-h-screen flex flex-col`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
+          {/* Persistent (mounted once, survives navigation) so it can drive the
+              cover→reveal page transition across routes. */}
+          <PageTransition />
         </ThemeProvider>
       </body>
     </html>

@@ -1,0 +1,80 @@
+[
+  {
+    "file": "home-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 0,
+    "page": "https://www.loopbridge.network"
+  },
+  {
+    "file": "home-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 0,
+    "page": "https://www.loopbridge.network"
+  },
+  {
+    "file": "home-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 0,
+    "page": "https://www.loopbridge.network"
+  },
+  {
+    "file": "home-wide.jpg",
+    "viewport": "wide",
+    "distance": 0,
+    "page": "https://www.loopbridge.network"
+  },
+  {
+    "file": "academy-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/academy"
+  },
+  {
+    "file": "academy-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/academy"
+  },
+  {
+    "file": "academy-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/academy"
+  },
+  {
+    "file": "exchange-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/exchange"
+  },
+  {
+    "file": "exchange-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/exchange"
+  },
+  {
+    "file": "exchange-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/exchange"
+  },
+  {
+    "file": "community-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/community"
+  },
+  {
+    "file": "community-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/community"
+  },
+  {
+    "file": "community-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://www.loopbridge.network/community"
+  }
+]

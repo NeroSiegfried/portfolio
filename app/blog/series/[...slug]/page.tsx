@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { readSeriesDb } from "@/lib/blog/store"
+import { readSeriesDb, getSeriesPath } from "@/lib/blog/store"
 import { findSeriesByPath, listPublishedPostsForSeries } from "@/lib/blog/queries"
 import { Cursor } from "@/components/v2/cursor"
 import { BlogNav } from "@/components/v2/blog/blog-nav"
@@ -9,7 +9,21 @@ import { Footer } from "@/components/v2/footer"
 import { Eyebrow } from "@/components/v2/primitives"
 import { PostCard } from "@/components/v2/blog/post-card"
 
-export const revalidate = 60
+// ISR: every series page is prerendered at build and served static from the
+// edge. Cached up to an hour; content edits bust it via revalidateTag in updateDb.
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  try {
+    const db = await readSeriesDb()
+    // One entry per series, using its full root→leaf slug path (the catch-all).
+    return db.series.map((s) => ({
+      slug: getSeriesPath(db.series, s.id).map((node) => node.slug),
+    }))
+  } catch {
+    return []
+  }
+}
 
 export async function generateMetadata({ params }: SeriesPageProps): Promise<Metadata> {
   const { slug } = await params

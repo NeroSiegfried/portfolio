@@ -1,0 +1,80 @@
+[
+  {
+    "file": "home-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 0,
+    "page": "https://sunabtelecomservices.com/"
+  },
+  {
+    "file": "home-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 0,
+    "page": "https://sunabtelecomservices.com/"
+  },
+  {
+    "file": "home-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 0,
+    "page": "https://sunabtelecomservices.com/"
+  },
+  {
+    "file": "home-wide.jpg",
+    "viewport": "wide",
+    "distance": 0,
+    "page": "https://sunabtelecomservices.com/"
+  },
+  {
+    "file": "about-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/about"
+  },
+  {
+    "file": "about-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/about"
+  },
+  {
+    "file": "about-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/about"
+  },
+  {
+    "file": "services-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/services"
+  },
+  {
+    "file": "services-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/services"
+  },
+  {
+    "file": "services-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/services"
+  },
+  {
+    "file": "network-desktop.jpg",
+    "viewport": "desktop",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/network"
+  },
+  {
+    "file": "network-mobile.jpg",
+    "viewport": "mobile",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/network"
+  },
+  {
+    "file": "network-tablet.jpg",
+    "viewport": "tablet",
+    "distance": 1,
+    "page": "https://sunabtelecomservices.com/network"
+  }
+]

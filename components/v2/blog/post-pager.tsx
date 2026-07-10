@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight } from "lucide-react"
 import type { BlogPostSummary } from "@/lib/blog/queries"
+import { AnimatedArrow } from "@/components/v2/animated-arrow"
 import { monogramFor, seriesLabel } from "@/components/v2/blog/helpers"
 import { cn } from "@/lib/utils"
 
@@ -43,9 +43,9 @@ export function PostPager({
       {prev ? (
         <Link
           href={`/blog/${prev.slug}`}
-          className="group flex min-w-0 items-center gap-3.5 border border-border bg-card/30 px-4 py-3 transition-colors hover:border-primary/60 md:px-5"
+          className="group flex min-w-0 items-center gap-3.5 border border-border bg-card/30 px-4 py-3 text-muted-foreground transition-colors hover:border-primary/60 md:px-5"
         >
-          <ArrowLeft className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-x-1 group-hover:text-primary" />
+          <AnimatedArrow direction="left" className="shrink-0 text-lg transition-colors group-hover:text-primary" />
           <Thumb post={prev} />
           <span className="min-w-0">
             <span className="block font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">
@@ -63,7 +63,7 @@ export function PostPager({
       {next ? (
         <Link
           href={`/blog/${next.slug}`}
-          className="group flex min-w-0 items-center justify-end gap-3.5 border border-border bg-card/30 px-4 py-3 text-right transition-colors hover:border-primary/60 md:px-5"
+          className="group flex min-w-0 items-center justify-end gap-3.5 border border-border bg-card/30 px-4 py-3 text-right text-muted-foreground transition-colors hover:border-primary/60 md:px-5"
         >
           <span className="min-w-0">
             <span className="block font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">
@@ -74,7 +74,7 @@ export function PostPager({
             </span>
           </span>
           <Thumb post={next} />
-          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+          <AnimatedArrow direction="right" className="shrink-0 text-lg transition-colors group-hover:text-primary" />
         </Link>
       ) : (
         <span className="hidden sm:block" />

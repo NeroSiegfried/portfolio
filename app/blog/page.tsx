@@ -8,9 +8,10 @@ import { BlogNav } from "@/components/v2/blog/blog-nav"
 import { BlogIndex } from "@/components/v2/blog/blog-index"
 import { Footer } from "@/components/v2/footer"
 
-// ISR: rebuild at most every 60s. CloudFront/CDN serves cached HTML from
-// the nearest edge node — no Lambda round-trip to us-east-1 for repeat visitors.
-export const revalidate = 60
+// ISR: prerendered HTML served from the CDN edge — no Lambda round-trip to
+// us-east-1 for repeat visitors. Cached up to an hour; content edits bust it
+// instantly via revalidateTag("blog-data") in updateDb.
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: "Blog",
