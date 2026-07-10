@@ -67,16 +67,21 @@ export function TechStack() {
         <Eyebrow className="hidden pb-1 sm:block">Drag to explore →</Eyebrow>
       </div>
 
-      <div className="v2-marquee-mask mt-10 select-none">
-        <div ref={trackRef} className="flex w-max touch-pan-y gap-3 will-change-transform">
-          {items.map((t, i) => (
-            <div key={`${t.name}-${i}`} className="tech-item flex w-32 shrink-0 flex-col items-center gap-3 border border-border px-4 py-6">
-              <div className="pointer-events-none relative h-9 w-9">
-                <Image src={t.logo} alt={t.name} fill sizes="36px" className="tech-logo object-contain" />
+      {/* One full-width strip (viper): adjacent cells split by vertical dividers,
+          no gaps/boxes. The border-y frame is static; the cells scroll inside a
+          masked (edge-fading) window. */}
+      <div className="mt-10 border-y border-border">
+        <div className="v2-marquee-mask select-none">
+          <div ref={trackRef} className="flex w-max touch-pan-y will-change-transform">
+            {items.map((t, i) => (
+              <div key={`${t.name}-${i}`} className="tech-item flex h-28 w-44 shrink-0 flex-col items-center justify-center gap-3 border-r border-border px-6 md:h-36 md:w-56">
+                <div className="pointer-events-none relative h-10 w-10 md:h-11 md:w-11">
+                  <Image src={t.logo} alt={t.name} fill sizes="44px" className="tech-logo object-contain" />
+                </div>
+                <span className="font-mono text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground">{t.name}</span>
               </div>
-              <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-muted-foreground">{t.name}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

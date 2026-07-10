@@ -28,7 +28,9 @@ export function MasonryMockup({ id, className }: { id: number; className?: strin
   const ref = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] })
-  const scaleMV = useTransform(scrollYProgress, [0, 0.5, 1], [0.86, 1.02, 1.22])
+  // Scales the ENTIRE compiled grid as one (tiles are static) — a clear, whole-
+  // image zoom as the section scrolls through the viewport.
+  const scaleMV = useTransform(scrollYProgress, [0, 0.5, 1], [0.9, 1.03, 1.16])
   const scale = reduce ? 1 : scaleMV
 
   if (!layout) return null

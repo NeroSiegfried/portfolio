@@ -17,6 +17,8 @@ export function PostCard({ post, no, size = "sm" }: { post: BlogPostSummary; no:
   return (
     <Link
       href={`/blog/${post.slug}`}
+      data-cursor
+      data-cursor-label="Read post"
       className="group flex h-full flex-col border border-border bg-card/30 transition-colors hover:border-primary/50"
     >
       <div className={cn("v2-card-cover relative", size === "lg" ? "aspect-[16/10]" : "aspect-[4/3]")}>

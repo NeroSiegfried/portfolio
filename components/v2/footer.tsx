@@ -14,8 +14,8 @@ export function Footer() {
 
   return (
     <footer className="overflow-hidden border-t border-border px-4 pb-8 pt-16 md:px-6">
-      {/* Columns collapse to a single column on small screens. */}
-      <div className="grid grid-cols-1 gap-8 min-[520px]:grid-cols-2 md:grid-cols-4">
+      {/* Columns: 1 → 2 → 4, holding at 2 until 880px so nothing crowds/overlaps. */}
+      <div className="grid grid-cols-1 gap-8 min-[520px]:grid-cols-2 min-[880px]:grid-cols-4">
         <nav className={col}>
           <Link href={`${withBase(basePath, "/")}#work`} className={link}>Work</Link>
           <Link href={`${withBase(basePath, "/")}#about`} className={link}>About</Link>
@@ -60,7 +60,7 @@ export function Footer() {
         </span>
       </div>
 
-      <div className="mt-6 flex flex-col gap-2 border-t border-border pt-6 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-2 border-t border-border pt-6 font-mono text-xs text-muted-foreground min-[880px]:flex-row min-[880px]:items-center min-[880px]:justify-between">
         <span>© {year} Victor Nabasu. All rights reserved.</span>
         <span className="uppercase tracking-[0.12em]">Software Engineer · Full-Stack Developer</span>
       </div>

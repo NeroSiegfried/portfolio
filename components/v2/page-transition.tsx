@@ -34,6 +34,7 @@ export function PageTransition() {
   const [phase, setPhase] = useState<Phase>("hidden")
 
   const pendingPath = useRef<string | null>(null)
+  const pendingHref = useRef<string | null>(null)
   const coverDone = useRef(false)
   const fallback = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -48,6 +49,7 @@ export function PageTransition() {
     clearFallback()
     coverDone.current = false
     pendingPath.current = null
+    pendingHref.current = null
     setPhase("reveal")
   }, [])
 
@@ -80,13 +82,15 @@ export function PageTransition() {
 
       e.preventDefault()
       pendingPath.current = url.pathname
+      pendingHref.current = url.pathname + url.search + url.hash
       coverDone.current = false
       setPhase("cover")
-      // Load the destination underneath the curtain as it drops (overlapped).
-      router.push(url.pathname + url.search + url.hash)
+      // NB: we do NOT navigate yet — the curtain must fully cover the OLD page
+      // first (otherwise the new page flashes underneath). We push once the cover
+      // animation completes (see onAnimationComplete).
       clearFallback()
       // Safety net: never get stuck covered if the route never commits.
-      fallback.current = setTimeout(startReveal, 1400)
+      fallback.current = setTimeout(startReveal, 2200)
     }
 
     document.addEventListener("click", onClick, true)
@@ -111,13 +115,17 @@ export function PageTransition() {
       initial={false}
       animate={phase}
       variants={variants}
-      transition={{ duration: 0.45, ease: [0.76, 0, 0.24, 1] }}
-      onAnimationComplete={(def) => {
-        if (def === "cover") {
+      // expo-out: the curtain shoots down fast (snappy start) then settles.
+      transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+      onAnimationComplete={() => {
+        // Key off `phase` (state) — the variant-name arg isn't reliable here.
+        if (phase === "cover") {
           coverDone.current = true
-          // If the route already committed while the curtain was dropping, reveal now.
-          if (pathname === pendingPath.current || !pendingPath.current) startReveal()
-        } else if (def === "reveal") {
+          // Curtain now fully covers the OLD page → navigate underneath it.
+          if (pendingHref.current) router.push(pendingHref.current)
+          // Same-path navigations won't change `pathname`, so reveal right away.
+          if (!pendingPath.current || pathname === pendingPath.current) startReveal()
+        } else if (phase === "reveal") {
           setPhase("hidden")
         }
       }}

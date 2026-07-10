@@ -5,7 +5,7 @@ import { HeroBackdrop } from "@/components/v2/hero-backdrop"
 
 // Full-bleed hero slideshow — cross-fades every 5s. To test more options, drop a
 // file into /public/hero and add its path here; the rotation extends automatically.
-const HERO_IMAGES = ["/hero/hero-1.jpg", "/hero/hero-2.jpg"]
+const HERO_IMAGES = ["/hero/hero-2.jpg"]
 
 /**
  * Full-bleed sticky hero (portfolie): a minimal heading + subheading over a

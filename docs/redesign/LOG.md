@@ -222,3 +222,21 @@ Owner feedback: (1) "What I do" too plain — give each row a wide image (portfo
 - **Upload 500 (reported, infra):** `/api/upload` presign fails on the Vercel **Preview** deployment because it has no AWS credentials — local (with `.env.local` AWS keys) signs fine. Fix is env-side: add the S3 creds (OIDC `AWS_ROLE_ARN`, or `S3_UPLOADER_*`/`AWS_*`) to the Preview environment, not just Production.
 - Verified on dev via Puppeteer (masonry renders flush + mixed viewports; what-I-do rows; about scroll-text). Green `next build`; `tsc` clean.
 - **Heads-up (not touched):** owner renamed `public/hero/hero-1.jpg` → `hero-1.not_used.jpg`, but `hero.tsx` `HERO_IMAGES` still lists `/hero/hero-1.jpg` (now missing). Left as-is pending owner intent (drop it vs. supply a new hero-1).
+
+## 2026-07-10 — Session (cont.): responsive fixes, viper marquee, masonry rework, transition timing
+
+Owner feedback round: About responsiveness (subtext shrank to a thin line before collapsing); tech stack "too many boxes" → want a full-width marquee strip (ref viper-template); footer overlap → collapse ~870px; drop hero image #1; masonry too wide/disjointed/top-heavy-empty + per-tile scaling instead of whole-image; blog cards should get the project ring-cursor but say "Read post"; transition slow to start + new page flashes before it; put the image briefs in an easy-to-find md.
+
+- **Hero:** `HERO_IMAGES` → just `/hero/hero-2.jpg` (drops the renamed hero-1, resolving the dangling ref too).
+- **Service image briefs:** new root **`SERVICE_IMAGES.md`** (table of the 4 briefs + how to swap in real images).
+- **About responsiveness:** the 3-col grid (image | text | meta) now only forms at **`min-[1100px]`** (was `md`/768) — below that it's a single readable column, so the middle text never squeezes to a thin line. Image sizes/`dl` borders moved to the same breakpoint.
+- **Footer:** columns hold at 2-up until **`min-[880px]`** (were `md`/768→4-up) and the bottom bar goes row at 880 — no more crowding/overlap ~768–870px.
+- **Tech stack → viper marquee:** dropped the per-item bordered boxes; now one full-width strip (`border-y` frame) of **adjacent cells split by `border-r` dividers** (taller, `h-28`/`md:h-36`), scrolling inside the edge-fading mask. Same JS auto-scroll/drag.
+- **Blog cards → "Read post" cursor:** `PostCard` link got `data-cursor` + `data-cursor-label="Read post"`, so hovering any blog card shows the same portfoliod ring cursor as the Work media (covers the grid + featured card).
+- **Transition timing fixed:** (1) it never actually covered before navigating because `onAnimationComplete`'s variant-name arg wasn't matching `"cover"` — now keyed off `phase` state; (2) the push moved OUT of the click handler INTO cover-complete, so the curtain fully covers the OLD page *then* navigates (new page loads hidden under it) — no more new-page flash; (3) expo-out easing → snappy start. Verified via Puppeteer: covered ≈180ms, URL changes ≈870ms (only after cover), reveal ≈930ms.
+- **Masonry rework (proper tight masonry):**
+  - Packer: replaced the centred greedy (which left 2-cell gaps + empty top) with a **skyline bottom-left bin-pack** into a ~square target width — uniform **1-cell gaps everywhere**, dense top-down fill (no empty top), tall-first ordering to minimise holes.
+  - Grid is much **finer** (`SPAN` ~doubled: mobile 5×10, tablet 7×9, desktop 11×7, wide 16×7; `--cell` 40→**19px**) so images couple tightly (a 1-cell gap is a thin margin).
+  - **Whole-image scaling, not per-tile:** the `.v2-work-item img` hover-zoom was hitting the masonry tiles — scoped it to `.v2-work-item > img` (cover only) + `.v2-mason__tile img { transform:none }`. The scroll-scale stays on the plane wrapper (0.9→1.16 × base 1.34) so the *whole compiled grid* zooms as one.
+  - Regenerate: `node scripts/build-masonry-layout.mjs` (reuses existing shots; bump `MAX_SUBPAGES` in the capture script for even more tiles). Verified render: tiles tightly packed, flush to fine grid, fills the frame, mixed viewports.
+- Green `next build`; `tsc` clean.
