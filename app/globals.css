@@ -678,35 +678,52 @@ button:hover .v2-slide > span { transform: translateY(-100%); }
 }
 
 /* ── Isometric masonry mockup ─────────────────────────────────────────────────
-   Project screenshots (home centred, deeper pages outward) at four viewports are
-   packed onto ONE grid: every tile spans an integer number of cells, tiles are
-   ≥1 cell apart, and edges land on grid lines — so they sit flush on the drawn
-   isometric lines. The whole grid tilts onto an axonometric plane and scales as
-   one unit on scroll (tiles stay static). Oversized so it spills past the frame
-   (clipped by .v2-work-item's overflow). */
-.v2-mason { position: absolute; inset: 0; overflow: hidden; background: hsl(var(--secondary)); }
-.v2-mason__scale { position: absolute; inset: 0; display: grid; place-items: center; transform-origin: center; }
-.v2-mason__plane {
-  --cell: 19px;
-  display: grid;
-  grid-template-columns: repeat(var(--cw), var(--cell));
-  grid-template-rows: repeat(var(--ch), var(--cell));
-  transform: rotateX(50deg) rotateZ(-42deg) scale(1.34);
-  transform-origin: center;
-  /* one grid line per cell → tile edges (integer cells) sit flush on the lines */
-  background-image:
-    repeating-linear-gradient(0deg,  hsl(var(--foreground) / 0.12) 0 1px, transparent 1px var(--cell)),
-    repeating-linear-gradient(90deg, hsl(var(--foreground) / 0.12) 0 1px, transparent 1px var(--cell));
+   A project's screenshots packed into ONE dense CSS-grid mosaic
+   (grid-auto-flow: dense → the browser backfills every hole, no gaps), tilted
+   onto an axonometric plane. It sits EXPANDED by default — oversized + centred so
+   it overflows every edge/corner of the frame (clipped by .v2-work-item) — and
+   the WHOLE collage shrinks toward its natural size on hover. Tiles never move
+   individually. Tight uniform gap. */
+.v2-mason {
+  position: absolute; inset: 0; overflow: hidden;
+  background: hsl(var(--secondary));
 }
+.v2-mason__grid {
+  --mason-w: 960px;         /* constant plane width; cell size follows col count */
+  --mason-cols: 13;         /* overridden per-project (computed) via inline var */
+  --cell: calc(var(--mason-w) / var(--mason-cols));
+  --gap: 4px;
+  --iso: rotateX(36deg) rotateZ(-20deg);
+  --scale: 1.2;             /* resting: the LOW-zoom floor that still covers every edge + corner */
+  --scale-hover: 1.29;      /* hover: leans in ≤10%, matching the site's cover-image zoom ratio */
+  /* Absolutely centred so the plane overflows the frame SYMMETRICALLY (top =
+     bottom) — a grid child can't be centred by place-items once its row grows
+     past the frame, which is what buried the top corners. */
+  position: absolute; top: 50%; left: 50%;
+  display: grid;
+  grid-template-columns: repeat(var(--mason-cols), var(--cell));
+  grid-auto-rows: var(--cell);
+  grid-auto-flow: dense;
+  gap: var(--gap);
+  transform: translate(-50%, -50%) var(--iso) scale(var(--scale));
+  transform-origin: center;
+  transition: transform .6s cubic-bezier(.16, 1, .3, 1);
+}
+/* Hover leans the plane in by a subtle ≤10% (like `.v2-work-item > img`), never
+   below the resting scale — so corners stay covered in both states. */
+.v2-work-item:hover .v2-mason__grid { transform: translate(-50%, -50%) var(--iso) scale(var(--scale-hover)); }
 .v2-mason__tile {
   position: relative; overflow: hidden;
-  border: 1px solid hsl(var(--foreground) / 0.20);
+  border: 1px solid hsl(var(--foreground) / 0.16);
   background: hsl(var(--background));
-  box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.45);
 }
 .v2-mason__tile img { transform: none; }
+@media (prefers-reduced-motion: reduce) { .v2-mason__grid { transition: none; } }
 @media (max-width: 767px) {
-  .v2-mason__plane { --cell: 12px; transform: rotateX(48deg) rotateZ(-38deg) scale(1.2); }
+  /* mobile frame is squarer (4:3): flatter X-tilt (taller plane), gentler Z-skew
+     (less corner-cut) + more scale so the smaller frame still fills corner-to-corner */
+  .v2-mason__grid { --mason-w: 680px; --gap: 3px; --iso: rotateX(24deg) rotateZ(-10deg); --scale: 1.44; --scale-hover: 1.52; }
 }
 
 /* Rotating marker beside the active thumbnail. It's a single persistent element so

@@ -165,8 +165,11 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden">
-      {/* Fullscreen canvas behind everything */}
+    <section className="relative isolate h-screen flex items-center justify-center overflow-hidden">
+      {/* Fullscreen particle canvas. `isolate` on the section gives it its own
+          stacking context so this `-z-10` canvas stays scoped INSIDE the hero
+          (above the /v1 layout's opaque bg-background, below the content) —
+          without it the dots hide behind the .v1-scope background. */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full -z-10"

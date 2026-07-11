@@ -240,3 +240,39 @@ Owner feedback round: About responsiveness (subtext shrank to a thin line before
   - **Whole-image scaling, not per-tile:** the `.v2-work-item img` hover-zoom was hitting the masonry tiles — scoped it to `.v2-work-item > img` (cover only) + `.v2-mason__tile img { transform:none }`. The scroll-scale stays on the plane wrapper (0.9→1.16 × base 1.34) so the *whole compiled grid* zooms as one.
   - Regenerate: `node scripts/build-masonry-layout.mjs` (reuses existing shots; bump `MAX_SUBPAGES` in the capture script for even more tiles). Verified render: tiles tightly packed, flush to fine grid, fills the frame, mixed viewports.
 - Green `next build`; `tsc` clean.
+
+## 2026-07-10 — Session (cont.): masonry coverage/centering, capture crawl (no open menus/footers)
+
+Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom over-exaggerated; capture crawl was leaving nav/cart/search overlays OPEN in shots + shooting footers.
+
+- **Masonry centring (root-cause fix).** `.v2-mason` used `display:grid; place-items:center`, but a grid child taller than the frame grows the implicit row to its own height → "centre" had nothing to centre against, so the plane pinned to the top and overflowed only DOWNWARD (measured gTop:0 / gBot:+977). Switched `.v2-mason__grid` to **absolute centring** (`position:absolute; top/left:50%; transform: translate(-50%,-50%) var(--iso) scale()`), giving symmetric overflow → top corners covered, tiles no longer buried.
+- **Coverage math, not guessing.** Solved the min scale to contain all 4 frame corners for an orthographic `rotateX(φ)·rotateZ(θ)` plane (u,v = inverse transform of the corner; scale = max(2|u|/W, 2|v|/H)). Confirmed corner gaps are a parallelogram-shape problem, not size — a huge bbox still leaves triangular corners. Landed on **rotateX(36) rotateZ(-20), rest scale 1.20** (desktop), covering corner-to-corner at low zoom.
+- **Zoom ratio matched to the site.** Dropped the 2.35→1.35 hover *shrink*; masonry now rests at the covering floor and **hover leans in +8%** (`--scale` 1.20 → `--scale-hover` 1.29), mirroring `.v2-work-item > img` (rest 1.09→hover 1.0, ≤10%).
+- **Per-project shape normalisation.** `masonry-mockup.tsx` computes `--mason-cols = √(area/K)` (K=1.15) inline; CSS derives `--cell = mason-w / cols`. So every project's plane has ~constant footprint/aspect regardless of tile count (29–46) → one scale/rotation covers all. Mobile: squarer 4:3 frame → flatter tilt + more scale in the `max-width:767` block.
+- **Packing = dense auto-placement (css-tricks ref).** Kept `grid-auto-flow: dense` with **big-shots-first order** (wide→desktop→tablet→mobile) so big tiles anchor and the many small tiles backfill every hole. (Tried round-robin interleave for "mobile more central" — it exhausted small tiles early and left holes → reverted; dense backfill already scatters small tiles into holes.)
+- **Capture crawl — direct navigation, no interaction during shots.** `reveal()` now takes `openMenus` (true only for link DISCOVERY); the capture pass navigates DIRECTLY to discovered routes and never clicks menus/carts. Added `closeOverlays()` (Escape + close-buttons + blur, skips real links) as a safety before every shot; `sectionOffsets()` skips the final ~screen so **footers aren't captured**; nav switched `networkidle2`→`domcontentloaded`+`waitForNetworkIdle` fallback (sites with chat/analytics sockets never idle → the first re-crawl only got the homepage). Re-captured all 4 (id9 34 / id10 44 / id11 46 / id12 29 shots, 6–14 real pages each); full-tile contact-sheet audit = every menu/cart/search CLOSED, no footers.
+- **Stale image cache.** The "menus still open" the owner saw were **stale `.next/cache/images`** entries predating the re-capture (reused filenames = same optimiser URL). Cleared `.next/cache/images`.
+- Green `next build` (✓ Compiled successfully; blog SSG DB-timeout warnings are local-only, no RDS access). NOT pushed — awaiting owner go-ahead.
+
+## 2026-07-11 — Session: service images (procedural), v1 hero dots fix
+
+- **"What I do" service images (procedural, on-brand).** No text-to-image API in
+  this env, so `scripts/generate-service-images.mjs` code-generates the 4 images
+  to match the hero: HTML5 Canvas (headless Chrome) → dark warm-charcoal base +
+  contained burnt-orange (#FB460D) glow "light source" + soft shadow mass + faint
+  per-service motif (UI window / JSON+schema / circuit+live-node / code+AI-beam) +
+  **reeded-glass** treatment (vertical striations, lens warp, vertical smear, rib
+  sheen) + grain + vignette → `sharp` (resize 2000×1250, brightness/contrast lift,
+  JPEG). Wired `image:` on all four `services` in `lib/portfolio-data.ts`. Rebalanced
+  tones so they read on BOTH light (warm paper) and dark (near-black) themes —
+  verified in-situ. `SERVICE_IMAGES.md` documents regen + swap-in. (Owner is now
+  considering swapping these for vectors — see chat.) NB: clear `.next/cache/images`
+  after regenerating a same-named file or the dev server serves the stale optimised copy.
+- **v1 hero floating dots — regression fixed.** The 100-particle canvas in
+  `components/hero.tsx` (blue #2F70FF dots) was still drawing (confirmed 350 blue
+  px on the canvas) but invisible: it's `absolute -z-10`, and the `/v1` layout's
+  `<div class="v1-scope bg-background">` (added in the Phase-1 backup) is opaque —
+  the hero `<section>` was `relative` with z-index auto (NO stacking context), so
+  `-z-10` escaped behind that background. Fix = add `isolate` to the hero section
+  → the canvas is scoped inside the hero (above the v1 bg, below the z-10 content).
+  Dots restored (verified /v1 light + dark). One-line, no particle-logic change.

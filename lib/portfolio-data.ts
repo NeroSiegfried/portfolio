@@ -218,24 +218,28 @@ export const services: Service[] = [
   {
     title: "Full-stack web",
     description: "End-to-end product builds with React, Next.js and TypeScript — from data model to polished, responsive UI.",
+    image: "/services/fullstack.jpg",
     imageAlt:
       "A polished web product on screen — a clean Next.js dashboard or landing page rendered on a MacBook, warm editorial lighting.",
   },
   {
     title: "APIs & backends",
     description: "Typed APIs, auth, and PostgreSQL data layers; serverless on Vercel or containers where it fits.",
+    image: "/services/apis.jpg",
     imageAlt:
       "A dark developer scene — a terminal / API client showing structured JSON beside a Postgres schema diagram; typed data flowing.",
   },
   {
     title: "Systems & fundamentals",
     description: "Low-level work in C and Python — databases from scratch, DSLs, networking and image processing.",
+    image: "/services/systems.jpg",
     imageAlt:
       "A low-level close-up — a terminal compiling C / a gdb session, or a macro shot of a circuit board; the machine underneath.",
   },
   {
     title: "AI-assisted delivery",
     description: "Pragmatic use of AI APIs and tooling to ship faster without losing control of the architecture.",
+    image: "/services/ai.jpg",
     imageAlt:
       "A code editor with an AI assistant panel (Cursor / Copilot) suggesting code inline, a subtle accent glow — human-directed AI.",
   },

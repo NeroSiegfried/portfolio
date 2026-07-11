@@ -1,62 +1,178 @@
 [
   {
     "file": "home-mobile.jpg",
-    "viewport": "mobile",
-    "distance": 0,
-    "page": "https://thestitchbloom.com/"
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s1.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s2.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s3.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s4.jpg",
+    "viewport": "mobile"
   },
   {
     "file": "home-tablet.jpg",
-    "viewport": "tablet",
-    "distance": 0,
-    "page": "https://thestitchbloom.com/"
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s2.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s3.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s4.jpg",
+    "viewport": "tablet"
   },
   {
     "file": "home-desktop.jpg",
-    "viewport": "desktop",
-    "distance": 0,
-    "page": "https://thestitchbloom.com/"
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s2.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s3.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s4.jpg",
+    "viewport": "desktop"
   },
   {
     "file": "home-wide.jpg",
-    "viewport": "wide",
-    "distance": 0,
-    "page": "https://thestitchbloom.com/"
+    "viewport": "wide"
   },
   {
-    "file": "section0-desktop.jpg",
-    "viewport": "desktop",
-    "distance": 1,
-    "page": "https://thestitchbloom.com/"
+    "file": "home-wide-s1.jpg",
+    "viewport": "wide"
   },
   {
-    "file": "section1-tablet.jpg",
-    "viewport": "tablet",
-    "distance": 1,
-    "page": "https://thestitchbloom.com/"
+    "file": "home-wide-s2.jpg",
+    "viewport": "wide"
   },
   {
-    "file": "section2-wide.jpg",
-    "viewport": "wide",
-    "distance": 1,
-    "page": "https://thestitchbloom.com/"
+    "file": "home-wide-s3.jpg",
+    "viewport": "wide"
   },
   {
-    "file": "section3-mobile.jpg",
-    "viewport": "mobile",
-    "distance": 1,
-    "page": "https://thestitchbloom.com/"
+    "file": "home-wide-s4.jpg",
+    "viewport": "wide"
   },
   {
-    "file": "section4-desktop.jpg",
-    "viewport": "desktop",
-    "distance": 1,
-    "page": "https://thestitchbloom.com/"
+    "file": "page-desktop.jpg",
+    "viewport": "desktop"
   },
   {
-    "file": "section5-mobile.jpg",
-    "viewport": "mobile",
-    "distance": 1,
-    "page": "https://thestitchbloom.com/"
+    "file": "page-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "shop-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "shop-mobile-s1.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "shop-najma-tablet.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "shop-najma-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "shop-gadget-sleeves-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "shop-gadget-sleeves-wide-s1.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "shop-accessories-desktop.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "shop-accessories-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "about-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "about-mobile-s1.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "contact-tablet.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "contact-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "shop-najma-handbag-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "shop-najma-tote-desktop.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "shop-najma-tote-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "shop-najma-shoulder-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "shop-najma-shoulder-mobile-s1.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "shop-najma-mini-tablet.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "shop-najma-mini-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "shop-sleeve-ipad-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "shop-sleeve-laptop-desktop.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "shop-sleeve-laptop-desktop-s1.jpg",
+    "viewport": "desktop"
   }
 ]
