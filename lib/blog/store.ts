@@ -405,6 +405,37 @@ export function upsertPost(db: BlogDb, post: BlogPost) {
   if (idx >= 0) db.posts[idx] = post; else db.posts.push(post)
 }
 
+// ─── Targeted single-row writers ──────────────────────────────────────────────
+// updateDb() rewrites the ENTIRE db every call (fine for a tiny JSON store, but
+// O(all rows) sequential round-trips to Postgres — it grew past the serverless
+// function timeout as the blog filled up, which surfaced as an empty-body 500).
+// A post save only changes one row, so write just that row.
+
+export async function getPostById(id: string): Promise<BlogPost | null> {
+  const r = await getPool().query("SELECT * FROM posts WHERE id=$1 LIMIT 1", [id])
+  return r.rows[0] ? rowToPost(r.rows[0]) : null
+}
+
+export async function isSlugTaken(slug: string, excludeId: string): Promise<boolean> {
+  const r = await getPool().query(
+    "SELECT 1 FROM posts WHERE slug=$1 AND id<>$2 LIMIT 1",
+    [slug, excludeId]
+  )
+  return r.rows.length > 0
+}
+
+/** Upsert a single post (identical columns to updateDb's posts loop). */
+export async function writePost(post: BlogPost): Promise<void> {
+  await getPool().query(
+    `INSERT INTO posts (id,slug,title,excerpt,content,series_id,status,author_id,created_at,updated_at,published_at,custom_css,position,cover_image)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10,$11,$12,$13)
+     ON CONFLICT (id) DO UPDATE SET
+       slug=$2,title=$3,excerpt=$4,content=$5,series_id=$6,status=$7,author_id=$8,updated_at=NOW(),published_at=$10,custom_css=$11,position=$12,cover_image=$13`,
+    [post.id, post.slug, post.title, post.excerpt, post.content, post.seriesId, post.status, post.authorId, post.createdAt, post.publishedAt, post.customCss ?? null, post.position ?? 0, post.coverImage ?? null]
+  )
+  revalidateTag("blog-data")
+}
+
 export function upsertSeries(db: BlogDb, series: BlogSeries) {
   const idx = db.series.findIndex((s) => s.id === series.id)
   if (idx >= 0) db.series[idx] = series; else db.series.push(series)
