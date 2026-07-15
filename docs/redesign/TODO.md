@@ -82,6 +82,7 @@ Convention: NEW components under `components/v2/`; reuse `components/ui/*`; do N
 - [ ] Full link audit: no dead links anywhere (new site, v1, cross-links, external)
 - [ ] Cross-check CSP/image domains for any new assets
 - [x] Performance/cache audit: shared blog-listing cache, intent prefetch, deferred below-fold third-party/media work, responsive image candidates
+- [x] Newsletter audit: production API validation + live confirm/unsubscribe state transitions; remove font-preload hydration blocker
 - [ ] Accessibility + reduced-motion + Lighthouse pass
 - [ ] Verify on Vercel preview: all pages, all viewports, auth/comments/snippets
 
