@@ -276,3 +276,36 @@ Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom
   `-z-10` escaped behind that background. Fix = add `isolate` to the hero section
   → the canvas is scoped inside the hero (above the v1 bg, below the z-10 content).
   Dots restored (verified /v1 light + dark). One-line, no particle-logic change.
+
+## 2026-07-15 — Performance, image delivery, and code-quality pass
+
+- **Measured production first.** Desktop Lighthouse on `www.nerosiegfried.com`
+  reported 74 performance / 3.5s LCP / 0ms TBT / 0 CLS. The home page was also
+  eagerly loading Cloudflare Turnstile (about 430KB across two third-party
+  requests) despite the form living at the bottom of the page.
+- **Route intent prefetch.** `PageTransition` now prefetches eligible internal
+  routes on pointer and keyboard focus intent. This also covers the project
+  showcase's native anchors, which the standard Next `Link` viewport prefetch
+  could not cover. The existing cover→reveal sequence remains unchanged.
+- **Below-fold work is actually deferred.** `Turnstile` begins loading 500px
+  before its form enters the viewport; `MasonryMockup` mounts its many image
+  elements 600px before a work card appears. A Puppeteer production-build check
+  confirmed zero Turnstile requests on initial load and the widget loading when
+  the contact section is reached.
+- **Image density / thumbnails.** On a 3,840px-wide 4K viewport, the hero needs
+  up to 7,680 source pixels for a 2× panel but its real source is 5,000px; the
+  Next image configuration now permits that full 5,000px source rather than
+  capping it at 3,840px. The three-column blog grid gets a 2,560px candidate
+  (close to its 2× 4K need). The post pager already uses Next's cached 48px
+  `Image` derivative, which produces 96px (2×) thumbnails without duplicating
+  every remotely managed cover; its thumbnail quality is now tuned to 60.
+  Masonry tiles use 256px / quality-65 derivatives, sufficient for their
+  roughly 114px maximum displayed size after transform.
+- **Cache/query simplification.** The identical blog-home and series database
+  snapshots now share one tagged `unstable_cache` entry. Published-post summaries
+  build series paths and vote totals with maps in linear passes; descendant-series
+  lookup now uses a children map instead of repeatedly filtering the whole list.
+- **Verification.** `next build` is green: `/`, `/blog`, `/blog/features` static;
+  posts and series SSG with 1-hour ISR. `tsc --noEmit` still reports the known,
+  unrelated errors in the admin/not-found/reference DB files; edited files report
+  none. `git diff --check` passes.

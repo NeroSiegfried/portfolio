@@ -18,12 +18,26 @@ export interface BlogPostDetail extends BlogPostSummary {
 }
 
 export function listPublishedPosts(db: BlogDb): BlogPostSummary[] {
-  const published = getPublishedPosts(db.posts)
+  const seriesById = new Map(db.series.map((series) => [series.id, series]))
+  const scoresByPostId = new Map<string, number>()
+  for (const vote of db.postVotes) {
+    scoresByPostId.set(vote.postId, (scoresByPostId.get(vote.postId) ?? 0) + vote.value)
+  }
 
-  return published.map((post) => ({
+  const seriesPath = (seriesId: string | null) => {
+    const path: BlogSeries[] = []
+    let series = seriesId ? seriesById.get(seriesId) ?? null : null
+    while (series) {
+      path.unshift(series)
+      series = series.parentId ? seriesById.get(series.parentId) ?? null : null
+    }
+    return path
+  }
+
+  return getPublishedPosts(db.posts).map((post) => ({
     ...post,
-    seriesPath: getSeriesPath(db.series, post.seriesId),
-    upvotes: getPostScore(db.postVotes, post.id),
+    seriesPath: seriesPath(post.seriesId),
+    upvotes: scoresByPostId.get(post.id) ?? 0,
   }))
 }
 
@@ -51,15 +65,21 @@ export function findSeriesByPath(db: BlogDb, slugPath: string[]) {
 
 export function listPublishedPostsForSeries(db: BlogDb, seriesId: string): BlogPostSummary[] {
   const includeIds = new Set<string>()
-
-  const collect = (parentId: string) => {
-    includeIds.add(parentId)
-    db.series
-      .filter((series) => series.parentId === parentId)
-      .forEach((series) => collect(series.id))
+  const childrenByParentId = new Map<string, string[]>()
+  for (const series of db.series) {
+    if (!series.parentId) continue
+    const children = childrenByParentId.get(series.parentId) ?? []
+    children.push(series.id)
+    childrenByParentId.set(series.parentId, children)
   }
 
-  collect(seriesId)
+  const pending = [seriesId]
+  while (pending.length) {
+    const id = pending.pop()!
+    if (includeIds.has(id)) continue
+    includeIds.add(id)
+    pending.push(...(childrenByParentId.get(id) ?? []))
+  }
 
   return listPublishedPosts(db)
     .filter((post) => post.seriesId && includeIds.has(post.seriesId))

@@ -81,6 +81,7 @@ Convention: NEW components under `components/v2/`; reuse `components/ui/*`; do N
 - [ ] Update `ROUTES.md` with new + /v1 routes
 - [ ] Full link audit: no dead links anywhere (new site, v1, cross-links, external)
 - [ ] Cross-check CSP/image domains for any new assets
+- [x] Performance/cache audit: shared blog-listing cache, intent prefetch, deferred below-fold third-party/media work, responsive image candidates
 - [ ] Accessibility + reduced-motion + Lighthouse pass
 - [ ] Verify on Vercel preview: all pages, all viewports, auth/comments/snippets
 

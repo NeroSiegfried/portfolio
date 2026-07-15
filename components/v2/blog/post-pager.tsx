@@ -10,7 +10,7 @@ function Thumb({ post }: { post: BlogPostSummary }) {
   return (
     <span className="relative aspect-square h-12 w-12 shrink-0 overflow-hidden border border-border bg-secondary">
       {post.coverImage ? (
-        <Image src={post.coverImage} alt="" fill sizes="48px" className="object-cover" />
+        <Image src={post.coverImage} alt="" fill sizes="48px" quality={60} className="object-cover" />
       ) : (
         <span className="flex h-full w-full items-center justify-center font-display text-sm font-semibold text-muted-foreground">
           {monogramFor(post)}

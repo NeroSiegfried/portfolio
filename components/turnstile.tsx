@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 declare global {
   interface Window {
@@ -23,12 +23,29 @@ const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render
 export function Turnstile({ onVerify, className }: { onVerify: (token: string) => void; className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const widgetId = useRef<string | null>(null)
+  const [nearViewport, setNearViewport] = useState(false)
+
+  // Loading Turnstile costs a few hundred kilobytes. The form sits at the end
+  // of the portfolio, so start it shortly before it becomes visible instead of
+  // competing with the hero and initial route for bandwidth.
+  useEffect(() => {
+    const element = ref.current
+    if (!element || !SITE_KEY) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      setNearViewport(true)
+      observer.disconnect()
+    }, { rootMargin: "500px 0px" })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     if (!SITE_KEY) {
       onVerify("")
       return
     }
+    if (!nearViewport) return
     let cancelled = false
 
     const render = () => {
@@ -59,7 +76,7 @@ export function Turnstile({ onVerify, className }: { onVerify: (token: string) =
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [nearViewport, onVerify])
 
   if (!SITE_KEY) return null
   return <div ref={ref} className={className} />

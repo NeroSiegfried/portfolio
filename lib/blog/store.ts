@@ -182,7 +182,9 @@ export async function readDb(): Promise<BlogDb> {
 // only a safety-net backstop (e.g. for vote-count drift, which isn't tagged).
 const CACHE_TTL = 3600 // seconds
 
-export const readBlogHomeDb = unstable_cache(
+// The blog index and series pages need the exact same published-post snapshot.
+// Share one cache entry so the first visit to either route warms the other too.
+const readPublishedBlogDb = unstable_cache(
   async (): Promise<BlogDb> => {
     const pool = getPool()
     const [series, posts, postVotes] = await Promise.all([
@@ -205,36 +207,12 @@ export const readBlogHomeDb = unstable_cache(
       postVotes: postVotes.rows.map(rowToPostVote),
     }
   },
-  ["blog-home"],
-  { revalidate: CACHE_TTL, tags: ["blog-home", "blog-data"] }
+  ["blog-listing"],
+  { revalidate: CACHE_TTL, tags: ["blog-home", "blog-series", "blog-data"] }
 )
 
-export const readSeriesDb = unstable_cache(
-  async (): Promise<BlogDb> => {
-    const pool = getPool()
-    const [series, posts, postVotes] = await Promise.all([
-      pool.query("SELECT * FROM series ORDER BY title"),
-      pool.query(
-        `SELECT id, slug, title, excerpt, cover_image, series_id, status, author_id,
-                published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
-         FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
-      ),
-      pool.query("SELECT * FROM post_votes"),
-    ])
-    return {
-      users: [],
-      sessions: [],
-      series: series.rows.map(rowToSeries),
-      posts: posts.rows.map(rowToPost),
-      snippets: [],
-      comments: [],
-      commentVotes: [],
-      postVotes: postVotes.rows.map(rowToPostVote),
-    }
-  },
-  ["blog-series"],
-  { revalidate: CACHE_TTL, tags: ["blog-series", "blog-data"] }
-)
+export const readBlogHomeDb = readPublishedBlogDb
+export const readSeriesDb = readPublishedBlogDb
 
 export const readBlogPostDb = unstable_cache(
   async (slug: string): Promise<BlogDb | null> => {

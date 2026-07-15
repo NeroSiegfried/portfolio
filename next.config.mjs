@@ -36,6 +36,10 @@ const nextConfig = {
   },
   images: {
     unoptimized: false,
+    // Keep the 5,000px source hero available to high-density 4K displays.
+    // The intermediate 2,560px width also avoids jumping straight from 2,048
+    // to 3,840px for the three-column blog grid.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 2560, 3840, 5000],
     remotePatterns: [
       { protocol: "https", hostname: "nerosiegfried.com" },
       { protocol: "https", hostname: "www.nerosiegfried.com" },

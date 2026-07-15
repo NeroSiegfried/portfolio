@@ -23,7 +23,13 @@ export function PostCard({ post, no, size = "sm" }: { post: BlogPostSummary; no:
     >
       <div className={cn("v2-card-cover relative", size === "lg" ? "aspect-[16/10]" : "aspect-[4/3]")}>
         {post.coverImage ? (
-          <Image src={post.coverImage} alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+          <Image
+            src={post.coverImage}
+            alt=""
+            fill
+            sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+            className="object-cover"
+          />
         ) : (
           <PostCover monogram={monogramFor(post)} className="absolute inset-0 h-full w-full" />
         )}

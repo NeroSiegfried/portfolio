@@ -1,5 +1,7 @@
+"use client"
+
 import Image from "next/image"
-import type { CSSProperties } from "react"
+import { useEffect, useRef, useState, type CSSProperties } from "react"
 import layouts from "@/lib/masonry-layout.json"
 
 interface Tile { src: string; viewport: string }
@@ -41,6 +43,24 @@ export function hasMasonry(id: number) {
  */
 export function MasonryMockup({ id }: { id: number }) {
   const layout = LAYOUTS[String(id)]
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  // A mosaic contains dozens of screenshots. Mount its image elements only
+  // shortly before the frame enters view, rather than relying on the browser's
+  // very broad native lazy-load distance.
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      setVisible(true)
+      observer.disconnect()
+    }, { rootMargin: "600px 0px" })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
   if (!layout) return null
 
   // Column count that normalises the plane's shape/footprint across projects.
@@ -48,14 +68,16 @@ export function MasonryMockup({ id }: { id: number }) {
   const cols = Math.max(11, Math.min(18, Math.round(Math.sqrt(area / K))))
 
   return (
-    <div className="v2-mason">
-      <div className="v2-mason__grid" style={{ "--mason-cols": cols } as CSSProperties}>
-        {layout.tiles.map((t, i) => (
-          <div key={i} className="v2-mason__tile" style={{ gridArea: SPAN[t.viewport] ?? "span 2 / span 2" }}>
-            <Image src={t.src} alt="" fill sizes="320px" className="object-cover object-top" />
-          </div>
-        ))}
-      </div>
+    <div ref={ref} className="v2-mason">
+      {visible ? (
+        <div className="v2-mason__grid" style={{ "--mason-cols": cols } as CSSProperties}>
+          {layout.tiles.map((t, i) => (
+            <div key={i} className="v2-mason__tile" style={{ gridArea: SPAN[t.viewport] ?? "span 2 / span 2" }}>
+              <Image src={t.src} alt="" fill sizes="256px" quality={65} className="object-cover object-top" />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
