@@ -6,20 +6,27 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { PageTransition } from "@/components/v2/page-transition"
 
 // Body sans (unchanged from v1). Display + serif + mono added for v2.
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap", preload: false })
 // Oversized, tight display headings (portfolie's "Inter Display" analogue).
-const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-display", display: "swap" })
+const interTight = Inter_Tight({ subsets: ["latin"], variable: "--font-display", display: "swap", preload: false })
 // Serif for blog article/section titles (reado / narrate analogue).
 const nanumMyeongjo = Nanum_Myeongjo({
   subsets: ["latin"],
   weight: ["400", "700", "800"],
   variable: "--font-serif",
   display: "swap",
+  preload: false,
 })
 // Monospace eyebrow / micro labels.
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" })
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap", preload: false })
 // Elegant cursive signature (footer wordmark).
-const greatVibes = Great_Vibes({ subsets: ["latin"], weight: ["400"], variable: "--font-script", display: "swap" })
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-script",
+  display: "swap",
+  preload: false,
+})
 
 const fontVars = `${inter.variable} ${interTight.variable} ${nanumMyeongjo.variable} ${geistMono.variable} ${greatVibes.variable}`
 

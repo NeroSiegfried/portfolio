@@ -276,3 +276,25 @@ Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom
   `-z-10` escaped behind that background. Fix = add `isolate` to the hero section
   → the canvas is scoped inside the hero (above the v1 bg, below the z-10 content).
   Dots restored (verified /v1 light + dark). One-line, no particle-logic change.
+## 2026-07-15 — Live newsletter flow audit
+
+- **Production blocker found.** `/blog` emitted 189 `next/font` preload links.
+  A clean Chromium session still had only 144/211 requests complete after two
+  minutes, so the Suspense-wrapped blog feed never hydrated and the nav's
+  `#subscribe` target/form did not exist for the visitor.
+- **Font loading fixed.** Disabled eager preload for the five self-hosted font
+  families. The browser still downloads the faces selected by CSS, but they no
+  longer block the application bundles. A production build now emits zero font
+  preloads; clean-browser `/blog` load completes in 2.7s with 46 requests and a
+  hydrated `#subscribe` form.
+- **Build resilience.** Social-card background fetches now time out after 10s
+  and use the existing plain-background fallback instead of stalling the whole
+  build when the public origin/CDN is slow. `next build` is green.
+- **Live endpoint/state verification.** Production rejects malformed email and
+  missing Turnstile tokens, conceals honeypot hits, and safely handles invalid
+  confirm/unsubscribe tokens. Using an SES simulator test row, the live confirm
+  route changed `pending` → `confirmed`, the live link route changed it to
+  `unsubscribed`, and RFC 8058 one-click POST returned 200 idempotently. The test
+  row was deleted afterwards. Automated Chromium cannot solve the production
+  Turnstile challenge, so SES delivery through the live subscribe request still
+  requires a human-widget smoke test after deployment.

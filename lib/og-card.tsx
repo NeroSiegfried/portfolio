@@ -21,7 +21,10 @@ const SHADOW = "0 2px 20px rgba(0,0,0,0.55)"  // keeps text legible over bright 
 export async function fetchImageDataUrl(url: string): Promise<string> {
   if (!url) return ""
   try {
-    const res = await fetch(url)
+    // A social-card asset should never be able to stall an entire production
+    // build when the public origin or CDN is slow. The card already has a
+    // plain-background fallback, so fail fast and let that render instead.
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
     if (!res.ok) return ""
     const buf = Buffer.from(await res.arrayBuffer())
     const ct = res.headers.get("content-type") || "image/jpeg"
