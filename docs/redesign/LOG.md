@@ -298,3 +298,24 @@ Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom
   row was deleted afterwards. Automated Chromium cannot solve the production
   Turnstile challenge, so SES delivery through the live subscribe request still
   requires a human-widget smoke test after deployment.
+
+## 2026-07-15 — Contact/newsletter production incident
+
+- **Deployment was not the failure.** Vercel completed the `0c9311a` production
+  deployment and the live page served the hydration hotfix. Both deployed form
+  endpoints were then reproduced returning 500 after validation/database work.
+- **Exact contact root cause.** An admin-protected, temporary production
+  diagnostic proved the runtime selected the `portfolio-s3-uploader` IAM user.
+  AWS returned `AccessDeniedException` for `ses:SendEmail` first on the verified
+  `nerosiegfried.com` identity, then on the `portfolio-email` configuration set.
+  Added a narrowly scoped `PortfolioSESSend` inline policy for those two exact
+  resources. After IAM propagation, the same Vercel diagnostic returned 200 and
+  an SES simulator message ID. The diagnostic route was removed immediately.
+- **Exact newsletter blocker.** SES `ProductionAccessEnabled` is false. Direct
+  provider tests succeed for the SES simulator and the verified contact
+  destination, while an ordinary address is deterministically rejected as
+  unverified. The existing production-access review is `DENIED` (case
+  `178408848800815`); a corrected API resubmission returns 409 Conflict. The
+  newsletter cannot be considered fixed until AWS reopens/approves that case or
+  a production-capable mail provider replaces SES, followed by a real-inbox
+  subscribe → confirm → unsubscribe test.

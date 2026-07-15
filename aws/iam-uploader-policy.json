@@ -24,6 +24,15 @@
       "Condition": {
         "StringLike": { "s3:prefix": ["uploads/*", "media/*"] }
       }
+    },
+    {
+      "Sid": "TransactionalEmailSend",
+      "Effect": "Allow",
+      "Action": ["ses:SendEmail"],
+      "Resource": [
+        "arn:aws:ses:us-east-1:ACCOUNT_ID:identity/nerosiegfried.com",
+        "arn:aws:ses:us-east-1:ACCOUNT_ID:configuration-set/portfolio-email"
+      ]
     }
   ]
 }
