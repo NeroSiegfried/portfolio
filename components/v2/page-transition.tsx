@@ -20,6 +20,21 @@ type Phase = "hidden" | "cover" | "reveal"
 const isFrozen = (p: string) =>
   p === "/v1" || p.startsWith("/v1/") || p === "/control" || p.startsWith("/control/")
 
+function internalUrl(anchor: HTMLAnchorElement) {
+  const raw = anchor.getAttribute("href")
+  if (!raw || raw.startsWith("#") || raw.startsWith("mailto:") || raw.startsWith("tel:")) return null
+  if (anchor.target && anchor.target !== "_self") return null
+  if (anchor.hasAttribute("download") || (anchor.getAttribute("rel") ?? "").includes("external")) return null
+
+  try {
+    const url = new URL(anchor.href, window.location.href)
+    if (url.origin !== window.location.origin || isFrozen(url.pathname)) return null
+    return url
+  } catch {
+    return null
+  }
+}
+
 // hidden snaps instantly (it only ever resets while off-screen); cover/reveal
 // use the shared sweep easing.
 const variants: Variants = {
@@ -35,6 +50,7 @@ export function PageTransition() {
 
   const pendingPath = useRef<string | null>(null)
   const pendingHref = useRef<string | null>(null)
+  const prefetched = useRef(new Set<string>())
   const coverDone = useRef(false)
   const fallback = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -58,29 +74,34 @@ export function PageTransition() {
     if (typeof window === "undefined") return
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
 
+    const prefetch = (anchor: HTMLAnchorElement) => {
+      const url = internalUrl(anchor)
+      if (!url) return
+      const href = url.pathname + url.search
+      if (href === window.location.pathname + window.location.search || prefetched.current.has(href)) return
+      prefetched.current.add(href)
+      router.prefetch(href)
+    }
+
+    const onIntent = (e: Event) => {
+      const anchor = (e.target as HTMLElement | null)?.closest("a")
+      if (anchor instanceof HTMLAnchorElement) prefetch(anchor)
+    }
+
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
       const anchor = (e.target as HTMLElement | null)?.closest("a")
       if (!anchor) return
-      if (anchor.target && anchor.target !== "_self") return
-      if (anchor.hasAttribute("download") || (anchor.getAttribute("rel") ?? "").includes("external")) return
-
-      const raw = anchor.getAttribute("href")
-      if (!raw || raw.startsWith("#") || raw.startsWith("mailto:") || raw.startsWith("tel:")) return
-
-      let url: URL
-      try {
-        url = new URL(anchor.href, window.location.href)
-      } catch {
-        return
-      }
-      if (url.origin !== window.location.origin) return
+      if (!(anchor instanceof HTMLAnchorElement)) return
+      const url = internalUrl(anchor)
+      if (!url) return
       // Same page (identical path+query, or an in-page hash) → let the browser handle it.
       if (url.pathname === window.location.pathname && url.search === window.location.search) return
       // Never wrap the frozen v1 site or the admin area in the v2 transition.
-      if (isFrozen(url.pathname) || isFrozen(window.location.pathname)) return
+      if (isFrozen(window.location.pathname)) return
 
       e.preventDefault()
+      prefetch(anchor)
       pendingPath.current = url.pathname
       pendingHref.current = url.pathname + url.search + url.hash
       coverDone.current = false
@@ -94,8 +115,12 @@ export function PageTransition() {
     }
 
     document.addEventListener("click", onClick, true)
+    document.addEventListener("pointerover", onIntent, true)
+    document.addEventListener("focusin", onIntent, true)
     return () => {
       document.removeEventListener("click", onClick, true)
+      document.removeEventListener("pointerover", onIntent, true)
+      document.removeEventListener("focusin", onIntent, true)
       clearFallback()
     }
   }, [router, startReveal])
