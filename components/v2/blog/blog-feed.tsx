@@ -12,7 +12,7 @@ import { PostCard } from "@/components/v2/blog/post-card"
 import { Subscribe } from "@/components/v2/blog/subscribe"
 import { seriesLabel } from "@/components/v2/blog/helpers"
 
-const INITIAL = 6 // posts visible at first (incl. the featured one)
+const INITIAL = 7 // posts visible at first: the featured one + 6 in the grid
 const STEP = 3 // "Show more" increment
 
 export function BlogFeed({ posts, seriesTree }: { posts: BlogPostSummary[]; seriesTree: SeriesNode[] }) {

@@ -43,6 +43,7 @@ test*
 
 # scratch / working files — not part of the app
 /.idea/
+/.vscode/
 /services/
 /new*.sh
 

@@ -3,12 +3,16 @@
 import { useState } from "react"
 import { Mail, MapPin, Phone, Send } from "lucide-react"
 import { Eyebrow } from "@/components/v2/primitives"
+import { Turnstile } from "@/components/turnstile"
 import { cn } from "@/lib/utils"
 
 export function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" })
+  const [website, setWebsite] = useState("") // honeypot — real users never fill this
+  const [token, setToken] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState<null | "ok" | "err">(null)
+  const [errMsg, setErrMsg] = useState("")
 
   const change = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -23,12 +27,18 @@ export function Contact() {
       const r = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, website, turnstileToken: token }),
       })
-      if (!r.ok) throw new Error("bad response")
+      const data = (await r.json().catch(() => ({}))) as { error?: string }
+      if (!r.ok) {
+        setErrMsg(data.error ?? "Something went wrong. Please email me instead.")
+        setStatus("err")
+        return
+      }
       setForm({ name: "", email: "", message: "" })
       setStatus("ok")
     } catch {
+      setErrMsg("Something went wrong. Please email me instead.")
       setStatus("err")
     } finally {
       setSubmitting(false)
@@ -78,6 +88,18 @@ export function Contact() {
             <input required name="name" value={form.name} onChange={change} placeholder="Your name" className={field} suppressHydrationWarning />
             <input required type="email" name="email" value={form.email} onChange={change} placeholder="Your email" className={field} suppressHydrationWarning />
             <textarea required name="message" value={form.message} onChange={change} placeholder="Your message" rows={5} className={cn(field, "resize-none")} suppressHydrationWarning />
+            {/* Honeypot — hidden from users, catches naive bots. */}
+            <input
+              type="text"
+              name="website"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="absolute left-[-9999px] h-px w-px overflow-hidden"
+            />
+            <Turnstile onVerify={setToken} className="pt-1" />
             <button
               type="submit"
               disabled={submitting}
@@ -86,7 +108,7 @@ export function Contact() {
               {submitting ? "Sending…" : (<>Send message <Send className="h-4 w-4" /></>)}
             </button>
             {status === "ok" ? <p className="font-mono text-xs text-primary">Thanks — I&rsquo;ll get back to you soon.</p> : null}
-            {status === "err" ? <p className="font-mono text-xs text-destructive">Something went wrong. Please email me instead.</p> : null}
+            {status === "err" ? <p className="font-mono text-xs text-destructive">{errMsg}</p> : null}
           </form>
         </div>
       </div>

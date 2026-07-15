@@ -1,52 +1,57 @@
-// app/api/contact/route.ts
-import { NextRequest, NextResponse } from "next/server"
-import nodemailer from "nodemailer"
+import { NextResponse } from "next/server"
+import { clampString, isValidEmail, normalizeEmail, isHoneypotTripped, clientIp } from "@/lib/security/validation"
+import { verifyTurnstile } from "@/lib/security/turnstile"
+import { rateLimit } from "@/lib/security/rate-limit"
+import { sendEmail } from "@/lib/email/ses"
+import { contactNotificationEmail } from "@/lib/newsletter/emails"
 
-// Load environment variables from .env.local:
-//   EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS
-//
-// e.g. use a dedicated SMTP service like Gmail, SendGrid, or ProtonMail.
-// Below is an example using a Gmail SMTP account. Adapt as needed.
+export const runtime = "nodejs"
 
 export async function GET() {
-  return NextResponse.json({ status: "ok" });
+  return NextResponse.json({ status: "ok" })
 }
 
-export async function POST(request: NextRequest) {
-  const { name, email, message } = await request.json()
-
-  // Create a Nodemailer transporter:
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST, // e.g., 'smtp.gmail.com'
-    port: Number(process.env.EMAIL_PORT), // e.g., 587
-    secure: false, // true for port 465, false for 587
-    auth: {
-      user: process.env.EMAIL_USER, // your SMTP username
-      pass: process.env.EMAIL_PASS, // your SMTP password/App Password :contentReference[oaicite:4]{index=4}
-    },
-  })
-
+export async function POST(req: Request) {
+  let body: Record<string, unknown>
   try {
-    await transporter.sendMail({
-      from: `"Website Contact" <${process.env.EMAIL_USER}>`,
-      to: "victornabasu@yahoo.com",
-      subject: `New message from ${name}`,
-      text: `
-        You’ve received a new message from your site:
+    body = (await req.json()) as Record<string, unknown>
+  } catch {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 })
+  }
 
-        Name: ${name}
-        Email: ${email}
-        Message: ${message}
-      `,
-      // Optionally add HTML:
-      html: `<p><strong>Name:</strong> ${name}</p>
-             <p><strong>Email:</strong> ${email}</p>
-             <p><strong>Message:</strong><br/>${message}</p>`,
-    })
+  // Honeypot: silently accept so bots think they succeeded.
+  if (isHoneypotTripped(body.website)) return NextResponse.json({ success: true })
 
-    return NextResponse.json({ success: true})
-  } catch (error) {
-    console.error("Error sending email:", error)
-    return NextResponse.json({ success: false }, { status: 500 })
+  const name = clampString(body.name, 120)
+  const email = normalizeEmail(body.email)
+  const message = clampString(body.message, 5000)
+  if (!name || !isValidEmail(email) || message.length < 2) {
+    return NextResponse.json(
+      { error: "Please provide your name, a valid email, and a message." },
+      { status: 400 },
+    )
+  }
+
+  const ip = clientIp(req)
+  const rl = await rateLimit("contact", ip, 5, 3600) // 5 / hour / IP
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many messages. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    )
+  }
+
+  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
+    return NextResponse.json({ error: "Verification failed. Please try again." }, { status: 400 })
+  }
+
+  const to = process.env.CONTACT_TO ?? "victornabasu@yahoo.com"
+  try {
+    const { html, text } = contactNotificationEmail(name, email, message)
+    await sendEmail({ to, subject: `New message from ${name}`, replyTo: email, html, text })
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error("[contact]", err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: "Failed to send. Please try again." }, { status: 500 })
   }
 }

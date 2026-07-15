@@ -95,3 +95,27 @@ CREATE INDEX IF NOT EXISTS idx_posts_status_published_at ON posts(status, publis
 CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
 CREATE INDEX IF NOT EXISTS idx_comment_votes_comment_id ON comment_votes(comment_id);
 CREATE INDEX IF NOT EXISTS idx_post_votes_post_id ON post_votes(post_id);
+
+-- ─── Newsletter (self-hosted double opt-in) ──────────────────────────────────
+-- Also created lazily at runtime by lib/newsletter/store.ts (ensureNewsletterTables).
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  "id"                TEXT PRIMARY KEY,
+  "email"             TEXT UNIQUE NOT NULL,
+  "status"            TEXT NOT NULL DEFAULT 'pending',   -- pending | confirmed | unsubscribed
+  "confirm_token"     TEXT,
+  "unsubscribe_token" TEXT NOT NULL,
+  "created_at"        TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "confirmed_at"      TIMESTAMPTZ,
+  "unsubscribed_at"   TIMESTAMPTZ,
+  "ip"                TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_newsletter_confirm_token ON newsletter_subscribers(confirm_token);
+CREATE INDEX IF NOT EXISTS idx_newsletter_unsub_token ON newsletter_subscribers(unsubscribe_token);
+
+-- ─── Rate limiting (fixed-window; lib/security/rate-limit.ts) ─────────────────
+CREATE TABLE IF NOT EXISTS rate_limits (
+  "id"         TEXT PRIMARY KEY,
+  "count"      INTEGER NOT NULL DEFAULT 0,
+  "expires_at" TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_expires_at ON rate_limits(expires_at);

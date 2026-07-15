@@ -15,12 +15,13 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // vercel.live = the Vercel preview feedback/comments widget (preview deploys only).
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live", // unsafe-eval needed by Next.js dev; tighten in prod
+      // challenges.cloudflare.com = Cloudflare Turnstile (contact + newsletter spam check).
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://challenges.cloudflare.com", // unsafe-eval needed by Next.js dev; tighten in prod
       "style-src 'self' 'unsafe-inline' https://vercel.live",
       "img-src 'self' data: blob: https:",
       "font-src 'self' https://vercel.live",
-      "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com https://*.s3.amazonaws.com https://*.s3.us-east-1.amazonaws.com https://d2ukq6p6guyuw1.cloudfront.net https://vercel.live https://*.pusher.com wss://*.pusher.com",
-      "frame-src 'self' https://vercel.live",
+      "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com https://*.s3.amazonaws.com https://*.s3.us-east-1.amazonaws.com https://d2ukq6p6guyuw1.cloudfront.net https://vercel.live https://*.pusher.com wss://*.pusher.com https://challenges.cloudflare.com",
+      "frame-src 'self' https://vercel.live https://challenges.cloudflare.com",
       "frame-ancestors 'self'",
     ].join("; "),
   },

@@ -2,33 +2,41 @@
 
 import { useState } from "react"
 import { AnimatedArrow } from "@/components/v2/animated-arrow"
+import { Turnstile } from "@/components/turnstile"
 
 /**
- * Newsletter subscribe box (reado "Don't miss a thing"). A tasteful bordered
- * box (no pills). Posts to the existing /api/contact endpoint so the owner is
- * notified of new subscribers. `id="subscribe"` is the target of the nav button.
+ * Newsletter subscribe box (reado "Don't miss a thing"). Posts to
+ * /api/newsletter/subscribe, which stores a pending subscriber and sends a
+ * double-opt-in confirmation email. Protected by an invisible honeypot +
+ * Cloudflare Turnstile (server also rate-limits). `id="subscribe"` is the nav
+ * button's scroll target.
  */
 export function Subscribe() {
   const [email, setEmail] = useState("")
+  const [website, setWebsite] = useState("") // honeypot
+  const [token, setToken] = useState("")
   const [status, setStatus] = useState<null | "ok" | "err" | "loading">(null)
+  const [errMsg, setErrMsg] = useState("")
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus("loading")
     try {
-      const r = await fetch("/api/contact", {
+      const r = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "Newsletter subscriber",
-          email,
-          message: "Newsletter subscription request from the blog.",
-        }),
+        body: JSON.stringify({ email, website, turnstileToken: token }),
       })
-      if (!r.ok) throw new Error("bad response")
+      const data = (await r.json().catch(() => ({}))) as { error?: string }
+      if (!r.ok) {
+        setErrMsg(data.error ?? "Something went wrong. Please try again.")
+        setStatus("err")
+        return
+      }
       setEmail("")
       setStatus("ok")
     } catch {
+      setErrMsg("Something went wrong. Please try again.")
       setStatus("err")
     }
   }
@@ -50,6 +58,17 @@ export function Subscribe() {
           className="w-full border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
           suppressHydrationWarning
         />
+        {/* Honeypot — hidden from users, catches naive bots. */}
+        <input
+          type="text"
+          name="website"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="absolute left-[-9999px] h-px w-px overflow-hidden"
+        />
         <button
           type="submit"
           disabled={status === "loading"}
@@ -58,8 +77,11 @@ export function Subscribe() {
           {status === "loading" ? "Sending…" : (<>Subscribe <AnimatedArrow className="text-sm" /></>)}
         </button>
       </form>
-      {status === "ok" ? <p className="mt-3 font-mono text-xs text-primary">You&rsquo;re on the list — thanks!</p> : null}
-      {status === "err" ? <p className="mt-3 font-mono text-xs text-destructive">Something went wrong. Please try again.</p> : null}
+      <Turnstile onVerify={setToken} className="mt-3" />
+      {status === "ok" ? (
+        <p className="mt-3 font-mono text-xs text-primary">Almost there — check your inbox to confirm your subscription.</p>
+      ) : null}
+      {status === "err" ? <p className="mt-3 font-mono text-xs text-destructive">{errMsg}</p> : null}
     </div>
   )
 }

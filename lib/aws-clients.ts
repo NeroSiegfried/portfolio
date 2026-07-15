@@ -20,6 +20,7 @@
  */
 
 import { S3Client } from "@aws-sdk/client-s3"
+import { SESv2Client } from "@aws-sdk/client-sesv2"
 import { fromNodeProviderChain, fromWebToken } from "@aws-sdk/credential-providers"
 
 function resolveCredentials() {
@@ -54,5 +55,13 @@ export function makeS3Client(): S3Client {
     credentials: resolveCredentials(),
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
+  })
+}
+
+/** Creates a pre-configured SES v2 client (contact form + newsletter email). */
+export function makeSesClient(): SESv2Client {
+  return new SESv2Client({
+    region:      process.env.AWS_SES_REGION ?? process.env.AWS_S3_REGION ?? process.env.S3_REGION ?? "us-east-1",
+    credentials: resolveCredentials(),
   })
 }
