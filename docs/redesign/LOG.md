@@ -308,9 +308,12 @@ Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom
   diagnostic proved the runtime selected the `portfolio-s3-uploader` IAM user.
   AWS returned `AccessDeniedException` for `ses:SendEmail` first on the verified
   `nerosiegfried.com` identity, then on the `portfolio-email` configuration set.
-  Added a narrowly scoped `PortfolioSESSend` inline policy for those two exact
-  resources. After IAM propagation, the same Vercel diagnostic returned 200 and
-  an SES simulator message ID. The diagnostic route was removed immediately.
+  An exact deployed-route retest exposed the final sandbox-only resource: the
+  verified `victornabasu@yahoo.com` contact destination. Added a narrowly scoped
+  `PortfolioSESSend` policy for those three exact resources to both the active
+  app user and the OIDC role. After IAM propagation, the same deployed contact
+  endpoint that returned 500 returned `200 {"success":true}`; newsletter delivery
+  to the SES simulator also returned 200. The diagnostic route was removed.
 - **Exact newsletter blocker.** SES `ProductionAccessEnabled` is false. Direct
   provider tests succeed for the SES simulator and the verified contact
   destination, while an ordinary address is deterministically rejected as
