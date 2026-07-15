@@ -68,7 +68,7 @@ export function BlogNav() {
           <button type="button" aria-label="Search" onClick={() => setSearchOpen((o) => !o)} className={iconBtn}>
             {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
           </button>
-          <div className="hidden sm:contents"><InboxButton /></div>
+          <InboxButton />
           <ModeToggle />
           <Link
             href="/blog#subscribe"
