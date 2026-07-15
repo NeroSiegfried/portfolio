@@ -62,7 +62,7 @@ export function SiteNav() {
 
         <div className="flex items-center justify-self-end gap-2 sm:gap-3">
           <ModeToggle />
-          <a href="#contact" className="hidden items-center bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-primary-foreground sm:inline-flex">
+          <a href="#contact" className="hidden items-center bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-primary-foreground md:inline-flex">
             <HoverSlide>Contact</HoverSlide>
           </a>
           <button
