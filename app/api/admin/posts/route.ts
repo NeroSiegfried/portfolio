@@ -3,6 +3,12 @@ import { requireAdminUser } from "@/lib/blog/auth"
 import { createId, nowIso, slugify, getPool, getPostById, isSlugTaken, writePost } from "@/lib/blog/store"
 import type { BlogPost, BlogPostStatus } from "@/lib/blog/types"
 import { notifySeriesPost } from "@/lib/blog/notifications"
+import { markReferenced, deleteImages, imageUrlsIn } from "@/lib/blog/media"
+
+/** All CloudFront image URLs a post references (cover + body). */
+function postImages(post: { coverImage?: string | null; content?: string | null }): string[] {
+  return [...(post.coverImage ? [post.coverImage] : []), ...imageUrlsIn(post.content)]
+}
 
 export async function POST(request: Request) {
   const admin = await requireAdminUser()
@@ -62,6 +68,16 @@ export async function POST(request: Request) {
     }
 
     await writePost(savedPost)
+
+    // Uploads are permanent in place. Tag every image the saved post references
+    // keep=true (protect from the lifecycle backstop); delete any image the edit
+    // dropped from the previous version (code-driven GC).
+    const nextImages = postImages(savedPost)
+    void markReferenced(nextImages)
+    if (current) {
+      const kept = new Set(nextImages)
+      void deleteImages(postImages(current).filter((u) => !kept.has(u)))
+    }
 
     // Notify series followers when a post is freshly published into a series
     if (savedPost.status === "published" && prevStatus !== "published" && savedPost.seriesId) {

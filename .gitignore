@@ -40,3 +40,18 @@ next-env.d.ts
 .DS_Store
 
 test*
+
+# scratch / working files — not part of the app
+/.idea/
+/services/
+/new*.sh
+
+# scratch session docs / unused assets
+/AWS_DEPLOYMENT_COMPLETE.md
+/AWS_MIGRATION_GUIDE.md
+/AWS_SETUP_QUICK_START.md
+/FEATURES_GUIDE.md
+/FIXES_TODO.md
+/RDS_DATA_IMPORT_OPTIONS.md
+/SESSION_SUMMARY.md
+/public/hero/hero-1.not_used.jpg

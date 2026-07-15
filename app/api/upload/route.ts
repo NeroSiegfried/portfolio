@@ -4,6 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { randomUUID } from "crypto"
 import { getSessionUser } from "@/lib/blog/auth"
 import { makeS3Client } from "@/lib/aws-clients"
+import { UPLOAD_TAGGING } from "@/lib/blog/media"
 
 export const runtime = "nodejs"
 
@@ -72,6 +73,11 @@ export async function POST(req: Request) {
         Key:          key,
         ContentType:  contentType,
         CacheControl: "public, max-age=31536000, immutable",
+        // Born as an unverified upload; promoted to keep=true once the content
+        // referencing it is saved. The lifecycle backstop expires anything left
+        // at keep=false past the grace period. The client MUST echo this exact
+        // value in an `x-amz-tagging` header on the PUT (it's a signed header).
+        Tagging:      UPLOAD_TAGGING,
       }),
       { expiresIn: 300 }
     )
@@ -85,5 +91,5 @@ export async function POST(req: Request) {
   }
 
   const cfUrl = `https://${process.env.AWS_CLOUDFRONT_DOMAIN ?? process.env.CLOUDFRONT_DOMAIN}/${key}`
-  return NextResponse.json({ uploadUrl, key, cfUrl })
+  return NextResponse.json({ uploadUrl, key, cfUrl, tagging: UPLOAD_TAGGING })
 }

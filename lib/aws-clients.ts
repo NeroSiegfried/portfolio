@@ -5,8 +5,10 @@
  *     Vercel exchanges a per-invocation JWT for temporary STS credentials.
  *
  *  2. Scoped service account  (S3_UPLOADER_KEY_ID + S3_UPLOADER_SECRET)
- *     A dedicated IAM user with ONLY s3:PutObject on uploads/* — used by
- *     Amplify/Vercel compute environments that don't expose an execution role.
+ *     A dedicated IAM user scoped to the media prefixes — used by Amplify/Vercel
+ *     compute environments that don't expose an execution role. Media GC needs
+ *     more than PutObject: s3:PutObjectTagging, s3:GetObject, s3:DeleteObject and
+ *     s3:ListBucket on uploads/* and media/* (see aws/iam-uploader-policy.json).
  *     These are NOT personal admin keys. Stored as S3_UPLOADER_* env vars
  *     (Amplify blocks AWS_* prefix; Vercel uses encrypted env vars).
  *
@@ -32,7 +34,7 @@ function resolveCredentials() {
   // ── 2. Scoped service account ─────────────────────────────────────────────
   // Amplify Gen 1 WEB_COMPUTE doesn't inject execution-role credentials into
   // the SSR runtime — the service role is build-only. We use a dedicated IAM
-  // user scoped to s3:PutObject on uploads/* only.
+  // user scoped to the media prefixes (aws/iam-uploader-policy.json).
   const keyId  = process.env.S3_UPLOADER_KEY_ID
   const secret = process.env.S3_UPLOADER_SECRET
   if (keyId && secret) {

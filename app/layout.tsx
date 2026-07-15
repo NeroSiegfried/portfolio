@@ -67,6 +67,15 @@ export default function RootLayout({
           {/* Persistent (mounted once, survives navigation) so it can drive the
               cover→reveal page transition across routes. */}
           <PageTransition />
+          {/* Site-wide film grain (see .site-grain in globals.css): an empty
+              overlay filtered by the #noise-bg-fx feTurbulence below, grayscaled
+              + screen-blended. Non-interactive; above content, below the cursor. */}
+          <div className="site-grain" aria-hidden />
+          <svg className="site-grain-defs" aria-hidden focusable="false">
+            <filter id="noise-bg-fx">
+              <feTurbulence baseFrequency="0.8" />
+            </filter>
+          </svg>
         </ThemeProvider>
       </body>
     </html>

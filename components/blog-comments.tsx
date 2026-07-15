@@ -121,13 +121,14 @@ async function uploadImagePresigned(
     try { const e = (await res.json()) as { error?: string }; if (e.error) msg = e.error } catch {}
     throw new Error(msg)
   }
-  const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl?: string; cfUrl?: string }
+  const { uploadUrl, cfUrl, tagging } = (await res.json()) as { uploadUrl?: string; cfUrl?: string; tagging?: string }
   if (!uploadUrl || !cfUrl) throw new Error("Upload failed: incomplete server response.")
 
-  // PUT the file directly to S3
+  // PUT the file directly to S3. The `x-amz-tagging` header is a signed header
+  // on the presigned URL, so it must be echoed exactly as the server returned it.
   const put = await fetch(uploadUrl, {
     method:  "PUT",
-    headers: { "Content-Type": compressed.type },
+    headers: { "Content-Type": compressed.type, ...(tagging ? { "x-amz-tagging": tagging } : {}) },
     body:    compressed,
   })
   if (!put.ok) throw new Error("Upload failed: could not store file.")

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSessionUser, invalidateSessionCache } from "@/lib/blog/auth"
 import { getPool } from "@/lib/blog/store"
-import { permanentizeUrl } from "@/lib/blog/media"
+import { markReferenced, deleteImages } from "@/lib/blog/media"
 
 export async function PATCH(req: Request) {
   const user = await getSessionUser()
@@ -52,10 +52,14 @@ export async function PATCH(req: Request) {
 
   const pool = getPool()
 
-  // If the avatar URL points to a temporary uploads/ object, copy it to permanent storage
-  const finalAvatarUrl = avatarUrl?.trim()
-    ? await permanentizeUrl(avatarUrl.trim(), `media/avatars/${user.id}`)
-    : (avatarUrl?.trim() || null)
+  // Uploads are permanent in place. Tag the chosen avatar keep=true so the
+  // lifecycle backstop never expires it, and reclaim the replaced avatar
+  // (code-driven GC). Only act when an avatar field was actually supplied.
+  const finalAvatarUrl = avatarUrl?.trim() || null
+  if (avatarUrl !== undefined) {
+    if (finalAvatarUrl) void markReferenced([finalAvatarUrl])
+    if (user.avatarUrl && user.avatarUrl !== finalAvatarUrl) void deleteImages([user.avatarUrl])
+  }
 
   await pool.query(
     `UPDATE users SET

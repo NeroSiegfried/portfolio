@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/blog/auth"
 import { getPool } from "@/lib/blog/store"
+import { markReferenced, deleteImages, imageUrlsIn } from "@/lib/blog/media"
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000 // 15 minutes
 
@@ -47,6 +48,14 @@ export async function PATCH(
     "UPDATE comments SET content=$1, edited_at=NOW(), updated_at=NOW() WHERE id=$2",
     [content, id]
   )
+
+  // Reconcile referenced images: keep the ones still present, delete the ones
+  // dropped from the edited comment (code-driven GC).
+  const before = new Set(imageUrlsIn(comment.content as string))
+  const after = new Set(imageUrlsIn(content))
+  void markReferenced([...after])
+  void deleteImages([...before].filter((u) => !after.has(u)))
+
   return NextResponse.json({ comment: { ...comment, content, updatedAt: new Date().toISOString() } })
 }
 
@@ -63,7 +72,7 @@ export async function DELETE(
   const hard = url.searchParams.get("hard") === "1" && user.role === "admin"
   const pool = getPool()
 
-  const commentRow = await pool.query("SELECT user_id FROM comments WHERE id=$1 LIMIT 1", [id])
+  const commentRow = await pool.query("SELECT user_id, content FROM comments WHERE id=$1 LIMIT 1", [id])
   if (!commentRow.rows.length) return NextResponse.json({ error: "Comment not found." }, { status: 404 })
 
   const isOwner = (commentRow.rows[0].user_id as string) === user.id
@@ -72,6 +81,8 @@ export async function DELETE(
 
   if (hard) {
     await pool.query("DELETE FROM comments WHERE id=$1", [id])
+    // Hard delete is irreversible — reclaim the comment's images too.
+    void deleteImages(imageUrlsIn(commentRow.rows[0].content as string))
     return NextResponse.json({ deleted: true })
   }
 

@@ -18,5 +18,8 @@
       "main": true,
       "redesign/v2": true
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/admin/media/sweep", "schedule": "0 4 * * *" }
+  ]
 }

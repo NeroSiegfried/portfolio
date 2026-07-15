@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/blog/auth"
 import { getPool } from "@/lib/blog/store"
 import { autoFollowSeries, notifyCommentReply } from "@/lib/blog/notifications"
-import { permanentizeImages } from "@/lib/blog/media"
+import { markReferenced, imageUrlsIn } from "@/lib/blog/media"
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -57,13 +57,14 @@ export async function POST(request: Request) {
   const id = randomUUID()
   const now = new Date().toISOString()
 
-  // Permanentize any image uploads before inserting so the DB stores permanent URLs
-  const permanentContent = await permanentizeImages(content, `media/comments/${id}`)
+  // Uploads are permanent in place — tag any referenced images keep=true so the
+  // lifecycle backstop never expires them. Best-effort (the sweep self-heals).
+  void markReferenced(imageUrlsIn(content))
 
   await pool.query(
     `INSERT INTO comments (id, post_id, user_id, parent_id, content, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $6)`,
-    [id, postId, user.id, parentId, permanentContent, now]
+    [id, postId, user.id, parentId, content, now]
   )
 
   // Auto-follow series (non-blocking, fire-and-forget)

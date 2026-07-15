@@ -11,6 +11,7 @@ import time
 import json
 from datetime import datetime
 from botocore.exceptions import ClientError
+from lifecycle_config import MEDIA_LIFECYCLE
 
 def print_header(text):
     print("\n" + "=" * 70)
@@ -138,21 +139,15 @@ def setup_s3(s3_client):
         s3_client.put_bucket_cors(Bucket=bucket_name, CORSConfiguration=cors)
         print_success("CORS configured")
         
-        # Set lifecycle policy
-        lifecycle = {
-            'Rules': [
-                {
-                    'Id': 'DeleteOldVersions',
-                    'Status': 'Enabled',
-                    'NoncurrentVersionExpirationInDays': 30
-                }
-            ]
-        }
+        # Set lifecycle policy. Uploads are PERMANENT: the app tags referenced
+        # images keep=true and deletes orphans itself. The only expiry rule is a
+        # backstop for uploads/ objects still tagged keep=false after 30 days
+        # (see aws/lifecycle_config.py + lib/blog/media.ts).
         s3_client.put_bucket_lifecycle_configuration(
             Bucket=bucket_name,
-            LifecycleConfiguration=lifecycle
+            LifecycleConfiguration=MEDIA_LIFECYCLE
         )
-        print_success("Lifecycle policy set (delete old versions after 30 days)")
+        print_success("Lifecycle policy set (keep=false uploads expire after 30d; version + multipart cleanup)")
         
         return bucket_name
         

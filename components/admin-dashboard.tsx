@@ -221,8 +221,8 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
         const j = (await res.json()) as { error?: string }
         throw new Error(j.error ?? "Upload failed")
       }
-      const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl: string; cfUrl: string }
-      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type }, body: compressed })
+      const { uploadUrl, cfUrl, tagging } = (await res.json()) as { uploadUrl: string; cfUrl: string; tagging?: string }
+      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type, ...(tagging ? { "x-amz-tagging": tagging } : {}) }, body: compressed })
       if (!put.ok) throw new Error("Upload failed: could not store file.")
       setCoverImage(cfUrl)
     } catch (err) {
@@ -256,8 +256,8 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
         const j = (await res.json()) as { error?: string }
         throw new Error(j.error ?? "Upload failed")
       }
-      const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl: string; cfUrl: string }
-      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type }, body: compressed })
+      const { uploadUrl, cfUrl, tagging } = (await res.json()) as { uploadUrl: string; cfUrl: string; tagging?: string }
+      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type, ...(tagging ? { "x-amz-tagging": tagging } : {}) }, body: compressed })
       if (!put.ok) throw new Error("Upload failed: could not store file.")
       setCells((prev) =>
         prev.map((c, idx) => {

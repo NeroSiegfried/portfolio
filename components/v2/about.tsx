@@ -21,10 +21,10 @@ export function About() {
         </ScrollColorText>
 
         <div className="mt-12 grid gap-8 min-[1100px]:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,220px)] min-[1100px]:gap-12 xl:gap-16">
-          <div className="v2-media relative aspect-[4/5] w-full max-w-xs overflow-hidden border border-border min-[1100px]:max-w-none">
+          <div className="v2-media relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden border border-border min-[1100px]:mx-0 min-[1100px]:max-w-none">
             <Image src="/victor-nabasu.jpg" alt="Victor Nabasu" fill sizes="(max-width: 1100px) 80vw, 300px" className="object-cover object-top" />
           </div>
-          <div className="max-w-2xl space-y-5 text-base leading-relaxed text-muted-foreground min-[1100px]:max-w-none min-[1100px]:pt-2">
+          <div className="space-y-5 text-justify text-base leading-relaxed text-muted-foreground min-[1100px]:pt-2 min-[1100px]:text-left">
             <p>
               I&rsquo;ve worked on projects ranging from satellite modeling to domain-specific
               languages and AI-powered web apps. In my free time I leetcode, play Japanese RPGs, and

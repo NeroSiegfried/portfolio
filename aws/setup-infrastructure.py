@@ -12,6 +12,7 @@ import boto3
 import json
 import sys
 from datetime import datetime
+from lifecycle_config import MEDIA_LIFECYCLE
 
 def setup_rds():
     """Create RDS Aurora PostgreSQL cluster with multi-AZ HA"""
@@ -109,18 +110,13 @@ def setup_s3():
         s3.put_bucket_cors(Bucket=bucket_name, CORSConfiguration=cors_config)
         print(f"✓ CORS configured for uploads")
         
-        # Lifecycle policy: delete old versions after 30 days
-        lifecycle = {
-            'Rules': [
-                {
-                    'Id': 'DeleteOldVersions',
-                    'Status': 'Enabled',
-                    'NoncurrentVersionExpirationInDays': 30
-                }
-            ]
-        }
-        s3.put_bucket_lifecycle_configuration(Bucket=bucket_name, LifecycleConfiguration=lifecycle)
-        print(f"✓ Lifecycle policy configured (30-day version cleanup)")
+        # Lifecycle policy. Uploads are PERMANENT: the app tags referenced images
+        # keep=true and deletes orphans itself. The only expiry rule here is a
+        # backstop that removes uploads/ objects still tagged keep=false (never
+        # confirmed referenced) after a 30-day grace — orphans the app couldn't
+        # find. Kept in sync with aws/apply-lifecycle.py and lib/blog/media.ts.
+        s3.put_bucket_lifecycle_configuration(Bucket=bucket_name, LifecycleConfiguration=MEDIA_LIFECYCLE)
+        print(f"✓ Lifecycle policy configured (keep=false uploads expire after 30d; version + multipart cleanup)")
         
         return bucket_name
         

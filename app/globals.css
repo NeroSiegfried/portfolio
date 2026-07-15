@@ -603,6 +603,29 @@ html { scroll-behavior: smooth; }
 .v2-cursor-label[data-show="true"] { opacity: 1; }
 @media (pointer: coarse) { .v2-cursor, .v2-cursor-label { display: none; } }
 
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL FILM GRAIN  (reference-tweet technique)
+   Empty fixed overlay whose CSS `filter` is an SVG feTurbulence noise
+   (the #noise-bg-fx def lives in app/layout.tsx), grayscaled and
+   screen-blended. Sits above content + nav, below the custom cursor
+   (z 9999). Tune with --grain-opacity (0 disables) and the <feTurbulence>
+   baseFrequency in layout.tsx (fineness). NB: mix-blend screen means the
+   grain reads mostly on darker areas / the dark theme, and washes out on
+   light surfaces — switch to `overlay`/`soft-light` if you want it on both.
+   ═══════════════════════════════════════════════════════════════ */
+:root { --grain-opacity: 0.1; }
+.site-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  filter: url('#noise-bg-fx') grayscale(100%);
+  mix-blend-mode: screen;
+}
+/* Carries the SVG <filter> def only — collapsed to no visual box. */
+.site-grain-defs { position: absolute; width: 0; height: 0; pointer-events: none; }
+
 /* Hover text-slide: label slides up to reveal an identical copy. */
 .v2-slide { position: relative; display: inline-flex; overflow: hidden; vertical-align: middle; line-height: 1.15; }
 .v2-slide > span { position: relative; display: block; transition: transform .45s cubic-bezier(.16,1,.3,1); }
