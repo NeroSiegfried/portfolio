@@ -86,6 +86,7 @@ Convention: NEW components under `components/v2/`; reuse `components/ui/*`; do N
 - [x] Contact email: grant the deployed app principal scoped SES send access and verify from Vercel
 - [ ] Newsletter email: resolve denied SES production-access case `178408848800815`, then test a real inbox end to end
 - [x] Performance/cache audit: shared blog-listing cache, intent prefetch, deferred below-fold third-party/media work, responsive image candidates
+- [x] Newsletter audit: production API validation + live confirm/unsubscribe state transitions; remove font-preload hydration blocker
 - [ ] Accessibility + reduced-motion + Lighthouse pass
 - [ ] Verify on Vercel preview: all pages, all viewports, auth/comments/snippets
 
