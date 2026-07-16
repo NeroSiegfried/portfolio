@@ -13,6 +13,10 @@ export function Contact() {
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState<null | "ok" | "err">(null)
   const [errMsg, setErrMsg] = useState("")
+  // The first submit attempt goes through frictionlessly; the server only asks
+  // for Turnstile once it sees a repeat attempt from the same IP, and tells us
+  // via `turnstileRequired` so we know to reveal the widget.
+  const [verifyRequired, setVerifyRequired] = useState(false)
 
   const change = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -29,8 +33,9 @@ export function Contact() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, website, turnstileToken: token }),
       })
-      const data = (await r.json().catch(() => ({}))) as { error?: string }
+      const data = (await r.json().catch(() => ({}))) as { error?: string; turnstileRequired?: boolean }
       if (!r.ok) {
+        if (data.turnstileRequired) setVerifyRequired(true)
         setErrMsg(data.error ?? "Something went wrong. Please email me instead.")
         setStatus("err")
         return
@@ -99,7 +104,7 @@ export function Contact() {
               aria-hidden="true"
               className="absolute left-[-9999px] h-px w-px overflow-hidden"
             />
-            <Turnstile onVerify={setToken} className="pt-1" />
+            {verifyRequired ? <Turnstile onVerify={setToken} className="pt-1" /> : null}
             <button
               type="submit"
               disabled={submitting}

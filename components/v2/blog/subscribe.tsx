@@ -17,6 +17,10 @@ export function Subscribe() {
   const [token, setToken] = useState("")
   const [status, setStatus] = useState<null | "ok" | "err" | "loading">(null)
   const [errMsg, setErrMsg] = useState("")
+  // The first submit attempt goes through frictionlessly; the server only asks
+  // for Turnstile once it sees a repeat attempt from the same IP, and tells us
+  // via `turnstileRequired` so we know to reveal the widget.
+  const [verifyRequired, setVerifyRequired] = useState(false)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,8 +31,9 @@ export function Subscribe() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, website, turnstileToken: token }),
       })
-      const data = (await r.json().catch(() => ({}))) as { error?: string }
+      const data = (await r.json().catch(() => ({}))) as { error?: string; turnstileRequired?: boolean }
       if (!r.ok) {
+        if (data.turnstileRequired) setVerifyRequired(true)
         setErrMsg(data.error ?? "Something went wrong. Please try again.")
         setStatus("err")
         return
@@ -77,7 +82,7 @@ export function Subscribe() {
           {status === "loading" ? "Sending…" : (<>Subscribe <AnimatedArrow className="text-sm" /></>)}
         </button>
       </form>
-      <Turnstile onVerify={setToken} className="mt-3" />
+      {verifyRequired ? <Turnstile onVerify={setToken} className="mt-3" /> : null}
       {status === "ok" ? (
         <p className="mt-3 font-mono text-xs text-primary">Almost there — check your inbox to confirm your subscription.</p>
       ) : null}

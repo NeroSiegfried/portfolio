@@ -41,8 +41,14 @@ export async function POST(req: Request) {
     )
   }
 
-  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
-    return NextResponse.json({ error: "Verification failed. Please try again." }, { status: 400 })
+  // First attempt from an IP this window goes through frictionlessly; a repeat
+  // attempt (retry, or a script) must prove it's human before we send anything.
+  const FREE_ATTEMPTS = 1
+  if (rl.count > FREE_ATTEMPTS && !(await verifyTurnstile(body.turnstileToken, ip))) {
+    return NextResponse.json(
+      { error: "Please complete the verification below and try again.", turnstileRequired: true },
+      { status: 400 },
+    )
   }
 
   const to = process.env.CONTACT_TO ?? "victornabasu@yahoo.com"

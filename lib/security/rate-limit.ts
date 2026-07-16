@@ -20,6 +20,7 @@ async function ensure() {
 
 export interface RateLimitResult {
   ok: boolean
+  count: number // attempts so far in the current window, including this one
   remaining: number
   retryAfter: number // seconds until the window resets
 }
@@ -46,6 +47,7 @@ export async function rateLimit(
   pool.query(`DELETE FROM rate_limits WHERE expires_at < now()`).catch(() => {})
   return {
     ok: count <= limit,
+    count,
     remaining: Math.max(0, limit - count),
     retryAfter: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000)),
   }
