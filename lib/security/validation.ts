@@ -45,10 +45,17 @@ export function cleanMultiline(v: unknown, max: number): string {
   return value
 }
 
-/** Best-effort client IP from the hosting proxy, constrained to a real IP. */
+/**
+ * Best-effort client IP from the hosting proxy, constrained to a real IP.
+ * The site is Cloudflare-proxied in front of Vercel, so `x-forwarded-for` /
+ * `x-real-ip` carry Cloudflare's own edge IP (a different one per request),
+ * not the visitor's — `cf-connecting-ip` is Cloudflare's dedicated header for
+ * the true client IP and is set fresh at their edge, not client-suppliable.
+ */
 export function clientIp(req: Request): string {
   const h = req.headers
   const candidate = (
+    h.get("cf-connecting-ip") ||
     h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     h.get("x-real-ip") ||
     "unknown"
