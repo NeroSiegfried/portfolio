@@ -102,7 +102,7 @@ export default function BlogMarkdown({ markdown, snippetsBySlug, user }: BlogMar
   const blocks = parseBlocks(markdown)
 
   return (
-    <div className="prose prose-neutral dark:prose-invert max-w-none">
+    <div className="prose prose-neutral dark:prose-invert max-w-none break-words">
       {blocks.map((block, index) => {
         if (block.type === "snippet") {
           const tabs = block.slugs

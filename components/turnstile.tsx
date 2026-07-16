@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { cn } from "@/lib/utils"
 
 declare global {
   interface Window {
@@ -39,6 +40,7 @@ export function Turnstile({ onVerify, className }: { onVerify: (token: string) =
         "error-callback": () => onVerify(""),
         "expired-callback": () => onVerify(""),
         theme: "auto",
+        size: "flexible",
       })
     }
 
@@ -62,5 +64,13 @@ export function Turnstile({ onVerify, className }: { onVerify: (token: string) =
   }, [])
 
   if (!SITE_KEY) return null
-  return <div ref={ref} className={className} />
+  // w-full + overflow-x-auto: Turnstile's "flexible" size still has a 300px
+  // floor (Cloudflare's own minimum), which is wider than the available
+  // column on narrow phones. Without this, the widget forces its flex/grid
+  // ancestors wider than the viewport instead of just scrolling locally.
+  return (
+    <div className={cn("w-full max-w-full overflow-x-auto", className)}>
+      <div ref={ref} />
+    </div>
+  )
 }

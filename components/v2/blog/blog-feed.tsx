@@ -71,7 +71,7 @@ export function BlogFeed({ posts, seriesTree }: { posts: BlogPostSummary[]; seri
     <>
       {/* Editorial hero — tagline + series + subscribe (left), featured card (right). */}
       <section className="grid gap-10 border-b border-border px-4 py-12 md:grid-cols-2 md:gap-14 md:px-6 md:py-16">
-        <div className="flex flex-col justify-center">
+        <div className="flex min-w-0 flex-col justify-center">
           <h1 className="font-serif text-3xl leading-[1.12] text-foreground md:text-[2.9rem] md:leading-[1.08]">
             Build logs &amp; learning notes for curious engineers.
           </h1>
