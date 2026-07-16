@@ -19,9 +19,18 @@ const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render
  * Cloudflare Turnstile widget. Calls `onVerify` with the token (or "" on
  * expiry/error). If NEXT_PUBLIC_TURNSTILE_SITE_KEY is unset it renders nothing
  * and reports an empty token, so forms still work locally / before it's
- * configured (the server skips verification when the secret is also unset).
+ * configured. The server permits that only during local development and fails
+ * closed when the production secret is missing.
  */
-export function Turnstile({ onVerify, className }: { onVerify: (token: string) => void; className?: string }) {
+export function Turnstile({
+  onVerify,
+  action,
+  className,
+}: {
+  onVerify: (token: string) => void
+  action: "contact" | "newsletter"
+  className?: string
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const widgetId = useRef<string | null>(null)
 
@@ -36,6 +45,7 @@ export function Turnstile({ onVerify, className }: { onVerify: (token: string) =
       if (cancelled || !ref.current || !window.turnstile || widgetId.current) return
       widgetId.current = window.turnstile.render(ref.current, {
         sitekey: SITE_KEY,
+        action,
         callback: (token: string) => onVerify(token),
         "error-callback": () => onVerify(""),
         "expired-callback": () => onVerify(""),
@@ -59,6 +69,10 @@ export function Turnstile({ onVerify, className }: { onVerify: (token: string) =
     }
     return () => {
       cancelled = true
+      if (widgetId.current && window.turnstile?.remove) {
+        window.turnstile.remove(widgetId.current)
+        widgetId.current = null
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -70,7 +84,7 @@ export function Turnstile({ onVerify, className }: { onVerify: (token: string) =
   // ancestors wider than the viewport instead of just scrolling locally.
   return (
     <div className={cn("w-full max-w-full overflow-x-auto", className)}>
-      <div ref={ref} />
+      <div ref={ref} aria-label="Security verification" />
     </div>
   )
 }

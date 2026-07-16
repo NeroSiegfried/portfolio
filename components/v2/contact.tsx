@@ -1,10 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Mail, MapPin, Phone, Send } from "lucide-react"
+import { AlertCircle, CheckCircle2, LoaderCircle, Mail, MapPin, Phone, Send, ShieldCheck } from "lucide-react"
 import { Eyebrow } from "@/components/v2/primitives"
 import { Turnstile } from "@/components/turnstile"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+
+const TURNSTILE_ENABLED = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
 
 export function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" })
@@ -13,6 +18,11 @@ export function Contact() {
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState<null | "ok" | "err">(null)
   const [errMsg, setErrMsg] = useState("")
+  const [verificationKey, setVerificationKey] = useState(0)
+  // The first submit attempt goes through frictionlessly; the server only asks
+  // for Turnstile once it sees a repeat attempt from the same IP, and tells us
+  // via `turnstileRequired` so we know to reveal the widget.
+  const [verifyRequired, setVerifyRequired] = useState(false)
 
   const change = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -21,6 +31,11 @@ export function Contact() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (TURNSTILE_ENABLED && verifyRequired && !token) {
+      setErrMsg("Please complete the security check before sending.")
+      setStatus("err")
+      return
+    }
     setSubmitting(true)
     setStatus(null)
     try {
@@ -29,8 +44,9 @@ export function Contact() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, website, turnstileToken: token }),
       })
-      const data = (await r.json().catch(() => ({}))) as { error?: string }
+      const data = (await r.json().catch(() => ({}))) as { error?: string; turnstileRequired?: boolean }
       if (!r.ok) {
+        if (data.turnstileRequired) setVerifyRequired(true)
         setErrMsg(data.error ?? "Something went wrong. Please email me instead.")
         setStatus("err")
         return
@@ -42,13 +58,16 @@ export function Contact() {
       setStatus("err")
     } finally {
       setSubmitting(false)
+      if (TURNSTILE_ENABLED && verifyRequired) {
+        setToken("")
+        setVerificationKey((value) => value + 1)
+      }
     }
   }
 
-  const field =
-    "w-full border border-border bg-transparent px-4 py-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+  const field = "rounded-none border-border bg-background/70 focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0"
   const social =
-    "border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors hover:border-primary hover:text-primary"
+    "border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.12em] transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 
   return (
     <section id="contact" className="scroll-mt-16 border-t border-border px-4 py-14 md:px-6 md:py-20">
@@ -84,10 +103,85 @@ export function Contact() {
             </div>
           </div>
 
-          <form onSubmit={submit} className="space-y-4">
-            <input required name="name" value={form.name} onChange={change} placeholder="Your name" className={field} suppressHydrationWarning />
-            <input required type="email" name="email" value={form.email} onChange={change} placeholder="Your email" className={field} suppressHydrationWarning />
-            <textarea required name="message" value={form.message} onChange={change} placeholder="Your message" rows={5} className={cn(field, "resize-none")} suppressHydrationWarning />
+          <form
+            onSubmit={submit}
+            className="border border-border bg-card/30 p-5 sm:p-7"
+            aria-busy={submitting}
+          >
+            <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <Eyebrow>Project enquiry</Eyebrow>
+                <h3 className="mt-2 font-display text-2xl font-semibold tracking-tight">Start the conversation.</h3>
+              </div>
+              <span className="inline-flex w-fit items-center gap-2 border border-border px-3 py-2 font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                Usually replies in 1–2 days
+              </span>
+            </div>
+
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contact-name" className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
+                  Your name
+                </Label>
+                <Input
+                  id="contact-name"
+                  required
+                  name="name"
+                  autoComplete="name"
+                  maxLength={100}
+                  value={form.name}
+                  onChange={change}
+                  placeholder="Ada Lovelace"
+                  className={`${field} h-12`}
+                  suppressHydrationWarning
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-email" className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
+                  Email address
+                </Label>
+                <Input
+                  id="contact-email"
+                  required
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  maxLength={254}
+                  value={form.email}
+                  onChange={change}
+                  placeholder="ada@example.com"
+                  className={`${field} h-12`}
+                  suppressHydrationWarning
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <div className="flex items-baseline justify-between gap-4">
+                <Label htmlFor="contact-message" className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
+                  What are you building?
+                </Label>
+                <span className="font-mono text-[0.65rem] text-muted-foreground" aria-hidden="true">
+                  {form.message.length}/5000
+                </span>
+              </div>
+              <Textarea
+                id="contact-message"
+                required
+                name="message"
+                minLength={10}
+                maxLength={5000}
+                value={form.message}
+                onChange={change}
+                placeholder="A little context, the problem to solve, and your ideal timeline…"
+                rows={6}
+                className={`${field} min-h-40 resize-y py-3 leading-relaxed`}
+                suppressHydrationWarning
+              />
+            </div>
+
             {/* Honeypot — hidden from users, catches naive bots. */}
             <input
               type="text"
@@ -99,16 +193,43 @@ export function Contact() {
               aria-hidden="true"
               className="absolute left-[-9999px] h-px w-px overflow-hidden"
             />
-            <Turnstile onVerify={setToken} className="pt-1" />
-            <button
+
+            {TURNSTILE_ENABLED && verifyRequired ? (
+              <Turnstile key={verificationKey} action="contact" onVerify={setToken} className="mt-5" />
+            ) : null}
+
+            <div className="mt-5 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex max-w-xs items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                Your details are used only to reply to this enquiry.
+              </p>
+              <Button
               type="submit"
-              disabled={submitting}
-              className="inline-flex items-center gap-2 bg-primary px-6 py-3.5 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground disabled:opacity-60"
-            >
-              {submitting ? "Sending…" : (<>Send message <Send className="h-4 w-4" /></>)}
-            </button>
-            {status === "ok" ? <p className="font-mono text-xs text-primary">Thanks — I&rsquo;ll get back to you soon.</p> : null}
-            {status === "err" ? <p className="font-mono text-xs text-destructive">{errMsg}</p> : null}
+                disabled={submitting || (verifyRequired && !token)}
+                className="h-12 shrink-0 rounded-none px-6 font-mono text-xs uppercase tracking-[0.14em]"
+              >
+                {submitting ? (
+                  <><LoaderCircle className="animate-spin" aria-hidden="true" /> Sending…</>
+                ) : (
+                  <>Send message <Send aria-hidden="true" /></>
+                )}
+              </Button>
+            </div>
+
+            <div className="mt-4 min-h-12" aria-live="polite" aria-atomic="true">
+              {status === "ok" ? (
+                <p className="flex items-center gap-2 border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground" role="status">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  Thanks — your message is on its way. I&rsquo;ll get back to you soon.
+                </p>
+              ) : null}
+              {status === "err" ? (
+                <p className="flex items-center gap-2 border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {errMsg}
+                </p>
+              ) : null}
+            </div>
           </form>
         </div>
       </div>
