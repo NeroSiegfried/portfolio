@@ -28,7 +28,12 @@ export function clampString(v: unknown, max: number): string {
 /** Best-effort client IP from proxy headers (Vercel sets x-forwarded-for). */
 export function clientIp(req: Request): string {
   const h = req.headers
+  // The site is Cloudflare-proxied in front of Vercel, so x-forwarded-for /
+  // x-real-ip carry Cloudflare's own edge IP (a different one per request),
+  // not the visitor's - cf-connecting-ip is Cloudflare's dedicated header for
+  // the true client IP, set fresh at their edge, not client-suppliable.
   return (
+    h.get("cf-connecting-ip") ||
     h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     h.get("x-real-ip") ||
     "unknown"
