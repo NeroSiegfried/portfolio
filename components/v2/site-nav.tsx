@@ -14,11 +14,16 @@ const links = [
   { href: "#stack", label: "Stack" },
 ]
 
-export function SiteNav() {
+export function SiteNav({ homeLinks = false }: { homeLinks?: boolean }) {
   const [hidden, setHidden] = useState(false)
   const [open, setOpen] = useState(false)
   const basePath = useBasePath()
   const lastY = useRef(0)
+  const homePath = withBase(basePath, "/")
+
+  // On standalone pages, portfolio sections live on the homepage rather than
+  // the current document. Keep the familiar navigation useful in both places.
+  const sectionHref = (href: string) => homeLinks ? `${homePath}${href}` : href
 
   useEffect(() => {
     lastY.current = window.scrollY
@@ -43,7 +48,7 @@ export function SiteNav() {
       )}
     >
       <div className="grid grid-cols-2 items-center px-4 py-4 md:grid-cols-3 md:px-6 md:py-[1.15rem]">
-        <a href="#top" className="inline-flex items-center justify-self-start font-display text-lg font-semibold tracking-tight text-card-foreground">
+        <a href={homeLinks ? homePath : "#top"} className="inline-flex items-center justify-self-start font-display text-lg font-semibold tracking-tight text-card-foreground">
           <HoverSlide>Victor Nabasu</HoverSlide>
         </a>
 
@@ -51,7 +56,7 @@ export function SiteNav() {
           <ul className="flex items-center gap-9">
             {links.map((l) => (
               <li key={l.href}>
-                <a href={l.href} className={linkCls}><HoverSlide>{l.label}</HoverSlide></a>
+                <a href={sectionHref(l.href)} className={linkCls}><HoverSlide>{l.label}</HoverSlide></a>
               </li>
             ))}
             <li>
@@ -62,7 +67,7 @@ export function SiteNav() {
 
         <div className="flex items-center justify-self-end gap-2 sm:gap-3">
           <ModeToggle />
-          <a href="#contact" className="hidden items-center bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-primary-foreground sm:inline-flex">
+          <a href={sectionHref("#contact")} className="hidden items-center bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-primary-foreground sm:inline-flex">
             <HoverSlide>Contact</HoverSlide>
           </a>
           <button
@@ -82,14 +87,14 @@ export function SiteNav() {
           <ul className="flex flex-col gap-4">
             {links.map((l) => (
               <li key={l.href}>
-                <a href={l.href} onClick={() => setOpen(false)} className="font-display text-2xl font-semibold tracking-tight text-card-foreground">{l.label}</a>
+                <a href={sectionHref(l.href)} onClick={() => setOpen(false)} className="font-display text-2xl font-semibold tracking-tight text-card-foreground">{l.label}</a>
               </li>
             ))}
             <li>
               <Link href={withBase(basePath, "/blog")} onClick={() => setOpen(false)} className="font-display text-2xl font-semibold tracking-tight text-card-foreground">Blog</Link>
             </li>
             <li>
-              <a href="#contact" onClick={() => setOpen(false)} className="mt-1 inline-flex bg-primary px-5 py-3 font-mono text-xs uppercase tracking-[0.12em] text-primary-foreground">Contact</a>
+              <a href={sectionHref("#contact")} onClick={() => setOpen(false)} className="mt-1 inline-flex bg-primary px-5 py-3 font-mono text-xs uppercase tracking-[0.12em] text-primary-foreground">Contact</a>
             </li>
           </ul>
         </div>

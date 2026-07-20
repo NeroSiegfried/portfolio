@@ -1,159 +1,55 @@
-// app/not-found.tsx
-"use client"
-
-import { useEffect, useRef } from "react"
 import Link from "next/link"
-import { useTheme } from "next-themes"
-import { Button } from "@/components/ui/button"
-import { ModeToggle } from "@/components/mode-toggle"
-import Footer from "@/components/footer"
+import { AnimatedArrow } from "@/components/v2/animated-arrow"
+import { Wordmark } from "@/components/v2/blog/wordmark"
+import { Cursor } from "@/components/v2/cursor"
+import { Footer } from "@/components/v2/footer"
+import { HoverSlide } from "@/components/v2/hover-slide"
+import { Eyebrow } from "@/components/v2/primitives"
+import { SiteNav } from "@/components/v2/site-nav"
 
 export default function NotFound() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { resolvedTheme } = useTheme()
-  const themeRef = useRef(resolvedTheme)
-  useEffect(() => { themeRef.current = resolvedTheme }, [resolvedTheme])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    const mouse = { x: -9999, y: -9999 }
-
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resizeCanvas()
-    window.addEventListener("resize", resizeCanvas)
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect()
-      const mx = e.clientX - rect.left
-      const my = e.clientY - rect.top
-      if (mx >= 0 && mx <= rect.width && my >= 0 && my <= rect.height) {
-        mouse.x = mx
-        mouse.y = my
-      } else {
-        mouse.x = -9999
-        mouse.y = -9999
-      }
-    }
-    window.addEventListener("mousemove", handleMouseMove)
-
-    class Particle {
-      x: number; y: number; size: number; speedX: number; speedY: number
-      constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
-        this.size = Math.random() * 2 + 1
-        this.speedX = Math.random() * 0.5 - 0.25
-        this.speedY = Math.random() * 0.5 - 0.25
-      }
-      update() {
-        this.x += this.speedX
-        this.y += this.speedY
-        if (this.x > canvas.width) this.x = 0
-        else if (this.x < 0) this.x = canvas.width
-        if (this.y > canvas.height) this.y = 0
-        else if (this.y < 0) this.y = canvas.height
-        const dx = this.x - mouse.x
-        const dy = this.y - mouse.y
-        const dist = Math.hypot(dx, dy)
-        if (dist < 100 && dist > 0) {
-          const ux = dx / dist; const uy = dy / dist
-          const force = (100 - dist) / 100
-          this.x += ux * force * 2.5
-          this.y += uy * force * 2.5
-        }
-      }
-      draw() {
-        ctx!.fillStyle = themeRef.current === "dark"
-          ? "rgba(47, 112, 255, 0.3)"
-          : "rgba(47, 112, 255, 0.2)"
-        ctx!.beginPath()
-        ctx!.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx!.closePath()
-        ctx!.fill()
-      }
-    }
-
-    const particles: Particle[] = []
-    for (let i = 0; i < 100; i++) particles.push(new Particle())
-
-    let animId: number
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of particles) { p.update(); p.draw() }
-      animId = requestAnimationFrame(animate)
-    }
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (!prefersReducedMotion) {
-      animate()
-    } else {
-      for (const p of particles) p.draw()
-    }
-
-    return () => {
-      window.removeEventListener("resize", resizeCanvas)
-      window.removeEventListener("mousemove", handleMouseMove)
-      cancelAnimationFrame(animId)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
-    <div className="relative min-h-screen flex flex-col overflow-hidden">
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full -z-10"
-        aria-hidden="true"
-      />
+    <>
+      <Cursor />
+      <SiteNav homeLinks />
+      <main className="pt-24 md:pt-28">
+        <div className="mx-4 border-x border-border md:mx-6">
+          <section id="top" className="flex min-h-[calc(100svh-6rem)] flex-col border-t border-border">
+            <div className="flex items-center justify-between border-b border-border px-4 py-4 md:px-6">
+              <Eyebrow>Error index</Eyebrow>
+              <Eyebrow>Page unavailable</Eyebrow>
+            </div>
 
-      {/* Top nav — ModeToggle aligned right */}
-      <div className="absolute inset-x-0 top-0 z-20">
-        <div className="container mx-auto flex items-center justify-end px-4 py-6">
-          <ModeToggle />
+            <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12 text-center sm:gap-10 sm:px-6 sm:py-16">
+              <div className="w-full max-w-6xl">
+                <Wordmark text="404" />
+              </div>
+
+              <div className="flex flex-col items-center">
+                <Eyebrow className="mb-5 block">Wrong route</Eyebrow>
+                <h1 className="max-w-3xl font-display text-[clamp(2.75rem,7vw,5.75rem)] font-semibold leading-[0.92] tracking-[-0.045em]">
+                  This page isn&rsquo;t here.
+                </h1>
+                <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">
+                  It may have moved, been renamed, or never existed. The rest of the site is still within reach.
+                </p>
+
+                <div className="mt-9 flex w-full max-w-md flex-col justify-center gap-3 sm:w-auto sm:max-w-none sm:flex-row">
+                  <Link href="/" className="group inline-flex items-center justify-center gap-3 bg-primary px-5 py-3.5 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground">
+                    <HoverSlide>Back to home</HoverSlide>
+                    <AnimatedArrow direction="left" />
+                  </Link>
+                  <Link href="/blog" className="group inline-flex items-center justify-center gap-3 border border-border px-5 py-3.5 font-mono text-xs uppercase tracking-[0.14em] text-foreground transition-colors hover:border-primary hover:text-primary">
+                    <HoverSlide>Read the blog</HoverSlide>
+                    <AnimatedArrow />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+          <Footer />
         </div>
-      </div>
-
-      {/* Centred content — flex-1 so it takes remaining height */}
-      <div className="flex-1 flex items-center justify-center">
-        <div className="container mx-auto px-4 text-center mb-12 mt-12">
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-4">
-            Error 404
-          </p>
-          <h1 className="text-8xl md:text-9xl font-bold mb-6 leading-none">
-            404
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-3">
-            This page took a wrong turn somewhere.
-          </p>
-          <p className="text-sm text-muted-foreground/70 mb-10">
-            Maybe it was refactored out of existence, or never existed to begin with.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 sm:mt-12">
-            <Button
-              asChild
-              className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03]"
-            >
-              <Link href="/">← Back to Home</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="border-primary text-primary px-8 py-6 text-lg transition-transform duration-200 hover:scale-[1.03] hover:bg-primary hover:text-primary-foreground"
-            >
-              <Link href="/blog">Read the Blog</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <Footer />
-    </div>
+      </main>
+    </>
   )
 }

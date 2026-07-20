@@ -322,3 +322,29 @@ Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom
   newsletter cannot be considered fixed until AWS reopens/approves that case or
   a production-capable mail provider replaces SES, followed by a real-inbox
   subscribe → confirm → unsubscribe test.
+
+## 2026-07-20 — V2 404 page
+
+- Replaced the legacy particle-canvas error page with a v2 composition made only
+  from the existing shared system: `Cursor`, `SiteNav`, `Footer`, `Wordmark`,
+  `Eyebrow`, `HoverSlide`, and `AnimatedArrow`. It uses the same editorial frame,
+  theme toggle, type, motion, and footer as the portfolio rather than introducing
+  a separate visual language.
+- Extended the existing `SiteNav` with its optional `homeLinks` mode. On a
+  standalone page this prefixes portfolio-section links with `/`, so Work,
+  About, Stack, and Contact continue to navigate somewhere useful. The homepage
+  keeps its original in-page behaviour.
+- The 404 body moves from a single column on small screens to a bordered
+  text/wordmark split at large screens. Actions stack on narrow phones and become
+  inline when room permits; the error wordmark remains contained in the frame.
+  Browser-rendered checks at 375px, 810px, and 1440px found no horizontal
+  overflow; `/`, `/blog`, and an unknown route all returned their expected
+  responses from the local dev server.
+- Owner review rejected the split-panel composition and asked for a more dominant
+  error number. Reworked the hero into one continuous, centred stack: a full-width
+  interactive `404` wordmark leads, followed by the message and existing actions
+  beneath a single hairline. No new component or visual treatment was introduced.
+- Follow-up review requested that the wordmark and recovery content share the
+  same vertical centre, rather than independently filling the upper and lower
+  parts of the page. The full group now centres as one unit between the nav and
+  footer, retaining the responsive full-width wordmark.

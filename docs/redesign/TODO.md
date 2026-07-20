@@ -76,6 +76,7 @@ Convention: NEW components under `components/v2/`; reuse `components/ui/*`; do N
 - [ ] Commit + push → verify preview
 
 ## Phase 5 — Wire-up, redirects, QA
+- [x] Rebuilt the global 404 in the v2 system (shared nav, cursor, footer, and interaction primitives); navigation resolves to home sections
 - [ ] Add "v1" reference/link from new site
 - [ ] Add 301 redirects for any renamed v1 routes (next.config.mjs)
 - [ ] Update `ROUTES.md` with new + /v1 routes
