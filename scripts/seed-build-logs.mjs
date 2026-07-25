@@ -1,143 +1,146 @@
 /**
- * Seed / ensure a build-log blog post exists for each featured portfolio project.
+ * Seed / update the portfolio build-log posts and their interactive snippets.
  *
- * Build logs are ordinary blog posts in the "Portfolio Projects" series, authored
- * by the site admin and published. The blog post page (`app/blog/[slug]/page.tsx`)
- * automatically renders the project's live-site + repository links for any post
- * whose slug matches a project's `blogPostSlug` (see `projectByBlogSlug`), so the
- * content below is a starter that also restates those links inline.
+ * Content lives on disk, not in this file:
+ *   scripts/build-logs/posts/<slug>.md     post body + front matter
+ *   scripts/build-logs/posts/<slug>.css    optional per-post CSS (scoped to .post-body)
+ *   scripts/build-logs/snippets/<slug>/    index.html + style.css + script.js + meta.json
  *
- * Idempotent: a project whose slug already exists is skipped, so this is safe to
- * re-run (e.g. after adding a new featured project).
+ * Posts are keyed by slug and UPSERTED, so this is the way to edit a build log:
+ * change the markdown, re-run. Existing rows keep their id, author, comments and
+ * votes — only content/excerpt/title/css/series/publishedAt are rewritten.
  *
- *   node scripts/seed-build-logs.mjs            # create missing build logs
- *   node scripts/seed-build-logs.mjs --dry-run  # report only, no writes
+ * Every run first writes the current DB state of each touched post to
+ * scripts/.backups/posts-<timestamp>.json so an overwrite is always reversible.
  *
- * Keep this list in sync with the featured projects in `lib/portfolio-data.ts`.
+ *   node scripts/seed-build-logs.mjs             # apply
+ *   node scripts/seed-build-logs.mjs --dry-run   # report only, no writes
+ *
+ * Preview the snippets before seeding with: node scripts/preview-snippets.mjs
  */
-import { Pool } from "pg"
-import { readFileSync } from "fs"
+import { mkdirSync, writeFileSync } from "fs"
+import path from "path"
+import { readPosts, readSnippets, referencedSnippetSlugs } from "./build-logs/read-content.mjs"
+import { openDb } from "./build-logs/db.mjs"
 
-// Featured website projects (the Work section) → their build-log slug + links.
-const PROJECTS = [
-  {
-    slug: "derivian-build-log",
-    title: "Derivian — Supported Living Website",
-    description:
-      "A professional, fully accessible website for a supported living business in London — including an easy-read mode for visually impaired users, business email infrastructure and templated contact flows.",
-    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Vercel"],
-    liveUrl: "https://www.derivian.co.uk",
-    githubUrl: "https://github.com/NeroSiegfried/derivian-care",
-  },
-  {
-    slug: "sunab-build-log",
-    title: "Sunab Telecommunications — Build Log",
-    description:
-      "Marketing site for a Nigerian telecoms company that connects mobile network operators — interconnection and clearing-house solutions for stable routing, accurate billing and consistent service across Nigeria and beyond.",
-    technologies: ["React", "Vite", "Tailwind CSS", "React Router"],
-    liveUrl: "https://sunabtelecomservices.com/",
-    githubUrl: "https://github.com/NeroSiegfried/sunab-telecommunications",
-  },
-  {
-    slug: "stitch-bloom",
-    title: "Stitch Bloom Build Log",
-    description: "A custom web application and showcase for the Stitch Bloom brand.",
-    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
-    liveUrl: "https://thestitchbloom.com/",
-    githubUrl: "https://github.com/NeroSiegfried/stitch-bloom",
-  },
-  {
-    slug: "loopbridge-build-log",
-    title: "LoopBridge Build Log",
-    description:
-      "A website development project for a crypto trading community, built in plain HTML, CSS and JavaScript to keep contribution simple across different frontend stacks.",
-    technologies: ["HTML", "CSS", "JavaScript"],
-    liveUrl: "https://www.loopbridge.network",
-    githubUrl: "https://github.com/NeroSiegfried/LoopBridge",
-  },
-]
-
-const PORTFOLIO_SERIES_SLUG = "portfolio-projects"
+const BACKUP_DIR = path.resolve("scripts/.backups")
 const KNOWN_ADMIN_ID = "fa1e0324-4d75-476c-92f1-7f1acbfd61fa"
-
-function resolveDatabaseUrl() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL
-  try {
-    const env = readFileSync(new URL("../.env.local", import.meta.url), "utf8")
-    const m = env.match(/^DATABASE_URL=(.+)$/m)
-    if (m) return m[1].trim()
-  } catch {
-    /* no .env.local */
-  }
-  throw new Error("DATABASE_URL is not set (env or .env.local)")
-}
-
-function buildContent(p) {
-  return [
-    `# ${p.title}`,
-    "",
-    p.description,
-    "",
-    `**Live site:** ${p.liveUrl}`,
-    p.githubUrl ? `**Repository:** ${p.githubUrl}` : "",
-    "",
-    `**Stack:** ${p.technologies.join(", ")}`,
-    "",
-    "---",
-    "",
-    "_Full build log coming soon — architecture decisions, the tricky parts, and what I'd do differently._",
-  ]
-    .filter((line) => line !== undefined)
-    .join("\n")
-}
-
-function excerptFor(p) {
-  const d = p.description.trim()
-  return d.length > 155 ? `${d.slice(0, 152).trimEnd()}…` : d
-}
 
 async function main() {
   const dryRun = process.argv.includes("--dry-run")
-  const url = resolveDatabaseUrl()
-  const useSsl = url.includes("rds.amazonaws.com") || url.includes("sslmode=require") || url.includes("neon.tech")
-  const pool = new Pool({ connectionString: url, ssl: useSsl ? { rejectUnauthorized: false } : false, max: 1 })
+  const posts = readPosts()
+  const snippets = readSnippets()
+
+  if (!posts.length) throw new Error("no posts found in scripts/build-logs/posts")
+
+  // Fail before touching the DB if a post references a snippet that doesn't exist —
+  // a typo'd slug renders as a dashed "Snippet not found" box on the live site.
+  const have = new Set(snippets.map((s) => s.slug))
+  const missing = [...referencedSnippetSlugs(posts)].filter((s) => !have.has(s))
+  if (missing.length) throw new Error(`posts reference unknown snippets: ${missing.join(", ")}`)
+
+  const db = await openDb()
 
   try {
-    // Resolve the portfolio series id (fall back to the known 's_portfolio' id).
-    const seriesRow = await pool.query("SELECT id FROM series WHERE slug=$1 LIMIT 1", [PORTFOLIO_SERIES_SLUG])
-    const seriesId = seriesRow.rows[0]?.id ?? "s_portfolio"
-
-    // Resolve an admin author (fall back to the known admin id).
-    const adminRow = await pool.query("SELECT id FROM users WHERE role='admin' ORDER BY created_at LIMIT 1")
+    const adminRow = await db.query("SELECT id FROM users WHERE role='admin' ORDER BY created_at LIMIT 1")
     const authorId = adminRow.rows[0]?.id ?? KNOWN_ADMIN_ID
 
-    let created = 0
-    for (const p of PROJECTS) {
-      const exists = await pool.query("SELECT id FROM posts WHERE slug=$1 LIMIT 1", [p.slug])
-      if (exists.rowCount > 0) {
-        console.log(`• skip   ${p.slug} (already exists)`)
-        continue
-      }
-      if (dryRun) {
-        console.log(`• would create ${p.slug}`)
-        created++
-        continue
-      }
-      await pool.query(
-        `INSERT INTO posts (id, slug, title, excerpt, content, series_id, status, author_id, created_at, updated_at, published_at, position)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'published', $6, NOW(), NOW(), NOW(), 0)`,
-        [p.slug, p.title, excerptFor(p), buildContent(p), seriesId, authorId],
-      )
-      console.log(`✓ created ${p.slug}`)
-      created++
+    // --- back up whatever is currently live for these slugs -------------------
+    const slugs = posts.map((p) => p.slug)
+    const existing = await db.query(
+      `SELECT slug, title, excerpt, content, custom_css, cover_image, series_id, position, status, published_at
+         FROM posts WHERE slug = ANY($1)`,
+      [slugs],
+    )
+    if (existing.rowCount > 0 && !dryRun) {
+      mkdirSync(BACKUP_DIR, { recursive: true })
+      const file = path.join(BACKUP_DIR, `posts-${new Date().toISOString().replace(/[:.]/g, "-")}.json`)
+      writeFileSync(file, JSON.stringify(existing.rows, null, 2))
+      console.log(`↩ backed up ${existing.rowCount} existing post(s) → ${path.relative(process.cwd(), file)}\n`)
     }
-    console.log(dryRun ? `\nDry run: ${created} would be created.` : `\nDone: ${created} created, ${PROJECTS.length - created} already present.`)
+
+    // --- snippets ------------------------------------------------------------
+    for (const s of snippets) {
+      if (dryRun) {
+        console.log(`• would upsert snippet ${s.slug}`)
+        continue
+      }
+      await db.query(
+        `INSERT INTO snippets (id, slug, title, description, html, css, js, created_at, updated_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW(), NOW())
+         ON CONFLICT (slug) DO UPDATE SET
+           title = EXCLUDED.title,
+           description = EXCLUDED.description,
+           html = EXCLUDED.html,
+           css = EXCLUDED.css,
+           js = EXCLUDED.js,
+           updated_at = NOW()`,
+        [s.slug, s.title, s.description, s.html, s.css, s.js],
+      )
+      console.log(`✓ snippet  ${s.slug}`)
+    }
+
+    // --- posts ---------------------------------------------------------------
+    console.log("")
+    for (const p of posts) {
+      let seriesId = null
+      if (p.series) {
+        const row = await db.query("SELECT id FROM series WHERE slug=$1 LIMIT 1", [p.series])
+        if (!row.rows[0]) throw new Error(`post ${p.slug}: unknown series "${p.series}"`)
+        seriesId = row.rows[0].id
+      }
+
+      const previous = existing.rows.find((r) => r.slug === p.slug)
+      if (dryRun) {
+        console.log(`• would ${previous ? "update" : "create"} ${p.slug} (${p.content.length} chars)`)
+        continue
+      }
+
+      await db.query(
+        `INSERT INTO posts (id, slug, title, excerpt, content, custom_css, cover_image, series_id, status, author_id,
+                            created_at, updated_at, published_at, position)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 'published', $8, NOW(), NOW(), COALESCE($9::timestamptz, NOW()), $10)
+         ON CONFLICT (slug) DO UPDATE SET
+           title = EXCLUDED.title,
+           excerpt = EXCLUDED.excerpt,
+           content = EXCLUDED.content,
+           custom_css = EXCLUDED.custom_css,
+           -- keep an existing cover image unless the front matter names one
+           cover_image = COALESCE(EXCLUDED.cover_image, posts.cover_image),
+           series_id = EXCLUDED.series_id,
+           status = 'published',
+           updated_at = NOW(),
+           published_at = COALESCE(posts.published_at, EXCLUDED.published_at),
+           position = EXCLUDED.position`,
+        [
+          p.slug,
+          p.title,
+          p.excerpt,
+          p.content,
+          p.customCss,
+          p.coverImage,
+          seriesId,
+          authorId,
+          p.publishedAt,
+          p.position,
+        ],
+      )
+      const chars = p.content.length.toLocaleString()
+      const was = previous ? `${previous.content.length.toLocaleString()} → ` : ""
+      console.log(`✓ post     ${p.slug}  (${was}${chars} chars${p.customCss ? ", +css" : ""})`)
+    }
+
+    console.log(
+      dryRun
+        ? `\nDry run: ${snippets.length} snippets, ${posts.length} posts would be written.`
+        : `\nDone: ${snippets.length} snippets, ${posts.length} posts.`,
+    )
   } finally {
-    await pool.end()
+    await db.end()
   }
 }
 
 main().catch((err) => {
-  console.error(err)
+  console.error(err.message ?? err)
   process.exit(1)
 })

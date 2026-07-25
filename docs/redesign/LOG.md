@@ -348,3 +348,48 @@ Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom
   same vertical centre, rather than independently filling the upper and lower
   parts of the page. The full group now centres as one unit between the nav and
   footer, retaining the responsive full-width wordmark.
+
+## Pengana Concept added to Selected work + real build logs for every featured project
+
+- Added **Pengana Concept** (`id: 13`) to `lib/portfolio-data.ts` and put it at the
+  head of `featuredProjects`, so it leads the Work section. Crawled the live site
+  with `scripts/capture-project-shots.mjs` (32 shots across four viewports and 13
+  pages), rebuilt `lib/masonry-layout.json`, and generated `13-spread.jpg` for the
+  thumbnail rail.
+- `scripts/generate-spreads.mjs` now falls back to the live-site crawl in
+  `public/projects/shots/<id>/` when a project has no framed device renders, so a
+  new project only needs the one capture step.
+- Replaced the placeholder build logs with real ones. Content moved out of the
+  seed script and onto disk under `scripts/build-logs/`: `posts/<slug>.md` (front
+  matter + body), `posts/<slug>.css` (per-post CSS, scoped to `.post-body`), and
+  `snippets/<slug>/` (html + css + js + meta). `scripts/seed-build-logs.mjs` is now
+  an idempotent upsert keyed on slug — editing a post means editing the markdown
+  and re-running it. It backs up the live rows to `scripts/.backups/` first and
+  refuses to run if a post references a snippet slug that doesn't exist.
+- Each post is styled after the site it describes via its own scoped CSS. Dark mode
+  works through `.post-body:where(.dark *)`, which the scoper leaves untouched
+  because it already starts with the scope — `.dark h2` would have been rewritten
+  to `.post-body .dark h2` and silently never matched.
+- 13 interactive snippets, several of them showing *older commits* of the site
+  being described: Pengana's action button across all three of its implementations
+  (`58ef352` → `66e8b1b` → `a46e4c3`), the logomark's three attempts, the `data-site`
+  palette swap, the shape language, the expanding showcase; plus Derivian's Easy
+  Read token swap, Sunab's scheme alternation, Stitch Bloom's diagonal carousel and
+  LoopBridge's three architectures. `scripts/preview-snippets.mjs` renders them the
+  way `blog-snippet-embed.tsx` does and screenshots each in light and dark, so they
+  can be checked before they reach the database.
+
+### Two platform bugs found while doing it
+
+- **Snippets whose JS ended in a `//` comment failed to run at all.** The srcdoc
+  built `try{${tab.js}}catch(…)` on one line, so a trailing line comment swallowed
+  the closing brace, and — because it is all one `<script>` — the syntax error also
+  killed the injected auto-height script, leaving the iframe stuck at its 240px
+  default. Fixed by putting the snippet's JS on its own lines.
+- **`wide` snippets were broken on every v2 article page.** `.snippet-breakout`
+  used `width:100vw; margin-left:calc(50% - 50vw)`, which assumes the container is
+  centred in the viewport. The v2 post layout puts the reading column beside a
+  sticky sidebar, so breakouts were dragged off the left edge and under the
+  sidebar (visible on `/blog/features` too, not just the new posts). The article
+  column now carries `.post-body--column`: full-bleed means the full reading
+  column, and the measure is applied per prose block instead of on the container.

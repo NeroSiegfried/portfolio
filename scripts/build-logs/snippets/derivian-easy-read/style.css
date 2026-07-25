@@ -1,0 +1,150 @@
+/* Every size below is expressed as a token. That is the whole trick — Easy Read
+   only has to re-point the tokens. */
+.stage {
+  --text-large: 1.25rem;
+  --text-medium: 1rem;
+  --text-regular: 0.9rem;
+  --text-small: 0.8rem;
+  --root: 16px;
+
+  --ink: #1b263b;
+  --muted: #5f6775;
+  --accent: #499c85;
+  --pale: #eef9f6;
+  --line: rgba(27, 38, 59, 0.14);
+
+  font-size: var(--root);
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink);
+  background: #ffffff;
+  padding: 0 0 20px;
+  transition: font-size 300ms ease;
+}
+
+/* ── the entire Easy Read implementation ──────────────────────── */
+.stage[data-easyread="on"] {
+  --text-large: 1.45rem;
+  --text-medium: 1.25rem;
+  --text-regular: 1.15rem;
+  --text-small: 1.05rem;
+  --root: 18px;
+}
+
+.stage[data-easyread="on"] .page { letter-spacing: 0.01em; line-height: 1.7; }
+.stage[data-easyread="on"] p     { line-height: 1.7; }
+/* ─────────────────────────────────────────────────────────────── */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #fff;
+  background: #1b263b;
+}
+
+.brand {
+  font-size: var(--text-regular);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.easyread {
+  padding: 8px 14px;
+  color: #fff;
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+
+.easyread:hover { background: rgba(255, 255, 255, 0.14); }
+
+.easyread[aria-pressed="true"] {
+  color: #1b263b;
+  border-color: transparent;
+  background: #fff;
+}
+
+.page { padding: 24px 20px 4px; }
+
+.eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: var(--text-small);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page h2 {
+  margin: 10px 0 0;
+  max-width: 22ch;
+  font-size: var(--text-large);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.lead {
+  margin: 12px 0 0;
+  max-width: 52ch;
+  font-size: var(--text-medium);
+  line-height: 1.5;
+}
+
+.page p:not(.lead):not(.eyebrow) {
+  margin: 10px 0 0;
+  max-width: 58ch;
+  color: var(--muted);
+  font-size: var(--text-regular);
+  line-height: 1.55;
+}
+
+.cta {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 11px 20px;
+  color: #fff;
+  font-size: var(--text-small);
+  font-weight: 700;
+  border-radius: 6px;
+  background: var(--accent);
+}
+
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 20px 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.tokens div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--pale);
+}
+
+.tokens dt,
+.tokens dd {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.66rem;
+}
+
+.tokens dt { color: var(--muted); }
+.tokens dd { color: var(--ink); font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage, .easyread { transition-duration: 1ms; }
+}

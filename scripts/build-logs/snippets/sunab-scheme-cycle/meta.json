@@ -1,0 +1,4 @@
+{
+  "title": "Scheme alternation",
+  "description": "Sunab's page rhythm: each section declares one scheme class, and every child resolves its background, text, border, button and accent colours from that scheme's slots. Cycle through them."
+}

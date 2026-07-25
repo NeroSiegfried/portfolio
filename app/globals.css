@@ -521,10 +521,27 @@
   box-shadow: 0 0 12px 2px hsl(12 100% 54% / 0.2);
 }
 
-/* Full-bleed / breakout snippet — escapes the blog body container */
+/* Full-bleed / breakout snippet — escapes the reading measure.
+   Centred layouts (v1, /blog/features) break out to the whole viewport. */
 .snippet-breakout {
   width: 100vw;
   margin-left: calc(50% - 50vw);
+}
+
+/* The v2 article layout puts the reading column beside a sticky sidebar, so it
+   is NOT centred in the viewport: `50% - 50vw` would drag a breakout off the
+   left edge and underneath the sidebar. There, "full bleed" means the full
+   reading column instead — the column carries no max-width of its own, and the
+   measure is applied per prose block below so only breakouts escape it. */
+.post-body--column .snippet-breakout {
+  width: 100%;
+  margin-left: 0;
+}
+
+/* Reading measure. Every direct child of the prose body is capped except a
+   full-bleed snippet, which is exactly the thing that should span the column. */
+.post-body--column > .prose > *:not(.snippet-breakout) {
+  max-width: 48rem;
 }
 
 @keyframes carousel {

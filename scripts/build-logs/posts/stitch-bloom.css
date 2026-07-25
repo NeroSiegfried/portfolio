@@ -1,0 +1,95 @@
+/* Stitch Bloom build log — cream paper, leather brown, a display serif for
+   headings. Matches the shop it describes. Scoped to .post-body. */
+
+:root {
+  --sbm-paper: #f7f1ea;
+  --sbm-ink: #3a2b21;
+  --sbm-muted: #6f6259;
+  --sbm-brown: #6b4a34;
+  --sbm-terracotta: #a5583a;
+  --sbm-line: rgba(58, 43, 33, 0.18);
+  --sbm-code-bg: #2a211b;
+  --sbm-code-fg: #f0e6da;
+}
+
+.post-body:where(.dark *) {
+  --sbm-paper: rgba(167, 124, 92, 0.12);
+  --sbm-ink: #efe4d8;
+  --sbm-muted: #b5a596;
+  --sbm-brown: #d3ac8c;
+  --sbm-terracotta: #e0906c;
+  --sbm-line: rgba(239, 228, 216, 0.18);
+  --sbm-code-bg: #1d1712;
+  --sbm-code-fg: #f0e6da;
+}
+
+h2 {
+  margin-top: 3.25rem;
+  padding-bottom: 0.6rem;
+  color: var(--sbm-ink);
+  font-family: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
+  font-weight: 500;
+  font-size: 2.1rem;
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+  border-bottom: 1px solid var(--sbm-line);
+}
+
+h3 {
+  color: var(--sbm-ink);
+  font-family: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
+  font-weight: 600;
+}
+
+p { color: var(--sbm-ink); line-height: 1.74; }
+
+a {
+  color: var(--sbm-terracotta);
+  font-weight: 500;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 220ms ease;
+}
+
+a:hover { text-decoration-color: currentColor; }
+
+blockquote {
+  margin-inline: 0;
+  padding: 1rem 1.35rem;
+  color: var(--sbm-ink);
+  font-style: normal;
+  border-left: 2px solid var(--sbm-brown);
+  background: var(--sbm-paper);
+}
+
+blockquote p::before,
+blockquote p::after { content: none; }
+
+/* Squared corners throughout — the shop's navbar and cards are hard-edged. */
+pre {
+  color: var(--sbm-code-fg);
+  background: var(--sbm-code-bg);
+  border: 1px solid var(--sbm-line);
+  border-radius: 2px;
+}
+
+pre code { color: inherit; }
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  color: var(--sbm-brown);
+  font-weight: 500;
+  background: var(--sbm-paper);
+  border: 1px solid var(--sbm-line);
+  border-radius: 2px;
+}
+
+:not(pre) > code::before,
+:not(pre) > code::after { content: none; }
+
+ul > li::marker { color: var(--sbm-terracotta); }
+ol > li::marker { color: var(--sbm-terracotta); font-weight: 600; }
+
+li { line-height: 1.7; }
+
+strong { color: var(--sbm-ink); font-weight: 650; }

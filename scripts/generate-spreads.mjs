@@ -6,16 +6,24 @@ import sharp from "sharp"
 import fs from "fs"
 
 const DIR = "public/projects"
-const WEB_PROJECT_IDS = [11, 12, 10, 9, 1]
+const WEB_PROJECT_IDS = [13, 11, 12, 10, 9, 1]
 const W = 1600
 const H = 1000
 
+// Prefer the framed device renders when they exist; otherwise fall back to the
+// live-site crawl in `public/projects/shots/<id>` (capture-project-shots.mjs),
+// which every project has since the masonry mockup needs it anyway.
+const firstExisting = (...paths) => paths.find((p) => fs.existsSync(p))
+
 for (const id of WEB_PROJECT_IDS) {
-  const deskSrc = fs.existsSync(`${DIR}/${id}-studio.png`)
-    ? `${DIR}/${id}-studio.png`
-    : `${DIR}/${id}-macbook.png`
-  const phoneSrc = `${DIR}/${id}-iphone.png`
-  if (!fs.existsSync(deskSrc) || !fs.existsSync(phoneSrc)) {
+  const deskSrc = firstExisting(
+    `${DIR}/${id}-studio.png`,
+    `${DIR}/${id}-macbook.png`,
+    `${DIR}/shots/${id}/home-wide.jpg`,
+    `${DIR}/shots/${id}/home-desktop.jpg`,
+  )
+  const phoneSrc = firstExisting(`${DIR}/${id}-iphone.png`, `${DIR}/shots/${id}/home-mobile.jpg`)
+  if (!deskSrc || !phoneSrc) {
     console.log(`  ${id}: missing screenshots, skipping`)
     continue
   }

@@ -1,0 +1,4 @@
+{
+  "title": "Shape language",
+  "description": "Pengana's image-card shape rule: never a plain rounded rectangle. One corner gets an exaggerated radius or an angled chamfer; the other three stay perfectly sharp. Pick a treatment and a corner."
+}

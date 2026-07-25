@@ -23,6 +23,18 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    id: 13,
+    title: "Pengana Concept",
+    description:
+      "A group website for a family-owned Nigerian holding company and its three businesses — property and hospitality, agriculture, and telecoms. One component system, four palettes: every page resolves its colour, imagery and navigation from a single `data-site` token.",
+    technologies: ["React", "Vite", "React Router", "CSS", "Leaflet", "Vercel"],
+    showcaseMode: "web",
+    liveUrl: "https://www.penganaconcept.com",
+    githubUrl: "https://github.com/NeroSiegfried/pengana-concept",
+    blogPostSlug: "pengana-concept-build-log",
+    waitFor: 3,
+  },
+  {
     id: 11,
     title: "Derivian",
     description:
@@ -155,7 +167,7 @@ export const projects: Project[] = [
 ]
 
 /** The website projects shown in the Work section (most recent first). */
-export const featuredProjects: Project[] = [11, 12, 10, 9]
+export const featuredProjects: Project[] = [13, 11, 12, 10, 9]
   .map((id) => projects.find((p) => p.id === id))
   .filter((p): p is Project => Boolean(p))
 

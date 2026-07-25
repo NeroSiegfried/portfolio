@@ -1,0 +1,145 @@
+.stage {
+  --muted: #62666a;
+  --ink: #15191e;
+  --img-corner: clamp(28px, 3.4vw, 44px);
+  --img-corners: var(--img-corner) 0 0 0;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background: #fbfaf7;
+  padding: 20px;
+}
+
+[data-site="properties"] { --deep: #281b15; --accent: #9a6848; }
+[data-site="tishino"]    { --deep: #1c2417; --accent: #617149; }
+[data-site="sunab"]      { --deep: #0b1230; --accent: #3f4fb0; }
+
+/* ── verbatim from the shipped stylesheet ─────────────────────── */
+.showcase {
+  display: flex;
+  gap: 12px;
+  min-height: 330px;
+}
+
+.acc-card {
+  position: relative;
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: white;
+  text-decoration: none;
+  border-radius: var(--img-corners);
+  clip-path: inset(0 round var(--img-corners));
+  background:
+    radial-gradient(130% 90% at 70% 8%, color-mix(in srgb, var(--accent) 85%, white), transparent 64%),
+    linear-gradient(168deg, var(--accent), var(--deep) 74%);
+  isolation: isolate;
+  transition:
+    flex-grow 700ms var(--ease-out),
+    filter 420ms ease;
+}
+
+.showcase:hover .acc-card { flex-grow: 0.68; }
+.showcase .acc-card:is(:hover, :focus-visible) { flex-grow: 2.35; }
+
+.acc-card__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(0deg, rgba(8, 12, 14, 0.9), transparent 66%);
+}
+
+.acc-card__index,
+.acc-card__body {
+  position: absolute;
+  z-index: 2;
+}
+
+.acc-card__index {
+  top: 20px;
+  left: 20px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.acc-card__body {
+  right: 20px;
+  bottom: 20px;
+  left: 20px;
+}
+
+.acc-card__eyebrow {
+  display: block;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.acc-card__name {
+  display: block;
+  margin-top: 8px;
+  font-family: "Iowan Old Style", Palatino, "Times New Roman", serif;
+  font-size: clamp(1.15rem, 2.2vw, 1.9rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+/* The summary is the reward for hovering — hidden until the panel expands. */
+.acc-card__sub {
+  display: block;
+  max-width: 34ch;
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 380ms var(--ease-out) 120ms,
+    transform 480ms var(--ease-out) 120ms;
+}
+
+.acc-card:is(:hover, :focus-visible) .acc-card__sub {
+  opacity: 1;
+  transform: none;
+}
+/* ─────────────────────────────────────────────────────────────── */
+
+.note {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  max-width: 64ch;
+}
+
+.note code {
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+}
+
+/* Below 768px the row becomes a purposeful single-column sequence. */
+@media (max-width: 767px) {
+  .showcase {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .acc-card {
+    min-height: 168px;
+    flex: none;
+  }
+
+  .showcase:hover .acc-card,
+  .showcase .acc-card:is(:hover, :focus-visible) { flex-grow: 0; }
+
+  .acc-card__sub { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acc-card, .acc-card * { transition-duration: 1ms !important; }
+}

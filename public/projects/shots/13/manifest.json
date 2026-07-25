@@ -1,0 +1,130 @@
+[
+  {
+    "file": "home-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s1.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s2.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s3.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-mobile-s4.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "home-tablet.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s2.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s3.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-tablet-s4.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "home-desktop.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s2.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s3.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-desktop-s4.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "home-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "home-wide-s1.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "home-wide-s2.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "home-wide-s3.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "home-wide-s4.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "about-desktop.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "contact-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "companies-tablet.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "properties-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "properties-services-desktop.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "properties-stays-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "properties-contact-tablet.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "tishino-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "tishino-operations-desktop.jpg",
+    "viewport": "desktop"
+  },
+  {
+    "file": "tishino-produce-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "tishino-contact-tablet.jpg",
+    "viewport": "tablet"
+  },
+  {
+    "file": "sunab-wide.jpg",
+    "viewport": "wide"
+  }
+]

@@ -1,0 +1,4 @@
+{
+  "title": "Easy Read mode",
+  "description": "Derivian's accessibility toggle, reduced to its actual mechanism: five custom properties change on the root element and the whole page re-flows. No second stylesheet, no duplicated components."
+}

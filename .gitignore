@@ -46,6 +46,10 @@ test*
 /.vscode/
 /services/
 /new*.sh
+# build-log tooling scratch: snippet screenshots, pre-seed post backups, throwaways
+/scripts/.preview/
+/scripts/.backups/
+/scripts/.tmp/
 
 # scratch session docs / unused assets
 /AWS_DEPLOYMENT_COMPLETE.md

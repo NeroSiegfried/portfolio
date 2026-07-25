@@ -1,0 +1,69 @@
+.stage {
+  --unit: 8px;
+  --accent: #456079;
+  --deep: #101b26;
+  --pale: #dfe7ed;
+  --ink: #15191e;
+  --muted: #62666a;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink);
+  background: #f4f1e9;
+  padding: 26px 22px;
+}
+
+.note,
+.verdict {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.note b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); }
+.verdict { margin-top: 22px; max-width: 52ch; }
+.verdict em { color: var(--ink); }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ── verbatim from commit 58ef352 ─────────────────────────────── */
+.action {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--unit) * 4);
+  padding: 12px 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    gap 350ms var(--ease-out),
+    background-color 250ms ease,
+    border-color 250ms ease,
+    color 250ms ease;
+}
+
+.action:hover { gap: calc(var(--unit) * 5); }
+
+.action--solid { color: white; background: var(--accent); }
+.action--solid:hover { background: var(--deep); }
+
+.action--light { color: var(--ink); background: white; }
+.action--light:hover { background: var(--pale); }
+
+.action__arrow { font-size: 1rem; }
+/* ─────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .action { transition-duration: 1ms; }
+}

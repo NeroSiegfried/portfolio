@@ -1,0 +1,151 @@
+.stage {
+  --accent: #456079;
+  --deep: #101b26;
+  --ink: #15191e;
+  --muted: #62666a;
+  --radius-pill: 999px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink);
+  background: #f4f1e9;
+  padding: 26px 22px;
+}
+
+.note,
+.verdict {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.note b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); }
+.verdict { margin-top: 22px; max-width: 56ch; }
+.verdict em { color: var(--ink); }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ── verbatim from commit 66e8b1b ─────────────────────────────── */
+.action {
+  --action-bg: var(--accent);
+  --action-fg: #fff;
+  --action-icon-bg: rgba(255, 255, 255, 0.16);
+  --action-icon-fg: currentColor;
+  --action-icon-border: color-mix(in srgb, currentColor 22%, transparent);
+  --icon-size: 38px;
+  --icon-edge: 7px;
+  --label-pad: 24px;
+  --icon-reserve: calc(var(--icon-edge) + var(--icon-size) + 12px);
+  position: relative;
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  overflow: hidden;
+  padding-left: var(--icon-reserve);
+  padding-right: var(--label-pad);
+  color: var(--action-fg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--action-bg);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color 420ms var(--ease-out),
+    border-color 420ms var(--ease-out),
+    color 420ms var(--ease-out);
+}
+
+.action__icon {
+  position: absolute;
+  top: 50%;
+  left: var(--icon-edge);
+  z-index: 2;
+  display: grid;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  place-items: center;
+  color: var(--action-icon-fg);
+  border: 1px solid var(--action-icon-border);
+  border-radius: 50%;
+  background: var(--action-icon-bg);
+  transform: translateY(-50%);
+  transition:
+    left 600ms var(--ease-spring),
+    color 360ms var(--ease-out),
+    background-color 360ms var(--ease-out);
+}
+
+.action:is(:hover, :focus-visible) .action__icon {
+  left: calc(100% - var(--icon-edge) - var(--icon-size));
+}
+
+.action__arrow-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 520ms var(--ease-spring);
+}
+
+.action:is(:hover, :focus-visible) .action__arrow-icon { transform: rotate(45deg); }
+
+/* Label slides left to clear the arrow's landing spot; the two stacked copies
+   cross-swap so the text is replaced. */
+.action__label {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  padding-block: 6px;
+  margin-block: -6px;
+  transition: transform 600ms var(--ease-spring);
+}
+
+.action:is(:hover, :focus-visible) .action__label {
+  transform: translateX(calc(var(--label-pad) - var(--icon-reserve)));
+}
+
+.action__label-text {
+  grid-area: 1 / 1;
+  transition:
+    transform 460ms var(--ease-out),
+    opacity 300ms ease;
+}
+
+.action__label-text--next { opacity: 0; transform: translateX(65%); }
+
+.action:is(:hover, :focus-visible) .action__label-text { opacity: 0; transform: translateX(-65%); }
+.action:is(:hover, :focus-visible) .action__label-text--next { opacity: 1; transform: translateX(0); }
+
+.action--solid:is(:hover, :focus-visible) {
+  --action-bg: var(--deep);
+  --action-icon-bg: #fff;
+  --action-icon-fg: var(--deep);
+  --action-icon-border: transparent;
+}
+
+.action--light {
+  --action-bg: #fff;
+  --action-fg: var(--ink);
+  --action-icon-bg: var(--ink);
+  --action-icon-fg: #fff;
+  --action-icon-border: transparent;
+}
+
+.action--light:is(:hover, :focus-visible) {
+  --action-bg: var(--accent);
+  --action-fg: #fff;
+  --action-icon-bg: #fff;
+  --action-icon-fg: var(--accent);
+}
+/* ─────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .action, .action * { transition-duration: 1ms !important; }
+}

@@ -1,0 +1,122 @@
+/* Pengana Concept build log — the reading column borrows the site it describes:
+   warm paper, a serif display face for headings, and the group navy as the
+   accent. Scoped to .post-body by lib/blog/scope-css.ts. */
+
+:root {
+  --pg-paper: #f4f1e9;
+  --pg-paper-soft: #fbfaf7;
+  --pg-ink: #15191e;
+  --pg-muted: #5b6167;
+  --pg-accent: #456079;
+  --pg-deep: #101b26;
+  --pg-line: rgba(21, 25, 30, 0.16);
+  --pg-code-bg: #101b26;
+  --pg-code-fg: #dfe7ed;
+}
+
+.post-body:where(.dark *) {
+  --pg-paper: #141a20;
+  --pg-paper-soft: #182028;
+  --pg-ink: #e7ecf1;
+  --pg-muted: #9aa6b2;
+  --pg-accent: #8fb0cb;
+  --pg-deep: #cddbe6;
+  --pg-line: rgba(223, 231, 237, 0.18);
+  --pg-code-bg: #0c141b;
+  --pg-code-fg: #dfe7ed;
+}
+
+/* Headings take the site's display serif and its accent rule. */
+h2 {
+  position: relative;
+  margin-top: 3.25rem;
+  padding-top: 1.5rem;
+  color: var(--pg-deep);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+  font-weight: 400;
+  font-size: 1.95rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  border-top: 1px solid var(--pg-line);
+}
+
+h2::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 56px;
+  height: 2px;
+  background: var(--pg-accent);
+}
+
+h3 {
+  color: var(--pg-deep);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Body copy sits a touch wider and softer than the site default. */
+p {
+  color: var(--pg-ink);
+  line-height: 1.72;
+}
+
+a {
+  color: var(--pg-accent);
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 220ms ease;
+}
+
+a:hover { text-decoration-color: currentColor; }
+
+/* Pull-quotes read as the client's voice — the brief, verbatim. */
+blockquote {
+  margin-inline: 0;
+  padding: 1rem 1.35rem;
+  color: var(--pg-ink);
+  font-style: normal;
+  border-left: 3px solid var(--pg-accent);
+  background: var(--pg-paper);
+  border-radius: 0 10px 10px 0;
+}
+
+blockquote p {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+  font-size: 1.05rem;
+}
+
+blockquote p::before,
+blockquote p::after { content: none; }
+
+/* Code blocks take the group navy, matching the site's deep surfaces. */
+pre {
+  color: var(--pg-code-fg);
+  background: var(--pg-code-bg);
+  border: 1px solid var(--pg-line);
+  border-radius: 10px 10px 10px 2px;
+}
+
+pre code { color: inherit; }
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  color: var(--pg-deep);
+  font-weight: 500;
+  background: var(--pg-paper);
+  border: 1px solid var(--pg-line);
+  border-radius: 3px;
+}
+
+:not(pre) > code::before,
+:not(pre) > code::after { content: none; }
+
+/* Lists get the accent marker rather than a grey bullet. */
+ul > li::marker { color: var(--pg-accent); }
+ol > li::marker { color: var(--pg-accent); font-weight: 600; }
+
+li { line-height: 1.65; }
+
+strong { color: var(--pg-deep); font-weight: 650; }

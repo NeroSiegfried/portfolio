@@ -1,0 +1,100 @@
+/* LoopBridge build log — terminal-flavoured: dark code surfaces, a mint accent,
+   monospace section markers. Scoped to .post-body. */
+
+:root {
+  --lb-ink: #101521;
+  --lb-muted: #576073;
+  --lb-accent: #0f9d6b;
+  --lb-accent-soft: rgba(15, 157, 107, 0.1);
+  --lb-blue: #2f5fd0;
+  --lb-line: rgba(16, 21, 33, 0.16);
+  --lb-code-bg: #0b0e14;
+  --lb-code-fg: #e8ecf5;
+}
+
+.post-body:where(.dark *) {
+  --lb-ink: #e8ecf5;
+  --lb-muted: #97a0b3;
+  --lb-accent: #4ade9b;
+  --lb-accent-soft: rgba(74, 222, 155, 0.12);
+  --lb-blue: #6ea8ff;
+  --lb-line: rgba(232, 236, 245, 0.18);
+  --lb-code-bg: #05070c;
+  --lb-code-fg: #e8ecf5;
+}
+
+h2 {
+  margin-top: 3rem;
+  color: var(--lb-ink);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+/* A monospace marker before each section, like a shell prompt. */
+h2::before {
+  content: "▸ ";
+  color: var(--lb-accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 400;
+}
+
+h3 { color: var(--lb-ink); font-weight: 600; }
+
+p { color: var(--lb-ink); line-height: 1.72; }
+
+a {
+  color: var(--lb-blue);
+  font-weight: 500;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 220ms ease;
+}
+
+a:hover { text-decoration-color: currentColor; }
+
+blockquote {
+  margin-inline: 0;
+  padding: 1rem 1.35rem;
+  color: var(--lb-ink);
+  font-style: normal;
+  border-left: 3px solid var(--lb-accent);
+  border-radius: 0 6px 6px 0;
+  background: var(--lb-accent-soft);
+}
+
+blockquote p::before,
+blockquote p::after { content: none; }
+
+pre {
+  color: var(--lb-code-fg);
+  background: var(--lb-code-bg);
+  border: 1px solid var(--lb-line);
+  border-radius: 6px;
+}
+
+pre code { color: inherit; }
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  color: var(--lb-ink);
+  font-weight: 500;
+  background: var(--lb-accent-soft);
+  border: 1px solid var(--lb-line);
+  border-radius: 3px;
+}
+
+:not(pre) > code::before,
+:not(pre) > code::after { content: none; }
+
+ul > li::marker { color: var(--lb-accent); }
+
+/* The four-step debugging sequence reads better as a machine-numbered list. */
+ol > li::marker {
+  color: var(--lb-accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+}
+
+li { line-height: 1.68; }
+
+strong { color: var(--lb-ink); font-weight: 650; }

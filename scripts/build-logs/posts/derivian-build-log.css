@@ -1,0 +1,97 @@
+/* Derivian build log — the reading column borrows the care palette: mirage
+   navy, fountain-blue accent, generous line height. Scoped to .post-body. */
+
+:root {
+  --dv-ink: #1b263b;
+  --dv-muted: #5f6775;
+  --dv-accent: #499c85;
+  --dv-accent-soft: #eef9f6;
+  --dv-sienna: #b9543b;
+  --dv-line: rgba(27, 38, 59, 0.16);
+  --dv-code-bg: #151e2f;
+  --dv-code-fg: #e6ecf4;
+}
+
+.post-body:where(.dark *) {
+  --dv-ink: #e8eef6;
+  --dv-muted: #9fabbc;
+  --dv-accent: #6fd0b3;
+  --dv-accent-soft: rgba(92, 196, 167, 0.12);
+  --dv-sienna: #f0906f;
+  --dv-line: rgba(232, 238, 246, 0.18);
+  --dv-code-bg: #101725;
+  --dv-code-fg: #e6ecf4;
+}
+
+h2 {
+  margin-top: 3rem;
+  color: var(--dv-ink);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+/* A soft accent bar in the margin rather than a hard rule — the site's tone. */
+h2::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin-bottom: 1rem;
+  border-radius: 2px;
+  background: var(--dv-accent);
+}
+
+h3 { color: var(--dv-ink); font-weight: 600; }
+
+p { color: var(--dv-ink); line-height: 1.75; }
+
+a {
+  color: var(--dv-accent);
+  font-weight: 500;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 220ms ease;
+}
+
+a:hover { text-decoration-color: currentColor; }
+
+blockquote {
+  margin-inline: 0;
+  padding: 1rem 1.35rem;
+  color: var(--dv-ink);
+  font-style: normal;
+  border-left: 4px solid var(--dv-accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--dv-accent-soft);
+}
+
+blockquote p::before,
+blockquote p::after { content: none; }
+
+pre {
+  color: var(--dv-code-fg);
+  background: var(--dv-code-bg);
+  border: 1px solid var(--dv-line);
+  border-radius: 10px;
+}
+
+pre code { color: inherit; }
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  color: var(--dv-ink);
+  font-weight: 500;
+  background: var(--dv-accent-soft);
+  border: 1px solid var(--dv-line);
+  border-radius: 4px;
+}
+
+:not(pre) > code::before,
+:not(pre) > code::after { content: none; }
+
+ul > li::marker { color: var(--dv-accent); }
+ol > li::marker { color: var(--dv-accent); font-weight: 600; }
+
+li { line-height: 1.7; }
+
+strong { color: var(--dv-ink); font-weight: 650; }

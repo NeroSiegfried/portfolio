@@ -17,6 +17,7 @@ import path from 'path'
 const OUT = path.resolve('public/projects/shots')
 
 const PROJECTS = [
+  { id: 13, url: 'https://www.penganaconcept.com', wait: 3200 },
   { id: 11, url: 'https://www.derivian.co.uk', wait: 3400 },
   { id: 12, url: 'https://sunabtelecomservices.com/', wait: 2600 },
   { id: 10, url: 'https://thestitchbloom.com/', wait: 3200 },

@@ -92,7 +92,11 @@ function buildSrcDoc(tab: SnippetTab, theme: string, user: PublicUser | null) {
         var _loopGuard = setTimeout(function(){
           document.body.innerHTML = '<div style="padding:1rem;font-family:sans-serif;color:#c00;font-size:0.85rem">[Snippet stopped: possible infinite loop or long-running script]</div>';
         }, 15000);
-        try{${tab.js}}catch(e){console.error('[snippet error]', e);}
+        // The newlines matter: a snippet whose JS ends in a // comment would
+        // otherwise swallow the closing brace and fail to parse.
+        try{
+${tab.js}
+        }catch(e){console.error('[snippet error]', e);}
         clearTimeout(_loopGuard);
       })();
     <\/script>

@@ -1,0 +1,88 @@
+/* Sunab build log — deep madison blue with the japanese-laurel green as the
+   interaction colour, mirroring the site's own scheme system. */
+
+:root {
+  --sb-ink: #16151f;
+  --sb-muted: #55545f;
+  --sb-blue: #090673;
+  --sb-blue-soft: #e6e6f1;
+  --sb-green: #088c1c;
+  --sb-line: rgba(22, 21, 31, 0.16);
+  --sb-code-bg: #020122;
+  --sb-code-fg: #e6e6f1;
+}
+
+.post-body:where(.dark *) {
+  --sb-ink: #e9e9f2;
+  --sb-muted: #a0a0b0;
+  --sb-blue: #8f8ce0;
+  --sb-blue-soft: rgba(82, 80, 157, 0.16);
+  --sb-green: #52ae60;
+  --sb-line: rgba(233, 233, 242, 0.18);
+  --sb-code-bg: #05041a;
+  --sb-code-fg: #e6e6f1;
+}
+
+h2 {
+  margin-top: 3rem;
+  padding-left: 1rem;
+  color: var(--sb-ink);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border-left: 3px solid var(--sb-green);
+}
+
+h3 { color: var(--sb-ink); font-weight: 600; }
+
+p { color: var(--sb-ink); line-height: 1.72; }
+
+a {
+  color: var(--sb-green);
+  font-weight: 500;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 220ms ease;
+}
+
+a:hover { text-decoration-color: currentColor; }
+
+blockquote {
+  margin-inline: 0;
+  padding: 1rem 1.35rem;
+  color: var(--sb-ink);
+  font-style: normal;
+  border-left: 3px solid var(--sb-blue);
+  border-radius: 0 8px 8px 0;
+  background: var(--sb-blue-soft);
+}
+
+blockquote p::before,
+blockquote p::after { content: none; }
+
+pre {
+  color: var(--sb-code-fg);
+  background: var(--sb-code-bg);
+  border: 1px solid var(--sb-line);
+  border-radius: 12px;
+}
+
+pre code { color: inherit; }
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  color: var(--sb-blue);
+  font-weight: 500;
+  background: var(--sb-blue-soft);
+  border: 1px solid var(--sb-line);
+  border-radius: 4px;
+}
+
+:not(pre) > code::before,
+:not(pre) > code::after { content: none; }
+
+ul > li::marker { color: var(--sb-green); }
+ol > li::marker { color: var(--sb-green); font-weight: 600; }
+
+li { line-height: 1.68; }
+
+strong { color: var(--sb-ink); font-weight: 650; }

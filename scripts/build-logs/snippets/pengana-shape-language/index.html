@@ -1,0 +1,31 @@
+<div class="stage">
+  <div class="controls">
+    <div class="group" role="group" aria-label="Treatment">
+      <span class="group__label">Treatment</span>
+      <div class="group__buttons">
+        <button type="button" data-treat="plain" aria-pressed="false">Plain radius</button>
+        <button type="button" data-treat="radius" aria-pressed="true">Exaggerated</button>
+        <button type="button" data-treat="chamfer" aria-pressed="false">Chamfer</button>
+      </div>
+    </div>
+    <div class="group" role="group" aria-label="Corner">
+      <span class="group__label">Corner</span>
+      <div class="group__buttons">
+        <button type="button" data-corner="tl" aria-pressed="true">TL</button>
+        <button type="button" data-corner="tr" aria-pressed="false">TR</button>
+        <button type="button" data-corner="br" aria-pressed="false">BR</button>
+        <button type="button" data-corner="bl" aria-pressed="false">BL</button>
+      </div>
+    </div>
+  </div>
+
+  <figure class="card" data-treat="radius" data-corner="tl">
+    <div class="card__art" aria-hidden="true">
+      <span class="card__eyebrow">Pengana Properties</span>
+      <span class="card__title">Serviced apartments</span>
+    </div>
+  </figure>
+
+  <pre class="code"><code id="out"></code></pre>
+  <p class="note" id="verdict"></p>
+</div>

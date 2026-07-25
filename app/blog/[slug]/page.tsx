@@ -229,8 +229,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {/* Body — reading column (left) + sticky post-nav sidebar (right) */}
             <div className="px-4 py-12 md:px-6 md:py-16">
               <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12 xl:gap-16">
+                {/* Fills its grid cell rather than capping at the measure: the
+                    measure is applied per prose block in CSS (.post-body--column),
+                    so a `wide` snippet can span the whole column while the copy
+                    stays readable. */}
                 <div className="min-w-0">
-                  <div className="post-body max-w-3xl">
+                  <div className="post-body post-body--column">
                     <BlogMarkdown markdown={post.content} snippetsBySlug={snippetsBySlug} />
                   </div>
                 </div>
