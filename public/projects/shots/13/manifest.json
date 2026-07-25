@@ -84,7 +84,15 @@
     "viewport": "desktop"
   },
   {
+    "file": "about-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
     "file": "contact-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "contact-mobile-s1.jpg",
     "viewport": "mobile"
   },
   {
@@ -92,7 +100,15 @@
     "viewport": "tablet"
   },
   {
+    "file": "companies-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
     "file": "properties-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "properties-wide-s1.jpg",
     "viewport": "wide"
   },
   {
@@ -100,7 +116,15 @@
     "viewport": "desktop"
   },
   {
+    "file": "properties-services-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
     "file": "properties-stays-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "properties-stays-mobile-s1.jpg",
     "viewport": "mobile"
   },
   {
@@ -108,7 +132,15 @@
     "viewport": "tablet"
   },
   {
+    "file": "properties-contact-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
     "file": "tishino-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "tishino-wide-s1.jpg",
     "viewport": "wide"
   },
   {
@@ -116,7 +148,15 @@
     "viewport": "desktop"
   },
   {
+    "file": "tishino-operations-desktop-s1.jpg",
+    "viewport": "desktop"
+  },
+  {
     "file": "tishino-produce-mobile.jpg",
+    "viewport": "mobile"
+  },
+  {
+    "file": "tishino-produce-mobile-s1.jpg",
     "viewport": "mobile"
   },
   {
@@ -124,7 +164,15 @@
     "viewport": "tablet"
   },
   {
+    "file": "tishino-contact-tablet-s1.jpg",
+    "viewport": "tablet"
+  },
+  {
     "file": "sunab-wide.jpg",
+    "viewport": "wide"
+  },
+  {
+    "file": "sunab-wide-s1.jpg",
     "viewport": "wide"
   }
 ]

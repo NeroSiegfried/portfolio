@@ -1,42 +1,47 @@
-/* Pengana Concept build log — the reading column borrows the site it describes:
-   warm paper, a serif display face for headings, and the group navy as the
-   accent. Scoped to .post-body by lib/blog/scope-css.ts. */
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap");
 
+/* Pengana's editorial publication system, including its thin rules and
+   route-level semantic colour tokens. */
 :root {
   --pg-paper: #f4f1e9;
-  --pg-paper-soft: #fbfaf7;
+  --pg-paper-bright: #fbfaf7;
   --pg-ink: #15191e;
-  --pg-muted: #5b6167;
+  --pg-muted: #62666a;
+  --pg-line: rgba(21, 25, 30, 0.18);
   --pg-accent: #456079;
   --pg-deep: #101b26;
-  --pg-line: rgba(21, 25, 30, 0.16);
-  --pg-code-bg: #101b26;
-  --pg-code-fg: #dfe7ed;
+  --pg-pale: #dfe7ed;
+  --pg-code: #101b26;
+  --pg-code-ink: #dfe7ed;
 }
 
 .post-body:where(.dark *) {
   --pg-paper: #141a20;
-  --pg-paper-soft: #182028;
+  --pg-paper-bright: #182028;
   --pg-ink: #e7ecf1;
   --pg-muted: #9aa6b2;
+  --pg-line: rgba(223, 231, 237, 0.2);
   --pg-accent: #8fb0cb;
-  --pg-deep: #cddbe6;
-  --pg-line: rgba(223, 231, 237, 0.18);
-  --pg-code-bg: #0c141b;
-  --pg-code-fg: #dfe7ed;
+  --pg-deep: #dfe7ed;
+  --pg-pale: #263746;
+  --pg-code: #0c141b;
+  --pg-code-ink: #dfe7ed;
 }
 
-/* Headings take the site's display serif and its accent rule. */
+> .prose {
+  color: var(--pg-ink);
+}
+
 h2 {
   position: relative;
-  margin-top: 3.25rem;
-  padding-top: 1.5rem;
+  margin-top: 4.5rem;
+  padding-top: 1.4rem;
   color: var(--pg-deep);
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2rem, 1.58rem + 1vw, 2.6rem);
   font-weight: 400;
-  font-size: 1.95rem;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
   border-top: 1px solid var(--pg-line);
 }
 
@@ -45,78 +50,149 @@ h2::after {
   position: absolute;
   top: -1px;
   left: 0;
-  width: 56px;
+  width: 4.5rem;
   height: 2px;
   background: var(--pg-accent);
 }
 
 h3 {
+  margin-top: 2.65rem;
   color: var(--pg-deep);
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.45rem;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
 }
 
-/* Body copy sits a touch wider and softer than the site default. */
 p {
   color: var(--pg-ink);
-  line-height: 1.72;
+  line-height: 1.76;
 }
 
 a {
   color: var(--pg-accent);
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  text-underline-offset: 3px;
-  transition: text-decoration-color 220ms ease;
+  font-weight: 550;
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.22em;
 }
 
-a:hover { text-decoration-color: currentColor; }
+a:hover {
+  color: var(--pg-deep);
+}
 
-/* Pull-quotes read as the client's voice — the brief, verbatim. */
+table {
+  width: 100%;
+  margin-block: 2.25rem 3rem;
+  color: var(--pg-ink);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  border: 1px solid var(--pg-line);
+  border-radius: 0;
+  border-collapse: collapse;
+  background: var(--pg-paper-bright);
+}
+
+th,
+td {
+  padding: 0.82rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-right: 1px solid var(--pg-line);
+  border-bottom: 1px solid var(--pg-line);
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+thead th {
+  color: var(--pg-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--pg-paper);
+}
+
+tbody td:first-child {
+  width: 9rem;
+  color: var(--pg-accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 blockquote {
   margin-inline: 0;
-  padding: 1rem 1.35rem;
-  color: var(--pg-ink);
+  padding: 1.4rem 1.5rem;
+  color: #dfe7ed;
   font-style: normal;
-  border-left: 3px solid var(--pg-accent);
-  background: var(--pg-paper);
-  border-radius: 0 10px 10px 0;
+  border: 0;
+  border-left: 3px solid #8fb0cb;
+  border-radius: 0;
+  background: #101b26;
 }
 
 blockquote p {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
-  font-size: 1.05rem;
+  margin: 0;
+  color: inherit;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.08rem;
 }
 
 blockquote p::before,
-blockquote p::after { content: none; }
-
-/* Code blocks take the group navy, matching the site's deep surfaces. */
-pre {
-  color: var(--pg-code-fg);
-  background: var(--pg-code-bg);
-  border: 1px solid var(--pg-line);
-  border-radius: 10px 10px 10px 2px;
+blockquote p::after {
+  content: none;
 }
 
-pre code { color: inherit; }
+pre {
+  color: var(--pg-code-ink);
+  background: var(--pg-code);
+  border: 1px solid var(--pg-line);
+  border-radius: 0;
+}
+
+pre code {
+  color: inherit;
+}
 
 :not(pre) > code {
-  padding: 0.15em 0.4em;
+  padding: 0.12em 0.36em;
   color: var(--pg-deep);
   font-weight: 500;
   background: var(--pg-paper);
   border: 1px solid var(--pg-line);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 :not(pre) > code::before,
-:not(pre) > code::after { content: none; }
+:not(pre) > code::after {
+  content: none;
+}
 
-/* Lists get the accent marker rather than a grey bullet. */
-ul > li::marker { color: var(--pg-accent); }
-ol > li::marker { color: var(--pg-accent); font-weight: 600; }
+ul > li::marker,
+ol > li::marker {
+  color: var(--pg-accent);
+}
 
-li { line-height: 1.65; }
+li {
+  line-height: 1.7;
+}
 
-strong { color: var(--pg-deep); font-weight: 650; }
+strong {
+  color: var(--pg-deep);
+  font-weight: 650;
+}
+
+.snippet-breakout > div,
+.not-prose,
+iframe {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

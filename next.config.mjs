@@ -1,11 +1,23 @@
 /** @type {import('next').NextConfig} */
 
+const isDevelopment = process.env.NODE_ENV === "development"
+const scriptSources = [
+  "'self'",
+  "'unsafe-inline'",
+  ...(isDevelopment ? ["'unsafe-eval'"] : []),
+  "https://vercel.live",
+  "https://challenges.cloudflare.com",
+].join(" ")
+
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
-  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+  { key: "Origin-Agent-Cluster", value: "?1" },
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
@@ -16,24 +28,24 @@ const securityHeaders = [
       "default-src 'self'",
       // vercel.live = the Vercel preview feedback/comments widget (preview deploys only).
       // challenges.cloudflare.com = Cloudflare Turnstile (contact + newsletter spam check).
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://challenges.cloudflare.com", // unsafe-eval needed by Next.js dev; tighten in prod
+      `script-src ${scriptSources}`,
       "style-src 'self' 'unsafe-inline' https://vercel.live",
       "img-src 'self' data: blob: https:",
       "font-src 'self' https://vercel.live",
       "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com https://*.s3.amazonaws.com https://*.s3.us-east-1.amazonaws.com https://d2ukq6p6guyuw1.cloudfront.net https://vercel.live https://*.pusher.com wss://*.pusher.com https://challenges.cloudflare.com",
       "frame-src 'self' https://vercel.live https://challenges.cloudflare.com",
-      "frame-ancestors 'self'",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "manifest-src 'self'",
+      "worker-src 'self' blob:",
     ].join("; "),
   },
 ]
 
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  poweredByHeader: false,
   images: {
     unoptimized: false,
     remotePatterns: [

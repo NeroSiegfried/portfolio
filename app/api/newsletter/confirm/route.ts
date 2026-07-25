@@ -7,7 +7,9 @@ export const runtime = "nodejs"
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const token = url.searchParams.get("token") ?? ""
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? url.origin
+  const site = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? url.origin).origin
   const ok = token ? await confirmSubscriber(token).catch(() => false) : false
-  return NextResponse.redirect(`${site}/newsletter/confirmed${ok ? "" : "?error=1"}`)
+  const response = NextResponse.redirect(`${site}/newsletter/confirmed${ok ? "" : "?error=1"}`)
+  response.headers.set("Cache-Control", "no-store")
+  return response
 }

@@ -1,0 +1,130 @@
+<main class="lab">
+  <header class="lab-head">
+    <section class="lab-copy">
+      <p class="eyebrow">INTERACTIVE / B+ TREE</p>
+      <h2>B+ tree page index</h2>
+      <p class="dek">Run the insert and scan path described in the article. Records remain in the leaves while internal pages direct the cursor.</p>
+      <p class="model-scope" aria-label="Diagram scope">
+        <span><b>Diagram</b> three-key teaching nodes</span>
+        <span><b>Source leaf</b> 13 rows / 4 KB</span>
+      </p>
+    </section>
+    <dl class="head-stats" aria-label="Tree statistics">
+      <div><dt>Levels</dt><dd id="stat-height">1</dd></div>
+      <div title="Nodes attached to the teaching tree. The source pager does not reclaim merged pages."><dt>Active nodes</dt><dd id="stat-pages">1</dd></div>
+      <div><dt>Rows</dt><dd id="stat-rows">0</dd></div>
+    </dl>
+  </header>
+
+  <div class="workbench">
+    <section class="tree-panel" aria-label="B plus tree diagram">
+      <nav class="tree-toolbar" aria-label="Tree controls">
+        <button class="primary" id="guided" type="button">
+          <span class="play-icon">▶</span>
+          Run example
+        </button>
+        <button id="populate" type="button">Populate</button>
+        <button id="scan" type="button">Scan leaves</button>
+        <button id="reset" type="button">Reset</button>
+        <label class="speed">
+          <span>Speed</span>
+          <input id="speed" type="range" min="120" max="900" value="300" step="10" />
+        </label>
+      </nav>
+
+      <div class="tree-viewport" id="tree-viewport">
+        <svg class="edges" id="edges" aria-hidden="true">
+          <defs>
+            <marker id="leaf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0 0L8 4L0 8Z"></path>
+            </marker>
+          </defs>
+        </svg>
+        <div id="tree-stage" class="tree-stage"></div>
+        <p class="root-note" id="root-note">page 0 stays the root</p>
+      </div>
+
+      <ul class="legend">
+        <li><i class="dot internal"></i> internal page</li>
+        <li><i class="dot leaf"></i> leaf page with rows</li>
+        <li><i class="line"></i> next leaf pointer</li>
+        <li class="legend-note">page IDs are illustrative</li>
+      </ul>
+    </section>
+
+    <aside class="trace-panel">
+      <header class="trace-status">
+        <span id="phase">READY</span>
+        <span id="frame-count">01 / 01</span>
+      </header>
+      <h3 id="step-title">An empty database file</h3>
+      <p id="step-detail">Opening a new file turns page 0 into an empty leaf. It is also the root.</p>
+
+      <ol class="pipeline" id="pipeline" aria-label="Database execution path">
+        <li data-stage="repl"><b>REPL</b><small>read_input</small></li>
+        <li class="pipeline-arrow" aria-hidden="true">→</li>
+        <li data-stage="prepare"><b>PREPARE</b><small>statement</small></li>
+        <li class="pipeline-arrow" aria-hidden="true">→</li>
+        <li data-stage="execute"><b>EXECUTE</b><small>statement</small></li>
+        <li class="pipeline-arrow" aria-hidden="true">→</li>
+        <li data-stage="cursor"><b>CURSOR</b><small>table_find</small></li>
+        <li class="pipeline-arrow" aria-hidden="true">→</li>
+        <li data-stage="pager"><b>PAGER</b><small>get_page</small></li>
+      </ol>
+
+      <section class="code-card" aria-label="Source and teaching code">
+        <div class="code-head">
+          <span id="code-label">db_open()</span>
+          <span id="code-kind">SOURCE EXCERPT</span>
+        </div>
+        <pre id="code-view"><code><span class="hot">void *root = get_page(pager, 0);</span>
+initialize_leaf_node(root);
+set_node_root(root, true);</code></pre>
+      </section>
+
+      <figure class="page-strip">
+        <figcaption class="page-summary">
+          <span>SOURCE PAGE</span>
+          <small>real 4 KB layout</small>
+          <strong id="page-kind">LEAF</strong>
+        </figcaption>
+        <div class="page-map" id="page-map">
+          <span class="header-cell">14 B header</span>
+          <span class="body-cell">13 × 297 B cells max</span>
+        </div>
+      </figure>
+    </aside>
+  </div>
+
+  <form class="command-bar" id="command-form">
+    <label for="command">db &gt;</label>
+    <input
+      id="command"
+      autocomplete="off"
+      spellcheck="false"
+      value="insert 18 user18 person18@example.com"
+      aria-describedby="command-help"
+    />
+    <button type="submit">Run</button>
+  </form>
+  <aside class="command-foot">
+    <p id="command-help">
+      <span class="command-group">SOURCE</span>
+      <button data-command="insert 8 user8 person8@example.com">insert 8</button>,
+      <button data-command="select">full select</button> and
+      <button data-command=".btree">.btree</button>.
+      <span class="command-group extension-group">VISUAL LAB</span>
+      <button data-command="find 18">find 18*</button> and
+      <button data-command="delete 18">delete 18*</button>
+    </p>
+    <p><span class="extension">*</span> FIND and DELETE are visual extensions. The tutorial C program implements INSERT and full SELECT.</p>
+  </aside>
+
+  <nav class="timeline" aria-label="Animation timeline">
+    <button id="prev-frame" type="button" aria-label="Previous step">←</button>
+    <div class="timeline-track"><span id="timeline-fill"></span></div>
+    <button id="next-frame" type="button" aria-label="Next step">→</button>
+  </nav>
+
+  <div id="live-region" class="sr-only" aria-live="polite"></div>
+</main>

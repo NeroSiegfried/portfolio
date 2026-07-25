@@ -1,4 +1,4 @@
 {
-  "title": "Three architectures",
-  "description": "LoopBridge did not start as a platform. Step through the three shapes it has had — static pages, an SPA with an API, and a containerised service with a media pipeline — and what each move actually bought."
+  "title": "Four architecture states",
+  "description": "LoopBridge grew from a Figma-led static build through a vanilla component layer and a routed platform into its current low-cost AWS deployment. Evaluated scale paths are labelled separately from production."
 }

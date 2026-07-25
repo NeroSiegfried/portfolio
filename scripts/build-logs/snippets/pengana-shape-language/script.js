@@ -19,9 +19,9 @@ var CHAMFER = {
 };
 
 var NOTES = {
-  plain: "Rejected. A uniform radius on all four corners is the default every template ships with — it says nothing about the brand and reads as an unfinished component, not a decision.",
-  radius: "The workhorse. One corner blown out to ~44px, the other three left razor sharp. Because it is a border-radius the card still clips its own overflow, so a zooming image on hover stays inside the shape.",
-  chamfer: "The accent. Reserved for deliberate two-panel compositions — it needs a clip-path, so it wins over any border-radius and has to be declared last in the cascade."
+  plain: "Measured radii remain on regular surfaces in the final site.",
+  radius: "Selected image cards use one exaggerated corner and three sharp corners. Border radius keeps a moving image clipped inside the frame.",
+  chamfer: "Angled cuts appear in selected editorial compositions across the shipped routes. Their position follows the image and adjacent copy."
 };
 
 function render() {

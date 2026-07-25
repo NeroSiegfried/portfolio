@@ -1,32 +1,41 @@
 var STAGES = [
   {
-    why: "A Figma file and a deadline. Plain HTML, CSS and JavaScript — no build step, no framework — so any frontend developer joining the community could open a file and contribute on day one.",
-    cost: "Cost: every page repeated the header, the footer and the nav. Changing one link meant changing it everywhere.",
+    why: "The first job was visual fidelity. Plain HTML, CSS and JavaScript kept the Figma translation direct while the public page set was still taking shape.",
+    cost: "Tradeoff: shared chrome and behaviour were repeated across a growing set of page files.",
     tiers: [
-      { label: "Delivery", parts: [{ t: "Static host" }] },
-      { label: "Pages", parts: [{ t: "index.html" }, { t: "about.html" }, { t: "academy.html" }, { t: "…" }] },
-      { label: "Behaviour", parts: [{ t: "vanilla JS" }] }
+      { label: "Source", parts: [{ t: "Figma desktop" }, { t: "Figma mobile" }] },
+      { label: "Pages", parts: [{ t: "HTML" }, { t: "page CSS" }, { t: "vanilla JS" }] },
+      { label: "Delivery", parts: [{ t: "static host" }] }
     ]
   },
   {
-    why: "Accounts, an article feed and a course catalogue arrived. Repeating markup stopped being a contribution feature and started being a bug source, so the site became a routed SPA with a real API behind it.",
-    cost: "Cost: a build step and a server to keep alive — the price of not hand-syncing eleven copies of the nav.",
+    why: "Before the React migration, a vanilla component loader removed the worst duplication. Pages declared components, while JSON and localStorage supplied a mock content and account layer.",
+    cost: "Tradeoff: it improved composition and testing, but application state and product workflows were beginning to exceed the mock backend.",
     tiers: [
-      { label: "Delivery", parts: [{ t: "Static host" }] },
-      { label: "Client", parts: [{ t: "React 19", n: true }, { t: "Vite", n: true }, { t: "react-router", n: true }] },
-      { label: "API", parts: [{ t: "Express", n: true }, { t: "bcrypt", n: true }, { t: "Google OAuth", n: true }] },
-      { label: "Data", parts: [{ t: "SQLite", n: true }] }
+      { label: "Shell", parts: [{ t: "data-component", n: true }, { t: "shared nav", n: true }, { t: "shared footer", n: true }] },
+      { label: "Content", parts: [{ t: "JSON", n: true }, { t: "localStorage", n: true }] },
+      { label: "Pages", parts: [{ t: "HTML" }, { t: "isolated CSS" }, { t: "component JS", n: true }] }
     ]
   },
   {
-    why: "Video lessons broke the model. User uploads had to be transcoded, stored, streamed adaptively and played back at the right orientation — none of which belongs in a request handler. Media moved to its own pipeline and the app moved into a container.",
-    cost: "Cost: real infrastructure — IAM, callbacks, a queue, and a class of bug that only shows up on a portrait phone video.",
+    why: "Accounts, roles, editors, moderation, courses and progress needed durable shared state. The client became a routed React application and the server was split into routes, services and repositories.",
+    cost: "Tradeoff: the application now needed a build, a server and a database. The async data boundary keeps a later PostgreSQL migration possible, though the two schemas still need consolidation.",
     tiers: [
-      { label: "Edge", parts: [{ t: "Route 53" }, { t: "CloudFront", n: true }, { t: "ACM", n: true }] },
-      { label: "Compute", parts: [{ t: "ALB", n: true }, { t: "ECS Fargate", n: true }, { t: "Express" }] },
-      { label: "Media", parts: [{ t: "S3 uploads", n: true }, { t: "MediaConvert", n: true }, { t: "HLS", n: true }, { t: "hls.js", n: true }] },
-      { label: "Data", parts: [{ t: "RDS Postgres", n: true }, { t: "Secrets Manager", n: true }] },
-      { label: "Ops", parts: [{ t: "CloudWatch", n: true }, { t: "Terraform", n: true }] }
+      { label: "Client", parts: [{ t: "React", n: true }, { t: "Vite", n: true }, { t: "React Router", n: true }] },
+      { label: "HTTP", parts: [{ t: "thin Express routes", n: true }, { t: "auth guards", n: true }] },
+      { label: "Domain", parts: [{ t: "services", n: true }, { t: "repositories", n: true }] },
+      { label: "Data", parts: [{ t: "async DB adapter", n: true }, { t: "SQLite" }, { t: "Postgres seam", n: true }] }
+    ]
+  },
+  {
+    why: "The deployed system starts small and keeps the expensive migrations reversible. One EC2 host runs nginx and the app, while S3 handles media and Litestream copies the SQLite WAL off the machine.",
+    cost: "Scale path: move to RDS after measured write pressure or multiple app replicas. Add CloudFront when global media traffic justifies it. ECS and RDS were evaluated, not deployed.",
+    tiers: [
+      { label: "Edge", parts: [{ t: "nginx TLS", n: true }, { t: "API throttle", n: true }, { t: "asset cache headers", n: true }] },
+      { label: "Compute", parts: [{ t: "EC2", n: true }, { t: "Docker Compose", n: true }, { t: "app + nginx", n: true }] },
+      { label: "Data", parts: [{ t: "SQLite WAL on EBS", n: true }, { t: "Litestream → S3", n: true }] },
+      { label: "Media", parts: [{ t: "S3 uploads", n: true }, { t: "MediaConvert", n: true }, { t: "HLS", n: true }] },
+      { label: "Deploy", parts: [{ t: "GitHub OIDC", n: true }, { t: "ECR", n: true }, { t: "SSM", n: true }] }
     ]
   }
 ];

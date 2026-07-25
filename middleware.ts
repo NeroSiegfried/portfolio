@@ -13,6 +13,30 @@ export function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0].toLowerCase() ?? ""
   const pathname = request.nextUrl.pathname
 
+  // Reject browser-initiated cross-site mutations before they reach any API
+  // handler. SameSite cookies are still set, but this is an additional CSRF
+  // boundary for authenticated routes and future cookie changes.
+  if (pathname.startsWith("/api/") && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+    const origin = request.headers.get("origin")
+    const fetchSite = request.headers.get("sec-fetch-site")
+    if (fetchSite === "cross-site") {
+      return NextResponse.json({ error: "Cross-site request blocked." }, { status: 403 })
+    }
+    if (origin) {
+      try {
+        const allowed = new Set([request.nextUrl.origin])
+        if (process.env.NEXT_PUBLIC_SITE_URL) {
+          allowed.add(new URL(process.env.NEXT_PUBLIC_SITE_URL).origin)
+        }
+        if (!allowed.has(new URL(origin).origin)) {
+          return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 })
+        }
+      } catch {
+        return NextResponse.json({ error: "Invalid request origin." }, { status: 403 })
+      }
+    }
+  }
+
   // Redirect blog subdomain → main domain /blog/ path.
   // Using a hard redirect (not a rewrite) keeps everything on one origin so that
   // session cookies, OAuth callback URLs, and API routes all work consistently.

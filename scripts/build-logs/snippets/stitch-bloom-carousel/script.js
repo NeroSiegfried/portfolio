@@ -9,11 +9,31 @@ var Y_STEP = 0.286;    // vertical step per position (this is the "diagonal")
 var VISIBLE_SIDE = 2;  // cards rendered either side of the active one
 
 var ITEMS = [
-  { name: "Najma handbag", price: "₦65,000", a: "#8c6248", b: "#4a3323" },
-  { name: "Laptop sleeve", price: "₦45,000", a: "#a98a72", b: "#6b4a34" },
-  { name: "iPad sleeve", price: "₦35,000", a: "#7d6b5c", b: "#3d332b" },
-  { name: "Key holder", price: "₦15,000", a: "#b39680", b: "#7a5a41" },
-  { name: "Najma clutch", price: "₦110,000", a: "#6f5744", b: "#2e241c" }
+  {
+    name: "Najma Tote Bag",
+    description: "A roomy, structured tote handcrafted in the signature pink and brown colourway.",
+    image: "https://thestitchbloom.com/images/products/najma-tote-1.jpeg"
+  },
+  {
+    name: "Najma Shoulder Bag",
+    description: "Clean lines, comfortable straps and the heavy recycled-yarn texture used across the collection.",
+    image: "https://thestitchbloom.com/images/products/najma-shoulder-1.jpeg"
+  },
+  {
+    name: "Najma Mini Bag",
+    description: "The compact Najma silhouette, designed to sit crossbody or under the arm.",
+    image: "https://thestitchbloom.com/images/products/najma-mini-1.jpeg"
+  },
+  {
+    name: "Najma Handbag",
+    description: "A structured handbag shown here in its pink and brown colourway.",
+    image: "https://thestitchbloom.com/images/products/najma-handbag-pink-1.jpeg"
+  },
+  {
+    name: "Najma Clutch",
+    description: "A limited evening piece and the most detailed item in the current catalogue.",
+    image: "https://thestitchbloom.com/images/products/najma-clutch-1.jpeg"
+  }
 ];
 
 var dc = document.getElementById("dc");
@@ -23,6 +43,9 @@ var count = document.getElementById("count");
 var active = 0;
 var cw = 0;
 var timer = null;
+var controls = document.getElementById("controls");
+var activeName = document.getElementById("activeName");
+var activeDescription = document.getElementById("activeDescription");
 
 // Build every card ONCE. This is the whole reason the deck animates: a CSS
 // transition can only animate a change on an element that was already in the
@@ -32,10 +55,7 @@ var timer = null;
 var cards = ITEMS.map(function (item, i) {
   var el = document.createElement("div");
   el.className = "dc__card";
-  el.innerHTML =
-    '<span class="dc__art" style="background:linear-gradient(155deg,' + item.a + ',' + item.b + ')"></span>' +
-    '<span class="dc__label"><span class="dc__name">' + item.name + "</span>" +
-    '<span class="dc__price">' + item.price + "</span></span>";
+  el.innerHTML = '<img class="dc__art" src="' + item.image + '" alt="' + item.name + '">';
   el.addEventListener("click", function () { if (i !== active) goTo(i); });
   el.addEventListener("keydown", function (e) { if (e.key === "Enter" && i !== active) goTo(i); });
   stage.appendChild(el);
@@ -58,6 +78,7 @@ function geometry() {
 function render(instant) {
   var g = geometry();
   stage.style.height = g.stageH + "px";
+  controls.style.top = g.cardTop + g.cardH + "px";
 
   cards.forEach(function (el, i) {
     var total = ITEMS.length;
@@ -96,6 +117,8 @@ function render(instant) {
   });
 
   count.textContent = active + 1 + " / " + ITEMS.length;
+  activeName.textContent = ITEMS[active].name;
+  activeDescription.textContent = ITEMS[active].description;
 
   readout.innerHTML = [
     ["container", cw + "px"], ["cardW", g.cardW + "px"], ["cardH", g.cardH + "px"],
@@ -111,7 +134,7 @@ function goTo(i) {
 
 function restart() {
   clearInterval(timer);
-  timer = setInterval(function () { goTo(active + 1); }, 3600);
+  timer = setInterval(function () { goTo(active + 1); }, 4000);
 }
 
 document.getElementById("prev").addEventListener("click", function () { goTo(active - 1); });

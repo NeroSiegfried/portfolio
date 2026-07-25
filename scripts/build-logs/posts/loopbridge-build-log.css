@@ -1,100 +1,196 @@
-/* LoopBridge build log — terminal-flavoured: dark code surfaces, a mint accent,
-   monospace section markers. Scoped to .post-body. */
+@import url("https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@300;400;500;600;700&display=swap");
 
+/* Taken from LoopBridge's global, article and glossary styles. */
 :root {
-  --lb-ink: #101521;
-  --lb-muted: #576073;
-  --lb-accent: #0f9d6b;
-  --lb-accent-soft: rgba(15, 157, 107, 0.1);
-  --lb-blue: #2f5fd0;
-  --lb-line: rgba(16, 21, 33, 0.16);
-  --lb-code-bg: #0b0e14;
-  --lb-code-fg: #e8ecf5;
+  --lb-ink: #1e1e1e;
+  --lb-copy: #444b54;
+  --lb-navy: #013352;
+  --lb-navy-hover: #01253d;
+  --lb-green: #30c070;
+  --lb-green-soft: #e9fded;
+  --lb-cyan: #00c1df;
+  --lb-grey: #f2f4f6;
+  --lb-grey-light: #f9fafb;
+  --lb-line: #e8ebef;
+  --lb-card: #ffffff;
+  --lb-code: #013352;
+  --lb-code-ink: #f2f4f6;
 }
 
 .post-body:where(.dark *) {
-  --lb-ink: #e8ecf5;
-  --lb-muted: #97a0b3;
-  --lb-accent: #4ade9b;
-  --lb-accent-soft: rgba(74, 222, 155, 0.12);
-  --lb-blue: #6ea8ff;
-  --lb-line: rgba(232, 236, 245, 0.18);
-  --lb-code-bg: #05070c;
-  --lb-code-fg: #e8ecf5;
+  --lb-ink: #f2f4f6;
+  --lb-copy: #c4cbd2;
+  --lb-navy: #75d7ea;
+  --lb-navy-hover: #9be4f1;
+  --lb-green: #56ffa1;
+  --lb-green-soft: #173a2a;
+  --lb-cyan: #75d7ea;
+  --lb-grey: #182832;
+  --lb-grey-light: #101d25;
+  --lb-line: #29404d;
+  --lb-card: #10202a;
+  --lb-code: #001b2c;
+  --lb-code-ink: #f2f4f6;
+}
+
+> .prose {
+  color: var(--lb-ink);
+  font-family: "Schibsted Grotesk", var(--font-sans), sans-serif;
 }
 
 h2 {
-  margin-top: 3rem;
-  color: var(--lb-ink);
+  position: relative;
+  margin-top: 4rem;
+  padding-bottom: 0.8rem;
+  color: var(--lb-navy);
+  font-family: var(--font-display), "Arial Black", sans-serif;
+  font-size: clamp(1.9rem, 1.55rem + 0.85vw, 2.35rem);
   font-weight: 650;
-  letter-spacing: -0.015em;
+  line-height: 1.16;
+  letter-spacing: -0.025em;
+  border-bottom: 1px solid var(--lb-line);
 }
 
-/* A monospace marker before each section, like a shell prompt. */
-h2::before {
-  content: "▸ ";
-  color: var(--lb-accent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-weight: 400;
+h2::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 3.5rem;
+  height: 2px;
+  background: var(--lb-green);
 }
 
-h3 { color: var(--lb-ink); font-weight: 600; }
+h3 {
+  margin-top: 2.5rem;
+  color: var(--lb-navy);
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+}
 
-p { color: var(--lb-ink); line-height: 1.72; }
+p {
+  color: var(--lb-ink);
+  line-height: 1.76;
+}
 
 a {
-  color: var(--lb-blue);
-  font-weight: 500;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  text-underline-offset: 3px;
-  transition: text-decoration-color 220ms ease;
+  color: var(--lb-green);
+  font-weight: 550;
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.22em;
+  transition: color 150ms ease;
 }
 
-a:hover { text-decoration-color: currentColor; }
+a:hover {
+  color: var(--lb-navy);
+}
+
+table {
+  width: 100%;
+  margin-block: 2.25rem 3rem;
+  overflow: hidden;
+  color: var(--lb-ink);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  border: 1px solid var(--lb-line);
+  border-radius: 0.75rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--lb-card);
+}
+
+th,
+td {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-right: 1px solid var(--lb-line);
+  border-bottom: 1px solid var(--lb-line);
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+thead th {
+  color: var(--lb-navy);
+  font-weight: 600;
+  background: var(--lb-grey);
+}
+
+tbody td:first-child {
+  width: 9rem;
+  color: var(--lb-copy);
+  font-weight: 500;
+}
 
 blockquote {
   margin-inline: 0;
-  padding: 1rem 1.35rem;
-  color: var(--lb-ink);
+  padding: 1.25rem 1.4rem;
+  color: #ffffff;
   font-style: normal;
-  border-left: 3px solid var(--lb-accent);
-  border-radius: 0 6px 6px 0;
-  background: var(--lb-accent-soft);
+  border: 0;
+  border-radius: 1rem;
+  background: #013352;
+}
+
+blockquote p {
+  margin: 0;
+  color: inherit;
 }
 
 blockquote p::before,
-blockquote p::after { content: none; }
-
-pre {
-  color: var(--lb-code-fg);
-  background: var(--lb-code-bg);
-  border: 1px solid var(--lb-line);
-  border-radius: 6px;
+blockquote p::after {
+  content: none;
 }
 
-pre code { color: inherit; }
+pre {
+  color: var(--lb-code-ink);
+  background: var(--lb-code);
+  border: 1px solid color-mix(in srgb, var(--lb-cyan) 32%, transparent);
+  border-radius: 0.5rem;
+}
+
+pre code {
+  color: inherit;
+}
 
 :not(pre) > code {
-  padding: 0.15em 0.4em;
-  color: var(--lb-ink);
+  padding: 0.12em 0.38em;
+  color: var(--lb-navy);
   font-weight: 500;
-  background: var(--lb-accent-soft);
+  background: var(--lb-grey);
   border: 1px solid var(--lb-line);
-  border-radius: 3px;
+  border-radius: 0.3rem;
 }
 
 :not(pre) > code::before,
-:not(pre) > code::after { content: none; }
-
-ul > li::marker { color: var(--lb-accent); }
-
-/* The four-step debugging sequence reads better as a machine-numbered list. */
-ol > li::marker {
-  color: var(--lb-accent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-weight: 700;
+:not(pre) > code::after {
+  content: none;
 }
 
-li { line-height: 1.68; }
+ul > li::marker,
+ol > li::marker {
+  color: var(--lb-green);
+}
 
-strong { color: var(--lb-ink); font-weight: 650; }
+li {
+  line-height: 1.7;
+}
+
+strong {
+  color: var(--lb-navy);
+  font-weight: 650;
+}
+
+.snippet-breakout > div,
+.not-prose,
+iframe {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

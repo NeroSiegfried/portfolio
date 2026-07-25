@@ -7,12 +7,14 @@ export interface BlogUser {
   passwordHash: string
   role: UserRole
   createdAt: string
+  updatedAt?: string
   blocked?: boolean
   displayName?: string | null
   avatarUrl?: string | null
 }
 
 export interface BlogSession {
+  id?: string
   token: string
   userId: string
   createdAt: string
@@ -85,6 +87,7 @@ export interface BlogCommentVote {
   commentId: string
   userId: string
   value: -1 | 1
+  createdAt?: string
 }
 
 export interface BlogPostVote {
@@ -92,6 +95,7 @@ export interface BlogPostVote {
   postId: string
   userId: string
   value: 1
+  createdAt?: string
 }
 
 export interface BlogDb {

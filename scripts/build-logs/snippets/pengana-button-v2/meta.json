@@ -1,4 +1,4 @@
 {
-  "title": "v2 — 66e8b1b",
-  "description": "Second attempt: the circular arrow travels left→right, but the two label copies cross-fade in place instead of travelling with it. Hover it — the text swaps, it doesn't move."
+  "title": "v2 · 66e8b1b",
+  "description": "The circular arrow travels from left to right. The two label copies still cross-fade in place."
 }

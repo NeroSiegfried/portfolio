@@ -1,0 +1,4 @@
+{
+  "title": "The expanding LoopBridge navbar",
+  "description": "A reduced copy of LoopBridge's mobile navbar mechanics. The same bordered pill changes its lower corners, expands in place and increases the first section's padding by its measured open height."
+}

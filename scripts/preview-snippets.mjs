@@ -17,14 +17,14 @@ const WIDTH = Number(process.env.WIDTH ?? 760)
 // Kept in sync with components/blog-snippet-embed.tsx.
 const THEME_RESET = `
 :root {
-  --sn-bg:#f7f8fc;--sn-fg:#1a1a1a;--sn-primary:#4f8cff;--sn-primary-fg:#fff;
-  --sn-secondary:#ff6b2b;--sn-muted:#e4e7f0;--sn-muted-fg:#666;
-  --sn-border:#e0e3ee;--sn-radius:0.5rem;
+  --sn-bg:#f7f6f2;--sn-fg:#0a0a0a;--sn-primary:#fb460d;--sn-primary-fg:#fff;
+  --sn-secondary:#ebe8e2;--sn-muted:#ebe8e2;--sn-muted-fg:#69645e;
+  --sn-card:#fff;--sn-border:#e1ded8;--sn-radius:0;
 }
 [data-theme="dark"]{
-  --sn-bg:#1a1a1a;--sn-fg:#f0f4ff;--sn-primary:#4f8cff;--sn-primary-fg:#fff;
-  --sn-secondary:#ff6b2b;--sn-muted:#23263a;--sn-muted-fg:#a6a6a6;
-  --sn-border:#2a3040;--sn-radius:0.5rem;
+  --sn-bg:#0d0d0d;--sn-fg:#f5f5f5;--sn-primary:#fb460d;--sn-primary-fg:#fff;
+  --sn-secondary:#242424;--sn-muted:#242424;--sn-muted-fg:#a3a3a3;
+  --sn-card:#171717;--sn-border:#292929;--sn-radius:0;
 }
 *,*::before,*::after{box-sizing:border-box;}
 html,body{margin:0;min-height:0!important;height:auto!important;

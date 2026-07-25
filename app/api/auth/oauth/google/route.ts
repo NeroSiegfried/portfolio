@@ -1,7 +1,15 @@
 // app/api/auth/oauth/google/route.ts
 import { randomBytes } from "crypto"
 import { NextResponse } from "next/server"
-import { setSessionCookie, hashPassword, isSecureRequest } from "@/lib/blog/auth"
+import {
+  consumeOAuthState,
+  clearOAuthStateCookie,
+  createOAuthState,
+  hashPassword,
+  isSecureRequest,
+  sanitizeReturnTo,
+  setSessionCookie,
+} from "@/lib/blog/auth"
 import { createId, getPool } from "@/lib/blog/store"
 
 const SESSION_DURATION_DAYS = 14
@@ -10,24 +18,19 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   const isLocal = !siteUrl || url.hostname === "localhost" || url.hostname === "127.0.0.1"
-  const baseUrl = isLocal ? url.origin : siteUrl!
+  const baseUrl = new URL(isLocal ? url.origin : siteUrl!).origin
   // redirect_uri must exactly match what is registered in Google Console
   const redirectUri = `${baseUrl}/api/auth/oauth/google/`
 
   // ── CALLBACK: Google redirected back with ?code= ──────────────────────────
   const code = url.searchParams.get("code")
   if (code) {
-    const stateParam = url.searchParams.get("state")
-    let returnTo = "/blog"
-    try {
-      if (stateParam) returnTo = Buffer.from(stateParam, "base64url").toString("utf-8")
-    } catch { /* ignore */ }
-    if (!returnTo.startsWith("/")) returnTo = "/blog"
-
     const failRedirect = `${baseUrl}/blog?auth_error=google`
+    const failureResponse = NextResponse.redirect(failRedirect)
+    const returnTo = consumeOAuthState(request, failureResponse, "google", url.searchParams.get("state"))
     const clientId = process.env.GOOGLE_CLIENT_ID
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-    if (!clientId || !clientSecret) return NextResponse.redirect(failRedirect)
+    if (!returnTo || !clientId || !clientSecret) return failureResponse
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -40,24 +43,25 @@ export async function GET(request: Request) {
         redirect_uri: redirectUri,
       }),
     })
-    if (!tokenRes.ok) return NextResponse.redirect(failRedirect)
+    if (!tokenRes.ok) return failureResponse
 
     const tokenData = (await tokenRes.json()) as { access_token?: string }
     const accessToken = tokenData.access_token
-    if (!accessToken) return NextResponse.redirect(failRedirect)
+    if (!accessToken) return failureResponse
 
     const userRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (!userRes.ok) return NextResponse.redirect(failRedirect)
+    if (!userRes.ok) return failureResponse
 
     const googleUser = (await userRes.json()) as {
-      sub: string; email: string; name?: string; given_name?: string
+      sub: string; email: string; email_verified?: boolean; name?: string; given_name?: string
     }
-    if (!googleUser.email) return NextResponse.redirect(failRedirect)
+    if (!googleUser.email || googleUser.email_verified !== true) return failureResponse
+    const normalizedEmail = googleUser.email.trim().toLowerCase()
 
     const pool = getPool()
-    let userRow = await pool.query("SELECT * FROM users WHERE email=$1 LIMIT 1", [googleUser.email])
+    let userRow = await pool.query("SELECT * FROM users WHERE email=$1 LIMIT 1", [normalizedEmail])
     if (!userRow.rows.length) {
       const id = createId()
       const username = (googleUser.given_name || googleUser.name || `google-${googleUser.sub}`).slice(0, 50)
@@ -65,14 +69,14 @@ export async function GET(request: Request) {
         `INSERT INTO users (id, username, email, password_hash, role, blocked, created_at, updated_at)
          VALUES ($1, $2, $3, $4, 'user', false, NOW(), NOW())
          ON CONFLICT (email) DO NOTHING`,
-        [id, username, googleUser.email, hashPassword(createId())]
+        [id, username, normalizedEmail, hashPassword(createId())]
       )
-      userRow = await pool.query("SELECT * FROM users WHERE email=$1 LIMIT 1", [googleUser.email])
+      userRow = await pool.query("SELECT * FROM users WHERE email=$1 LIMIT 1", [normalizedEmail])
     }
-    if (!userRow.rows.length) return NextResponse.redirect(failRedirect)
+    if (!userRow.rows.length) return failureResponse
 
     const r = userRow.rows[0]
-    if ((r.role as string) === "admin") return NextResponse.redirect(failRedirect)
+    if ((r.role as string) === "admin" || (r.blocked as boolean)) return failureResponse
 
     const token = randomBytes(32).toString("hex")
     const expiresAt = new Date()
@@ -84,6 +88,7 @@ export async function GET(request: Request) {
     )
 
     const response = NextResponse.redirect(`${baseUrl}${returnTo}`)
+    clearOAuthStateCookie(response, "google", isSecureRequest(url))
     setSessionCookie(response, token, isSecureRequest(url))
     return response
   }
@@ -94,14 +99,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Google OAuth is not configured." }, { status: 503 })
   }
 
-  const returnTo = url.searchParams.get("returnTo") ?? "/blog"
+  const returnTo = sanitizeReturnTo(url.searchParams.get("returnTo"))
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth")
   authUrl.searchParams.set("client_id", clientId)
   authUrl.searchParams.set("redirect_uri", redirectUri)
   authUrl.searchParams.set("response_type", "code")
   authUrl.searchParams.set("scope", "openid email profile")
   authUrl.searchParams.set("access_type", "online")
-  authUrl.searchParams.set("state", Buffer.from(returnTo).toString("base64url"))
-
-  return NextResponse.redirect(authUrl.toString())
+  const response = NextResponse.redirect(authUrl.toString())
+  authUrl.searchParams.set("state", createOAuthState(response, "google", returnTo, isSecureRequest(url)))
+  response.headers.set("Location", authUrl.toString())
+  response.headers.set("Cache-Control", "no-store")
+  return response
 }

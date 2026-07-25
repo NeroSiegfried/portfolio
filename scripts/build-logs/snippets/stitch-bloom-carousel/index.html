@@ -1,14 +1,29 @@
 <div class="stage">
   <div class="dc" id="dc">
-    <div class="dc__stage" id="dcStage" aria-live="polite"></div>
-    <div class="dc__controls">
-      <button class="dc__nav" type="button" id="prev" aria-label="Previous">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
-      <span class="dc__count" id="count">1 / 5</span>
-      <button class="dc__nav" type="button" id="next" aria-label="Next">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+    <div class="dc__stage" id="dcStage" aria-live="polite">
+      <div class="dc__controls" id="controls">
+        <button class="dc__nav" type="button" id="prev" aria-label="Previous">
+          <span class="dc__arrow dc__arrow--first">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+          <span class="dc__arrow dc__arrow--second">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </button>
+        <span class="dc__count" id="count">1 / 5</span>
+        <button class="dc__nav" type="button" id="next" aria-label="Next">
+          <span class="dc__arrow dc__arrow--first">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+          <span class="dc__arrow dc__arrow--second">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </button>
+      </div>
+    </div>
+    <div class="dc__info">
+      <p class="dc__name" id="activeName">Najma Tote Bag</p>
+      <p class="dc__description" id="activeDescription">A roomy, structured tote handcrafted in the signature pink and brown colourway.</p>
     </div>
   </div>
 

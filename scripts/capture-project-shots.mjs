@@ -46,10 +46,27 @@ async function gotoRoute(page, origin, route, wait) {
   // sockets open forever and never reach network-idle, timing the crawl out. The
   // fixed render `wait` + reveal()'s scrolling still let lazy content settle. Try
   // for network-idle as a bonus but don't fail the shot if it never comes.
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+  if (response && response.status() >= 400) {
+    throw new Error(`HTTP ${response.status()} for ${route}`)
+  }
   await page.waitForNetworkIdle({ idleTime: 500, timeout: Math.max(wait, 2500) }).catch(() => {})
   await new Promise(r => setTimeout(r, wait))
   await dismissBanners(page)
+
+  // A successful navigation call does not mean the application rendered a
+  // useful page. Vercel's routing error is itself valid HTML, and an SPA can
+  // also serve a branded not-found screen with status 200. Refuse to capture
+  // either case so an infrastructure error never becomes portfolio artwork.
+  const renderedError = await page.evaluate(() => {
+    const text = `${document.title}\n${document.body?.innerText ?? ''}`.trim()
+    return (
+      /\b404\s*:\s*NOT_FOUND\b/i.test(text) ||
+      /\bDEPLOYMENT_NOT_FOUND\b/i.test(text) ||
+      /\bThis page could not be found\b/i.test(text)
+    )
+  })
+  if (renderedError) throw new Error(`rendered a not-found page for ${route}`)
 }
 
 async function dismissBanners(page) {
@@ -194,16 +211,32 @@ async function captureSections(page, vp, wait, dir, tag, vpName, maxSec, manifes
 const SUB_VPS = ['desktop', 'mobile', 'tablet', 'wide']
 
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] })
+fs.mkdirSync(OUT, { recursive: true })
+
+function publishCapture(stagingDir, finalDir) {
+  const previousDir = `${finalDir}.previous-${process.pid}`
+  fs.rmSync(previousDir, { recursive: true, force: true })
+  if (fs.existsSync(finalDir)) fs.renameSync(finalDir, previousDir)
+  try {
+    fs.renameSync(stagingDir, finalDir)
+    fs.rmSync(previousDir, { recursive: true, force: true })
+  } catch (error) {
+    if (fs.existsSync(previousDir) && !fs.existsSync(finalDir)) {
+      fs.renameSync(previousDir, finalDir)
+    }
+    throw error
+  }
+}
 
 for (const proj of PROJECTS) {
   if (ONLY && !ONLY.has(String(proj.id))) continue
-  const dir = path.join(OUT, String(proj.id))
-  fs.rmSync(dir, { recursive: true, force: true })
-  fs.mkdirSync(dir, { recursive: true })
+  const finalDir = path.join(OUT, String(proj.id))
+  const dir = fs.mkdtempSync(path.join(OUT, `.capture-${proj.id}-`))
   const manifest = []
   const page = await browser.newPage()
   await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36')
   const origin = new URL(proj.url).origin
+  let completed = false
 
   try {
     // 1) Discover the full page list (thorough, desktop; path- or hash-routed).
@@ -234,11 +267,15 @@ for (const proj of PROJECTS) {
         await captureSections(page, vp, proj.wait, dir, slug, vpName, SUB_SECT, manifest)
       } catch (e) { console.log(`  [${proj.id}] ${slug} ${vpName} failed: ${e.message}`) }
     }
+    if (!manifest.length) throw new Error('capture produced no usable screenshots')
+    fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2))
+    publishCapture(dir, finalDir)
+    completed = true
     console.log(`[${proj.id}] ${manifest.length} shots (${subpages.length + 1} pages)`)
   } catch (e) {
     console.log(`[${proj.id}] FAILED: ${e.message}`)
   } finally {
-    fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2))
+    if (!completed) fs.rmSync(dir, { recursive: true, force: true })
     await page.close()
   }
 }

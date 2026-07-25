@@ -18,6 +18,41 @@ function normalizeMarkdownNewlines(raw: string): string {
     return `\x00P${preserved.length - 1}\x00`
   })
 
+  // Preserve GFM tables. Their rows must remain separated by single newlines
+  // or remark-gfm reads each row as an ordinary paragraph.
+  const lines = text.split("\n")
+  const tableDelimiter =
+    /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/
+  const withTablesPreserved: string[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const header = lines[i]
+    const delimiter = lines[i + 1]
+
+    if (header.includes("|") && delimiter && tableDelimiter.test(delimiter)) {
+      const tableLines = [header, delimiter]
+      let next = i + 2
+
+      while (
+        next < lines.length &&
+        lines[next].trim() !== "" &&
+        lines[next].includes("|")
+      ) {
+        tableLines.push(lines[next])
+        next++
+      }
+
+      preserved.push(tableLines.join("\n"))
+      withTablesPreserved.push(`\x00P${preserved.length - 1}\x00`)
+      i = next - 1
+      continue
+    }
+
+    withTablesPreserved.push(header)
+  }
+
+  text = withTablesPreserved.join("\n")
+
   // Preserve inline code
   text = text.replace(/`[^`\n]+`/g, (match) => {
     preserved.push(match)
@@ -117,7 +152,7 @@ export default function BlogMarkdown({ markdown, snippetsBySlug, user }: BlogMar
             return (
               <div
                 key={`missing-${index}`}
-                className="my-4 rounded-md border border-dashed p-3 text-sm text-muted-foreground"
+                className="my-4 border border-dashed p-3 text-sm text-muted-foreground"
               >
                 Snippet not found: <code>{block.slugs.join(", ")}</code>
               </div>

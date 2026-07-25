@@ -18,12 +18,26 @@ export async function ensureNewsletterTables() {
        email             text UNIQUE NOT NULL,
        status            text NOT NULL DEFAULT 'pending',
        confirm_token     text,
+       confirm_expires_at timestamptz,
        unsubscribe_token text NOT NULL,
        created_at        timestamptz NOT NULL DEFAULT now(),
        confirmed_at      timestamptz,
        unsubscribed_at   timestamptz,
        ip                text
      )`,
+  )
+  // Safe, idempotent migration for databases created before token expiry was
+  // introduced. Old pending links get a bounded grace period.
+  await getPool().query(
+    `ALTER TABLE newsletter_subscribers
+       ADD COLUMN IF NOT EXISTS confirm_expires_at timestamptz;
+     UPDATE newsletter_subscribers
+        SET confirm_expires_at = created_at + interval '30 days'
+      WHERE status = 'pending' AND confirm_expires_at IS NULL;
+     CREATE UNIQUE INDEX IF NOT EXISTS newsletter_confirm_token_idx
+       ON newsletter_subscribers (confirm_token) WHERE confirm_token IS NOT NULL;
+     CREATE UNIQUE INDEX IF NOT EXISTS newsletter_unsubscribe_token_idx
+       ON newsletter_subscribers (unsubscribe_token);`,
   )
   ensured = true
 }
@@ -49,9 +63,8 @@ export async function upsertPendingSubscriber(email: string, ip: string): Promis
   const pool = getPool()
   const existing = await pool.query<{
     status: SubscriberStatus
-    confirm_token: string | null
     unsubscribe_token: string
-  }>(`SELECT status, confirm_token, unsubscribe_token FROM newsletter_subscribers WHERE email=$1`, [email])
+  }>(`SELECT status, unsubscribe_token FROM newsletter_subscribers WHERE email=$1`, [email])
 
   if (existing.rows.length) {
     const row = existing.rows[0]
@@ -59,10 +72,14 @@ export async function upsertPendingSubscriber(email: string, ip: string): Promis
       return { status: "confirmed", confirmToken: null, unsubscribeToken: row.unsubscribe_token, created: false }
     }
     // pending or previously unsubscribed → (re)send a confirmation
-    const confirmToken = row.confirm_token ?? newToken()
+    // Rotate the confirmation token on every resend so leaked/old links stop
+    // working, and give the new link a short, explicit lifetime.
+    const confirmToken = newToken()
     await pool.query(
       `UPDATE newsletter_subscribers
-         SET status='pending', confirm_token=$2, unsubscribed_at=NULL, ip=$3
+         SET status='pending', confirm_token=$2,
+             confirm_expires_at=now() + interval '24 hours',
+             confirmed_at=NULL, unsubscribed_at=NULL, ip=$3
        WHERE email=$1`,
       [email, confirmToken, ip],
     )
@@ -72,8 +89,9 @@ export async function upsertPendingSubscriber(email: string, ip: string): Promis
   const confirmToken = newToken()
   const unsubscribeToken = newToken()
   await pool.query(
-    `INSERT INTO newsletter_subscribers (id, email, status, confirm_token, unsubscribe_token, ip)
-     VALUES ($1, $2, 'pending', $3, $4, $5)`,
+    `INSERT INTO newsletter_subscribers
+       (id, email, status, confirm_token, confirm_expires_at, unsubscribe_token, ip)
+     VALUES ($1, $2, 'pending', $3, now() + interval '24 hours', $4, $5)`,
     [randomUUID(), email, confirmToken, unsubscribeToken, ip],
   )
   return { status: "pending", confirmToken, unsubscribeToken, created: true }
@@ -84,8 +102,9 @@ export async function confirmSubscriber(confirmToken: string): Promise<boolean> 
   await ensureNewsletterTables()
   const { rowCount } = await getPool().query(
     `UPDATE newsletter_subscribers
-       SET status='confirmed', confirmed_at=now(), confirm_token=NULL
-     WHERE confirm_token=$1 AND status='pending'`,
+       SET status='confirmed', confirmed_at=now(), confirm_token=NULL,
+           confirm_expires_at=NULL, ip=NULL
+     WHERE confirm_token=$1 AND status='pending' AND confirm_expires_at > now()`,
     [confirmToken],
   )
   return (rowCount ?? 0) > 0
@@ -96,7 +115,8 @@ export async function unsubscribeByToken(unsubscribeToken: string): Promise<bool
   await ensureNewsletterTables()
   const { rowCount } = await getPool().query(
     `UPDATE newsletter_subscribers
-       SET status='unsubscribed', unsubscribed_at=now()
+       SET status='unsubscribed', unsubscribed_at=now(), confirm_token=NULL,
+           confirm_expires_at=NULL, ip=NULL
      WHERE unsubscribe_token=$1 AND status <> 'unsubscribed'`,
     [unsubscribeToken],
   )

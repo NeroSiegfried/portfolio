@@ -1015,7 +1015,11 @@ export default function BlogComments({
             {authMode === "register" && (
               <input
                 className="border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-                placeholder="Username"
+                placeholder="Username (letters, numbers, _ or -)"
+                aria-label="Username"
+                autoComplete="username"
+                minLength={2}
+                maxLength={30}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={busy}
@@ -1024,15 +1028,23 @@ export default function BlogComments({
             <input
               className="border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
               placeholder="Email"
+              aria-label="Email address"
               type="email"
+              autoComplete="email"
+              inputMode="email"
+              maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={busy}
             />
             <input
               className="border border-border bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-              placeholder="Password"
+              placeholder={authMode === "register" ? "Password (12+ characters)" : "Password"}
+              aria-label="Password"
               type="password"
+              autoComplete={authMode === "register" ? "new-password" : "current-password"}
+              minLength={authMode === "register" ? 12 : undefined}
+              maxLength={256}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") void submitAuth() }}

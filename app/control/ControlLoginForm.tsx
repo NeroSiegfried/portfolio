@@ -53,6 +53,8 @@ export default function ControlLoginForm() {
             className={input}
             placeholder="Admin email"
             type="email"
+            required
+            maxLength={254}
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -62,6 +64,8 @@ export default function ControlLoginForm() {
               className={`${input} pr-10`}
               placeholder="Admin password"
               type={showPassword ? "text" : "password"}
+              required
+              maxLength={256}
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

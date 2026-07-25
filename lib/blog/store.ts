@@ -27,13 +27,18 @@ export function getPool(): Pool {
     const url = process.env.DATABASE_URL
     if (!url) throw new Error("DATABASE_URL is not set")
 
-    // RDS requires SSL, but standard EC2 PostgreSQL setup doesn't have it by default.
-    // We only enable SSL if it's an RDS endpoint or if explicitly requested.
-    const useSsl = url.includes("rds.amazonaws.com") || url.includes("sslmode=require")
+    // Keep TLS verification explicit. pg-connection-string is changing the
+    // meaning of sslmode=require, and rejectUnauthorized:false silently permits
+    // database man-in-the-middle attacks.
+    const parsedUrl = new URL(url)
+    const sslMode = parsedUrl.searchParams.get("sslmode")
+    const useSsl = sslMode === "verify-full" || sslMode === "require" || parsedUrl.hostname.endsWith("rds.amazonaws.com")
+    parsedUrl.searchParams.delete("sslmode")
+    const ca = process.env.DATABASE_CA_CERT?.replace(/\\n/g, "\n")
 
     global._pgPool = new Pool({
-      connectionString: url,
-      ssl: useSsl ? { rejectUnauthorized: false } : false,
+      connectionString: parsedUrl.toString(),
+      ssl: useSsl ? { rejectUnauthorized: true, ...(ca ? { ca } : {}) } : false,
       max: 2,
       min: 0,
       idleTimeoutMillis: 10000,

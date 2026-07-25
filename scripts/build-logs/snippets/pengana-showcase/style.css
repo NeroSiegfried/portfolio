@@ -2,16 +2,13 @@
   --muted: #62666a;
   --ink: #15191e;
   --img-corner: clamp(28px, 3.4vw, 44px);
-  --img-corners: var(--img-corner) 0 0 0;
+  --img-corners: 0;
+  --chamfer: clamp(28px, 3.4vw, 44px);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   font-family: "Helvetica Neue", Arial, sans-serif;
   background: #fbfaf7;
   padding: 20px;
 }
-
-[data-site="properties"] { --deep: #281b15; --accent: #9a6848; }
-[data-site="tishino"]    { --deep: #1c2417; --accent: #617149; }
-[data-site="sunab"]      { --deep: #0b1230; --accent: #3f4fb0; }
 
 /* ── verbatim from the shipped stylesheet ─────────────────────── */
 .showcase {
@@ -30,17 +27,45 @@
   text-decoration: none;
   border-radius: var(--img-corners);
   clip-path: inset(0 round var(--img-corners));
-  background:
-    radial-gradient(130% 90% at 70% 8%, color-mix(in srgb, var(--accent) 85%, white), transparent 64%),
-    linear-gradient(168deg, var(--accent), var(--deep) 74%);
+  background: #101b26;
   isolation: isolate;
   transition:
     flex-grow 700ms var(--ease-out),
     filter 420ms ease;
 }
 
+.acc-card.img-cut--tl {
+  --img-corners: var(--img-corner) 0 0 0;
+}
+
+.acc-card.img-cut--tr {
+  --img-corners: 0 var(--img-corner) 0 0;
+}
+
+.acc-card.img-chamfer--br {
+  border-radius: 0;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%);
+}
+
 .showcase:hover .acc-card { flex-grow: 0.68; }
 .showcase .acc-card:is(:hover, :focus-visible) { flex-grow: 2.35; }
+
+.acc-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.94);
+  transition:
+    transform 1.2s var(--ease-out),
+    filter 600ms ease;
+}
+
+.acc-card:is(:hover, :focus-visible) img {
+  transform: scale(1.05);
+  filter: saturate(1.06);
+}
 
 .acc-card__veil {
   position: absolute;
@@ -50,7 +75,8 @@
 }
 
 .acc-card__index,
-.acc-card__body {
+.acc-card__body,
+.acc-card__arrow {
   position: absolute;
   z-index: 2;
 }
@@ -67,6 +93,30 @@
   right: 20px;
   bottom: 20px;
   left: 20px;
+}
+
+.acc-card__arrow {
+  top: 18px;
+  right: 18px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
+}
+
+.acc-card__arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.acc-card:is(:hover, :focus-visible) .acc-card__arrow {
+  color: var(--ink);
+  background: white;
 }
 
 .acc-card__eyebrow {
@@ -132,6 +182,10 @@
   .acc-card {
     min-height: 168px;
     flex: none;
+  }
+
+  .acc-card.img-chamfer--br {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%);
   }
 
   .showcase:hover .acc-card,

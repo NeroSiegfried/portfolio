@@ -1,97 +1,195 @@
-/* Derivian build log — the reading column borrows the care palette: mirage
-   navy, fountain-blue accent, generous line height. Scoped to .post-body. */
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap");
 
+/* DeRivian's Raleway, Inter and three-scheme care design system. */
 :root {
-  --dv-ink: #1b263b;
-  --dv-muted: #5f6775;
-  --dv-accent: #499c85;
-  --dv-accent-soft: #eef9f6;
-  --dv-sienna: #b9543b;
-  --dv-line: rgba(27, 38, 59, 0.16);
-  --dv-code-bg: #151e2f;
-  --dv-code-fg: #e6ecf4;
+  --dv-ink: #050a08;
+  --dv-muted: #505352;
+  --dv-paper: #ffffff;
+  --dv-soft: #f2f2f2;
+  --dv-line: #d9dad9;
+  --dv-mirage: #1b263b;
+  --dv-sienna: #e86a4a;
+  --dv-sienna-dark: #b9543b;
+  --dv-blue: #5cc4a7;
+  --dv-blue-soft: #eef9f6;
+  --dv-code: #151e2f;
+  --dv-code-ink: #ffffff;
 }
 
 .post-body:where(.dark *) {
-  --dv-ink: #e8eef6;
-  --dv-muted: #9fabbc;
-  --dv-accent: #6fd0b3;
-  --dv-accent-soft: rgba(92, 196, 167, 0.12);
-  --dv-sienna: #f0906f;
-  --dv-line: rgba(232, 238, 246, 0.18);
-  --dv-code-bg: #101725;
-  --dv-code-fg: #e6ecf4;
+  --dv-ink: #f2f2f2;
+  --dv-muted: #b4b5b4;
+  --dv-paper: #101412;
+  --dv-soft: #1e2220;
+  --dv-line: #3b403d;
+  --dv-mirage: #dce4f2;
+  --dv-sienna: #ef8064;
+  --dv-sienna-dark: #ef8064;
+  --dv-blue: #71d2b7;
+  --dv-blue-soft: #17352d;
+  --dv-code: #050a08;
+  --dv-code-ink: #ffffff;
+}
+
+> .prose {
+  color: var(--dv-ink);
+  font-family: var(--font-sans), Inter, sans-serif;
 }
 
 h2 {
-  margin-top: 3rem;
-  color: var(--dv-ink);
-  font-weight: 650;
-  letter-spacing: -0.015em;
+  position: relative;
+  margin-top: 4rem;
+  padding-top: 1.05rem;
+  color: var(--dv-mirage);
+  font-family: Raleway, var(--font-display), sans-serif;
+  font-size: clamp(1.9rem, 1.55rem + 0.85vw, 2.4rem);
+  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -0.018em;
+  border-top: 1px solid var(--dv-line);
 }
 
-/* A soft accent bar in the margin rather than a hard rule — the site's tone. */
 h2::before {
   content: "";
-  display: block;
-  width: 40px;
-  height: 4px;
-  margin-bottom: 1rem;
-  border-radius: 2px;
-  background: var(--dv-accent);
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 3.25rem;
+  height: 3px;
+  background: var(--dv-sienna);
 }
 
-h3 { color: var(--dv-ink); font-weight: 600; }
+h3 {
+  margin-top: 2.5rem;
+  color: var(--dv-mirage);
+  font-family: Raleway, var(--font-display), sans-serif;
+  font-weight: 550;
+}
 
-p { color: var(--dv-ink); line-height: 1.75; }
+p {
+  color: var(--dv-ink);
+  line-height: 1.76;
+}
 
 a {
-  color: var(--dv-accent);
-  font-weight: 500;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  text-underline-offset: 3px;
-  transition: text-decoration-color 220ms ease;
+  color: var(--dv-sienna-dark);
+  font-weight: 550;
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.22em;
 }
 
-a:hover { text-decoration-color: currentColor; }
+a:hover {
+  color: var(--dv-blue);
+}
+
+table {
+  width: 100%;
+  margin-block: 2.25rem 3rem;
+  overflow: hidden;
+  color: var(--dv-ink);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  border: 1px solid var(--dv-line);
+  border-radius: 0.5rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--dv-paper);
+}
+
+th,
+td {
+  padding: 0.82rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-right: 1px solid var(--dv-line);
+  border-bottom: 1px solid var(--dv-line);
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+thead th {
+  color: var(--dv-mirage);
+  font-family: Raleway, sans-serif;
+  font-weight: 600;
+  background: var(--dv-soft);
+}
+
+tbody td:first-child {
+  width: 9rem;
+  color: var(--dv-sienna-dark);
+  font-weight: 600;
+}
 
 blockquote {
   margin-inline: 0;
-  padding: 1rem 1.35rem;
-  color: var(--dv-ink);
+  padding: 1.3rem 1.5rem;
+  color: #ffffff;
   font-style: normal;
-  border-left: 4px solid var(--dv-accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--dv-accent-soft);
+  border: 0;
+  border-left: 4px solid #5cc4a7;
+  border-radius: 0.5rem;
+  background: #050a08;
+}
+
+blockquote p {
+  margin: 0;
+  color: inherit;
 }
 
 blockquote p::before,
-blockquote p::after { content: none; }
-
-pre {
-  color: var(--dv-code-fg);
-  background: var(--dv-code-bg);
-  border: 1px solid var(--dv-line);
-  border-radius: 10px;
+blockquote p::after {
+  content: none;
 }
 
-pre code { color: inherit; }
+pre {
+  color: var(--dv-code-ink);
+  background: var(--dv-code);
+  border: 1px solid var(--dv-line);
+  border-radius: 0.5rem;
+}
+
+pre code {
+  color: inherit;
+}
 
 :not(pre) > code {
-  padding: 0.15em 0.4em;
+  padding: 0.12em 0.36em;
   color: var(--dv-ink);
   font-weight: 500;
-  background: var(--dv-accent-soft);
+  background: var(--dv-blue-soft);
   border: 1px solid var(--dv-line);
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 :not(pre) > code::before,
-:not(pre) > code::after { content: none; }
+:not(pre) > code::after {
+  content: none;
+}
 
-ul > li::marker { color: var(--dv-accent); }
-ol > li::marker { color: var(--dv-accent); font-weight: 600; }
+ul > li::marker,
+ol > li::marker {
+  color: var(--dv-sienna);
+}
 
-li { line-height: 1.7; }
+li {
+  line-height: 1.72;
+}
 
-strong { color: var(--dv-ink); font-weight: 650; }
+strong {
+  color: var(--dv-mirage);
+  font-weight: 650;
+}
+
+.snippet-breakout > div,
+.not-prose,
+iframe {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

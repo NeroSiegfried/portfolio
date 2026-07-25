@@ -1,95 +1,185 @@
-/* Stitch Bloom build log — cream paper, leather brown, a display serif for
-   headings. Matches the shop it describes. Scoped to .post-body. */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap");
 
+/* Directly follows Stitch Bloom's Moss & Stone-derived tokens and controls. */
 :root {
-  --sbm-paper: #f7f1ea;
-  --sbm-ink: #3a2b21;
-  --sbm-muted: #6f6259;
-  --sbm-brown: #6b4a34;
-  --sbm-terracotta: #a5583a;
-  --sbm-line: rgba(58, 43, 33, 0.18);
-  --sbm-code-bg: #2a211b;
-  --sbm-code-fg: #f0e6da;
+  --sbm-cream: #f7f2ea;
+  --sbm-cream-dark: #ede5d8;
+  --sbm-terracotta: #c4714a;
+  --sbm-brown: #2c1a0e;
+  --sbm-brown-mid: #5c3d2a;
+  --sbm-muted: #7a6559;
+  --sbm-line: #ddd3c7;
+  --sbm-card: #faf8f5;
+  --sbm-code: #2c1a0e;
+  --sbm-code-ink: #f7f2ea;
 }
 
 .post-body:where(.dark *) {
-  --sbm-paper: rgba(167, 124, 92, 0.12);
-  --sbm-ink: #efe4d8;
-  --sbm-muted: #b5a596;
-  --sbm-brown: #d3ac8c;
-  --sbm-terracotta: #e0906c;
-  --sbm-line: rgba(239, 228, 216, 0.18);
-  --sbm-code-bg: #1d1712;
-  --sbm-code-fg: #f0e6da;
+  --sbm-cream: #241a14;
+  --sbm-cream-dark: #30231b;
+  --sbm-terracotta: #d4896a;
+  --sbm-brown: #f7f2ea;
+  --sbm-brown-mid: #d7c1af;
+  --sbm-muted: #c9b8aa;
+  --sbm-line: #503d31;
+  --sbm-card: #1c1511;
+  --sbm-code: #120d0a;
+  --sbm-code-ink: #f7f2ea;
+}
+
+> .prose {
+  color: var(--sbm-brown);
 }
 
 h2 {
-  margin-top: 3.25rem;
-  padding-bottom: 0.6rem;
-  color: var(--sbm-ink);
-  font-family: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
+  margin-top: 4.25rem;
+  padding-bottom: 0.8rem;
+  color: var(--sbm-brown);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(2.15rem, 1.7rem + 1.15vw, 2.8rem);
   font-weight: 500;
-  font-size: 2.1rem;
-  line-height: 1.12;
-  letter-spacing: -0.005em;
-  border-bottom: 1px solid var(--sbm-line);
+  line-height: 1.08;
+  letter-spacing: -0.018em;
+  border-bottom: 1px solid var(--sbm-brown);
 }
 
 h3 {
-  color: var(--sbm-ink);
-  font-family: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
+  margin-top: 2.6rem;
+  color: var(--sbm-brown);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.55rem;
   font-weight: 600;
 }
 
-p { color: var(--sbm-ink); line-height: 1.74; }
+p {
+  color: var(--sbm-brown);
+  line-height: 1.76;
+}
 
 a {
   color: var(--sbm-terracotta);
-  font-weight: 500;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  text-underline-offset: 3px;
-  transition: text-decoration-color 220ms ease;
+  font-weight: 550;
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.22em;
 }
 
-a:hover { text-decoration-color: currentColor; }
+a:hover {
+  color: var(--sbm-brown);
+}
+
+table {
+  width: 100%;
+  margin-block: 2.25rem 3rem;
+  color: var(--sbm-brown);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  border: 1px solid var(--sbm-brown);
+  border-radius: 0;
+  border-collapse: collapse;
+  background: var(--sbm-card);
+}
+
+th,
+td {
+  padding: 0.82rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-right: 1px solid var(--sbm-brown);
+  border-bottom: 1px solid var(--sbm-brown);
+}
+
+th:last-child,
+td:last-child {
+  border-right: 0;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+thead th {
+  color: var(--sbm-brown);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--sbm-cream-dark);
+}
+
+tbody td:first-child {
+  width: 9rem;
+  color: var(--sbm-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 blockquote {
   margin-inline: 0;
-  padding: 1rem 1.35rem;
-  color: var(--sbm-ink);
+  padding: 1.3rem 1.5rem;
+  color: var(--sbm-brown);
   font-style: normal;
-  border-left: 2px solid var(--sbm-brown);
-  background: var(--sbm-paper);
+  border: 1px solid var(--sbm-brown);
+  border-left: 4px solid var(--sbm-terracotta);
+  border-radius: 0;
+  background: var(--sbm-cream);
+}
+
+blockquote p {
+  margin: 0;
+  color: inherit;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.22rem;
 }
 
 blockquote p::before,
-blockquote p::after { content: none; }
-
-/* Squared corners throughout — the shop's navbar and cards are hard-edged. */
-pre {
-  color: var(--sbm-code-fg);
-  background: var(--sbm-code-bg);
-  border: 1px solid var(--sbm-line);
-  border-radius: 2px;
+blockquote p::after {
+  content: none;
 }
 
-pre code { color: inherit; }
+pre {
+  color: var(--sbm-code-ink);
+  background: var(--sbm-code);
+  border: 1px solid var(--sbm-brown);
+  border-radius: 0;
+}
+
+pre code {
+  color: inherit;
+}
 
 :not(pre) > code {
-  padding: 0.15em 0.4em;
+  padding: 0.12em 0.35em;
   color: var(--sbm-brown);
   font-weight: 500;
-  background: var(--sbm-paper);
+  background: var(--sbm-cream);
   border: 1px solid var(--sbm-line);
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 :not(pre) > code::before,
-:not(pre) > code::after { content: none; }
+:not(pre) > code::after {
+  content: none;
+}
 
-ul > li::marker { color: var(--sbm-terracotta); }
-ol > li::marker { color: var(--sbm-terracotta); font-weight: 600; }
+ul > li::marker,
+ol > li::marker {
+  color: var(--sbm-terracotta);
+}
 
-li { line-height: 1.7; }
+li {
+  line-height: 1.72;
+}
 
-strong { color: var(--sbm-ink); font-weight: 650; }
+strong {
+  color: var(--sbm-brown);
+  font-weight: 650;
+}
+
+.snippet-breakout > div,
+.not-prose,
+iframe {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

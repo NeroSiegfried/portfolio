@@ -23,10 +23,33 @@
 }
 
 /* ── the whole theme system ─────────────────────────────────── */
-[data-site="concept"]   { --deep: #101b26; --accent: #456079; --pale: #dfe7ed; }
-[data-site="properties"]{ --deep: #281b15; --accent: #9a6848; --pale: #eadfd4; }
-[data-site="tishino"]   { --deep: #1c2417; --accent: #617149; --pale: #e3e4d3; }
-[data-site="sunab"]     { --deep: #0b1230; --accent: #3f4fb0; --pale: #d9def2; }
+[data-site="concept"] {
+  --deep: #101b26;
+  --accent: #456079;
+  --pale: #dfe7ed;
+  --preview-image: url("https://www.penganaconcept.com/images/group/hero-640.webp");
+}
+
+[data-site="properties"] {
+  --deep: #281b15;
+  --accent: #9a6848;
+  --pale: #eadfd4;
+  --preview-image: url("https://www.penganaconcept.com/images/properties/hero-640.webp");
+}
+
+[data-site="tishino"] {
+  --deep: #1c2417;
+  --accent: #617149;
+  --pale: #e3e4d3;
+  --preview-image: url("https://www.penganaconcept.com/images/tishino/hero-640.webp");
+}
+
+[data-site="sunab"] {
+  --deep: #0b1230;
+  --accent: #3f4fb0;
+  --pale: #d9def2;
+  --preview-image: url("https://www.penganaconcept.com/images/sunab/hero-640.webp");
+}
 /* ───────────────────────────────────────────────────────────── */
 
 .switch {
@@ -75,10 +98,11 @@
   position: relative;
   min-height: 190px;
   border-radius: var(--img-corners);
-  background:
-    radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, var(--pale) 70%, transparent), transparent 70%),
-    linear-gradient(160deg, var(--accent), var(--deep) 78%);
-  transition: background 600ms var(--ease-out);
+  background-color: var(--deep);
+  background-image: var(--preview-image);
+  background-position: center;
+  background-size: cover;
+  transition: background-color 400ms var(--ease-out);
 }
 
 .panel__index {

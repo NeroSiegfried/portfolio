@@ -26,14 +26,14 @@ const DEFAULT_HEIGHT = 240
 // - Exposes --sn-* design tokens that snippets can opt into.
 const THEME_RESET = `
 :root {
-  --sn-bg:#f7f8fc;--sn-fg:#1a1a1a;--sn-primary:#4f8cff;--sn-primary-fg:#fff;
-  --sn-secondary:#ff6b2b;--sn-muted:#e4e7f0;--sn-muted-fg:#666;
-  --sn-border:#e0e3ee;--sn-radius:0.5rem;
+  --sn-bg:#f7f6f2;--sn-fg:#0a0a0a;--sn-primary:#fb460d;--sn-primary-fg:#fff;
+  --sn-secondary:#ebe8e2;--sn-muted:#ebe8e2;--sn-muted-fg:#69645e;
+  --sn-card:#fff;--sn-border:#e1ded8;--sn-radius:0;
 }
 [data-theme="dark"]{
-  --sn-bg:#1a1a1a;--sn-fg:#f0f4ff;--sn-primary:#4f8cff;--sn-primary-fg:#fff;
-  --sn-secondary:#ff6b2b;--sn-muted:#23263a;--sn-muted-fg:#a6a6a6;
-  --sn-border:#2a3040;--sn-radius:0.5rem;
+  --sn-bg:#0d0d0d;--sn-fg:#f5f5f5;--sn-primary:#fb460d;--sn-primary-fg:#fff;
+  --sn-secondary:#242424;--sn-muted:#242424;--sn-muted-fg:#a3a3a3;
+  --sn-card:#171717;--sn-border:#292929;--sn-radius:0;
 }
 *,*::before,*::after{box-sizing:border-box;}
 /* Kill any min-height:100vh that would cause resize feedback */
@@ -156,12 +156,9 @@ export default function BlogSnippetEmbed({
   const displayTabs = tabs.length > 1 && showTabs !== false
   const activeTab = tabs[activeIndex]
 
-  // Rounded corners: when there's no tab bar the iframe is the topmost child,
-  // so give it rounded-top corners; always give it rounded-bottom.
-  const iframeRadius = displayTabs ? "rounded-b-xl" : "rounded-xl"
-
-  const outerClass = wide ? "my-8 snippet-breakout" : "my-8 rounded-xl border border-border/60 overflow-hidden"
-  const innerClass = wide ? "rounded-xl border border-border/60 overflow-hidden" : ""
+  // Snippets use the same square, ruled frame as the v2 portfolio.
+  const outerClass = wide ? "my-8 snippet-breakout" : "my-8 border border-border overflow-hidden"
+  const innerClass = wide ? "border border-border overflow-hidden" : ""
 
   return (
     <div className={`not-prose ${outerClass}`}>
@@ -194,13 +191,13 @@ export default function BlogSnippetEmbed({
             srcDoc={buildSrcDoc(activeTab, theme, user)}
             style={{ height: `${height}px` }}
             // `block` removes the 4px inline descender gap that causes bottom spacing
-            className={`block w-full transition-[height] duration-150 ${iframeRadius}`}
+            className="block w-full transition-[height] duration-150"
             loading="lazy"
           />
         ) : (
           <div
             style={{ height: `${DEFAULT_HEIGHT}px` }}
-            className={`block w-full animate-pulse bg-muted/40 ${iframeRadius}`}
+            className="block w-full animate-pulse bg-muted/40"
           />
         )}
       </div>

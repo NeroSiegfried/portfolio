@@ -30,9 +30,15 @@ export function initDb() {
     throw new Error('DATABASE_URL not set in environment')
   }
 
+  const parsedUrl = new URL(url)
+  const sslMode = parsedUrl.searchParams.get('sslmode')
+  const useSsl = sslMode === 'verify-full' || sslMode === 'require' || parsedUrl.hostname.endsWith('rds.amazonaws.com')
+  parsedUrl.searchParams.delete('sslmode')
+  const ca = process.env.DATABASE_CA_CERT?.replace(/\\n/g, '\n')
+
   pool = new Pool({
-    connectionString: url,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    connectionString: parsedUrl.toString(),
+    ssl: useSsl ? { rejectUnauthorized: true, ...(ca ? { ca } : {}) } : false,
   })
 
   return pool
@@ -62,6 +68,9 @@ export async function getDb(): Promise<BlogDb> {
       role: row.role,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      blocked: row.blocked ?? false,
+      displayName: row.display_name ?? null,
+      avatarUrl: row.avatar_url ?? null,
     })),
     sessions: sessions.rows.map(row => ({
       id: row.id,
@@ -94,6 +103,9 @@ export async function getDb(): Promise<BlogDb> {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       publishedAt: row.published_at,
+      coverImage: row.cover_image ?? null,
+      customCss: row.custom_css ?? null,
+      position: row.position ?? 0,
     })),
     snippets: snippets.rows.map(row => ({
       id: row.id,
@@ -141,7 +153,7 @@ export async function upsertUser(user: BlogUser) {
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (id) DO UPDATE SET
        username = $2, email = $3, password_hash = $4, role = $5, updated_at = $7`,
-    [user.id, user.username, user.email, user.passwordHash, user.role, user.createdAt, user.updatedAt]
+    [user.id, user.username, user.email, user.passwordHash, user.role, user.createdAt, user.updatedAt ?? user.createdAt]
   )
 }
 
@@ -152,7 +164,7 @@ export async function upsertSession(session: BlogSession) {
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (id) DO UPDATE SET
        user_id = $2, token = $3, expires_at = $4`,
-    [session.id, session.userId, session.token, session.expiresAt, session.createdAt]
+    [session.id ?? session.token, session.userId, session.token, session.expiresAt, session.createdAt]
   )
 }
 
@@ -240,7 +252,7 @@ export async function upsertCommentVote(vote: BlogCommentVote) {
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (comment_id, user_id) DO UPDATE SET
        value = $4`,
-    [vote.id, vote.commentId, vote.userId, vote.value, vote.createdAt]
+    [vote.id, vote.commentId, vote.userId, vote.value, vote.createdAt ?? new Date().toISOString()]
   )
 }
 
@@ -251,7 +263,7 @@ export async function upsertPostVote(vote: BlogPostVote) {
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (post_id, user_id) DO UPDATE SET
        value = $4`,
-    [vote.id, vote.postId, vote.userId, vote.value, vote.createdAt]
+    [vote.id, vote.postId, vote.userId, vote.value, vote.createdAt ?? new Date().toISOString()]
   )
 }
 

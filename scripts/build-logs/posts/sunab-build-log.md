@@ -1,93 +1,182 @@
 ---
-title: "Sunab Telecommunications — A Site for a Product You Can't Photograph"
-excerpt: "Interconnection and clearing-house services between mobile network operators. There is nothing to photograph, the old build transpiled JSX in the browser, and the palette was 95% one blue."
+title: "Sunab Telecommunications, designing around an invisible service"
+excerpt: "A launch-ready site for an interconnect business, developed through a Relume prototype, a detailed study of Amazon Leo, and several rounds of visual and technical revision."
 series: portfolio-projects
 publishedAt: 2026-07-09
 ---
 
-## What the business does, and why that's hard
+Sunab Telecommunications Services was preparing to enter the interconnect business. The client had a logo, a board of directors, basic company information, and a clear need for a credible public presence before operations began. I had room to decide how the website should look and work, which made the design process unusually open.
 
-Sunab Telecommunications Services connects mobile network operators — interconnection and clearing-house solutions, so calls route, records reconcile and billing agrees across Nigeria and beyond.
+| Project | Detail |
+| --- | --- |
+| Client | A new Nigerian telecommunications interconnect business |
+| Main work | Website, content structure, visual direction, business email setup |
+| Initial tools | Relume, React loaded in the browser, Tailwind CDN |
+| Final build | React 18, Vite, React Router, Tailwind CSS 4 |
+| Delivery | Vercel, Cloudflare, Microsoft 365, Resend |
 
-The product is invisible. There is no shop, no handset, no building anyone recognises. Whatever the site is going to be, it can't lean on photography of the thing being sold, because there isn't one.
+## The business and the launch brief
 
-## First, get the build step back
+Sunab operates in a part of telecommunications that most people use without seeing. Interconnect services help calls move between operator networks. The work includes routing, switching, traffic records, settlement, collocation, and support between carriers.
 
-What existed was a set of static HTML pages that pulled React, Babel and Tailwind from CDNs and **transpiled JSX in the browser on every page load**. That's fine for a prototype and wrong for a live site: you ship the compiler to every visitor, you ship the whole of Tailwind, and nothing is minified, tree-shaken or cache-busted.
+That made the content problem different from a consumer telecoms website. There was no handset, retail bundle, or familiar app screen to place at the centre of the design. A visitor needed to understand what Sunab did, why an operator would speak to them, who was responsible for the company, and how to start a technical conversation.
 
-So the first move was unglamorous — port it to Vite + React 18 + Tailwind v4 with `react-router`, keep every original page in `legacy/` for reference, and produce an actual bundle. Routes live in one `routes.js` path map so there's a single source of truth for URLs.
+The client wanted the site ready for the start of the business. They also wanted company email accounts. Microsoft 365 suited that second requirement because Office was already part of how they intended to work. I treated mail as a separate workstream. Domain records and staff accounts were configured around Microsoft, while the website form provider handled automated enquiries.
 
-## It was 95% blue
+I had broad freedom over the site. The client supplied the formal information and reviewed each round, while I made most of the calls on page structure, photography, colour, type, and motion. They were happy with the final result after several iterations.
 
-With the build fixed the site was still flat, and an audit of the stylesheet showed why. Five colours were defined and one was doing everything:
+## Starting with Relume
 
-- **Madison blue** `#090673` — navbar, footer, buttons, headings, links, borders
-- **Ecstasy orange** `#f58220` — defined, barely used
-- **Jade green** `#088c1c` — defined, unused
-- plus purple and a neutral ramp
+Relume gave me the first sitemap and section plan. The initial material covered Home, About, Network, Services, Contact, and legal pages. It also gave the project an early token set and enough repeated components to test the content at realistic page lengths. I used Claude Code through the implementation and later refactors.
 
-The answer wasn't more colours. It was giving each section a defined identity and then alternating between them on purpose, the way the [Amazon Leo](https://leo.amazon.com) site does — that was my reference for this pass, along with the new palette in the design folder that came from the logo.
+The first implementation was deliberately quick. It loaded React, Babel, and Tailwind from public CDNs, then transpiled JSX in the browser. That helped while the site was still a prototype, although it was a poor production arrangement. Every visitor would have downloaded development tooling and paid the cost of compiling the interface again.
 
-Every section declares exactly one scheme class. Everything inside resolves its background, text, border, button text and accent from that scheme's slots. Nothing inside a section names a colour.
+I moved the project to React 18 and Vite once the page plan was stable. React Router took over navigation, shared content moved into data modules, and the old pages stayed in a `legacy` folder as a record of the first direction. The production bundle could then be minified, split, and cached normally.
+
+The migration also made later design work easier. A section could be rebuilt once and checked across every route. Metadata, route definitions, social links, calls to action, and enquiry topics no longer depended on copies scattered through separate HTML files.
+
+## Why the first visual direction stopped working
+
+The early site used Madison blue, bright orange, jade green, purple, and Montserrat. It had all the expected corporate sections and it rendered correctly. It still felt flat.
+
+Most pages repeated the same card grids against the same dark blue. The accent colours appeared without a clear job. Images occupied similar boxes from one section to the next. Adjusting a margin or replacing one card style did not solve the larger pacing problem.
+
+Further polishing would only have made that version more consistent. The overall direction still felt flat, so I stopped and looked for a better structural reference.
+
+I found it in the Amazon Leo site. What interested me was the page rhythm. Large statements, restrained text fields, full-width photography, contained image plates, and dark sections followed one another with enough variation to hold a long technical page together. The floating pill navigation also stayed compact without looking like a generic header.
+
+I captured Leo pages at phone, tablet, desktop, and ultrawide widths. I recorded computed tokens, layout measurements, navigation frames, reveal timing, and the behaviour of full-bleed images. The project still contains that research under `.leo-research`.
+
+My first Leo-informed pass repeated the visible motifs and missed the timing and alternation that made them useful. I went back through the captures frame by frame and rebuilt the section sequence, navbar entrance, and reveal timing from those observations. Sunab kept its own identity throughout. Leo gave me a practical reference for scale and pacing.
+
+## Building the final palette from the logo
+
+The client logo gave me the colours that mattered. The final system centres on deep blue `#090673` and Japanese laurel green `#088C1C`, with lighter and darker steps for each. Inter and Roboto replaced Montserrat.
+
+Each section declares a scheme. That scheme provides its background, text, border, button text, and active accent. Components read those roles instead of naming colours directly.
 
 {{snippet:sunab-scheme-cycle wide}}
 
-```css
-@utility scheme-night {
-  --color-scheme-background: var(--color-deep-blue-darkest);
-  --color-scheme-text: var(--color-white);
-  --color-scheme-border: var(--color-white-15);
-  --color-scheme-accent: var(--color-japanese-laurel-light);
-  background-color: var(--color-scheme-background);
-  color: var(--color-scheme-text);
-}
-```
+The available surfaces include white, pale blue, pale green, full blue, and a near-black blue for the deepest sections. Green marks active states and key actions on dark backgrounds. Deep blue performs the same job on light backgrounds.
 
-Six schemes — a near-black `night` for heroes and immersive sections, two dark blues, two lights, and a green-tinted one — composed into a dark/light alternation down each page. The green finally earns its keep: on the dark schemes it's the one colour with enough contrast to carry links, focus rings and active indicators, so it becomes the interaction colour instead of decoration.
+This solved two practical problems. A component can move between sections without carrying a second set of overrides, and a new page is less likely to introduce another almost identical blue. It also gave the pages a predictable rhythm. Consecutive sections no longer merge into one long field.
 
-A section changes character by changing one class, and a new section can't invent an off-brand colour because there isn't one available to it.
+## Removing content that had no source
 
-## The logo
+One design pass contained plausible material that had not come from the client. It included operator testimonials, performance numbers, a larger company timeline, awards, and staff detail that looked reasonable in a template.
 
-I started redrawing the logo myself and got as far as an SVG before I ran out of patience with it. What was left was specific: take the two concentric circles and crop them into four waves, crop the lines in some places, align them in others, and fill the shapes with the right colours. The only other reference was `logo.jpeg`, which is not a good image.
+I removed it.
 
-Once it existed it went into the nav, the footer and the favicon first, and only then into variants. Getting the primary placements right before generating a family is worth doing in that order — a variant of a mark you haven't yet seen in context is a guess.
+The published site keeps the information I could verify from the supplied material. That includes the company identity, 2022 formation date, Abuja location, NCC licence information, the board, and the QIDPR material around quality, integrity, dependability, professionalism, and respect.
 
-Related, and more annoying than it should have been: the logo and wordmark in the navbar wouldn't centre. They sat resting on the top of their div. There was a bottom margin coming from somewhere I hadn't written, and finding it took longer than fixing it.
+This reduced some sections and left fewer easy opportunities for impressive numbers. It also made the site more credible. A new business gains nothing from statistics that cannot be defended when a carrier asks where they came from.
 
-## Motion, and getting the timing right
+I kept a backend and launch checklist for information that still needed operational confirmation. Where an email address, endpoint, social account, or formal document was not ready, the interface either hid it or used an honest fallback.
 
-The site got a set of cheap, on-brand behaviours rather than a redesign:
+## Alternating image fields
 
-- **CSS patterns instead of flat fills** — a dot grid and a blueprint grid from a `radial-gradient` and two `linear-gradient`s. Engineering texture behind empty dark bands at zero asset cost.
-- **A scroll-cycle** used on the Services benefits and again on the About page's QIDPR values, so it's one pattern reused rather than two bespoke components.
-- **Scroll reveals and counters** via `IntersectionObserver`, with `prefers-reduced-motion` honoured.
-- **Strip page transitions**, because an SPA route change is instant and abrupt by default.
+The final page system alternates three kinds of visual space. Some images run edge to edge. Some sit inside a contained plate. Some sections use colour and type without photography.
 
-Two timing corrections were the difference between "it animates" and "it feels right".
+The contained treatment is handled by a reusable `ShowcaseCard`. Its image and copy animate independently. The image opens through a clip path and has enough scale for a small parallax movement without exposing an empty edge.
 
-The first: when sections expanded, the text animation only started **after** the section had finished expanding. On the reference it starts midway, so the section feels alive and you're not waiting to be allowed to read it.
+The first timing sequence waited for the image to open before bringing in the words. It looked hesitant. I recorded the sequence and moved the copy entrance forward so it begins while the image still has roughly nine percent of its inset remaining. In the component, that meant reducing the delay from 420 milliseconds to 200 milliseconds.
 
-The second: the page transition was capturing the navbar in its snapshot. The navbar doesn't meaningfully change between pages, so animating it out and back in is motion that communicates nothing — it needed to sit outside the transition entirely. The same class of problem showed up in navigation generally: animating the transition *and* smooth-scrolling the new route to the top makes the reveal observers fire on elements passing through the viewport rather than arriving in it. Jump to the top instantly, then animate.
+Several long sections use native scrolling as the input for a pinned sequence. Services benefits, the service process, and the About page QIDPR section map progress through a tall wrapper to an active item. A `requestAnimationFrame` loop keeps the update separate from raw scroll events. Mobile receives a simpler linear arrangement where a pinned desktop composition would consume too much height.
 
-The fiddliest one was the capabilities section on the network page, where cards deck-stack over each other on mobile. The heading slid up out of view as soon as the stack began, so you lost the context for what you were reading. It had to stay put until all the cards were in place and the whole section scrolled away — and the first fix over-corrected, sticking the heading to the end of its section rather than its natural position relative to the topmost card, so it overlapped instead.
+The image brief became part of the implementation. Every slot has a subject, crop, aspect ratio, and purpose in `images.md`. That prevented every search from returning another generic server rack.
 
-## Images, since there's nothing to photograph
+The final optimisation pass reduced the image library from about 104 MB to 16 MB. Large source files remain available, while the site receives delivery versions sized for their actual use.
 
-Every image slot is described in `images.md`, and the first version of those descriptions was too vague to act on — "network infrastructure" is not a brief. They got rewritten to be explicit about subject, framing and mood. Even then a lot of these were genuinely hard to source, and the descriptions grew extra keywords rather than being replaced, so the original intent stayed visible.
+## The navbar begins as a small mark
 
-Compression was done by working out where each image actually appears, taking the largest size it's displayed at, and compressing to twice that — with the originals backed up first, because a lossy pipeline you can't reverse is a trap.
+The navbar carries more of the site’s personality than the earlier post described.
 
-## Forms that degrade honestly
+On the first page load, the white shell starts as a tiny clipped shape in the centre of the viewport. It grows vertically into a narrow pill, then stretches horizontally into the complete navigation. The brand, route links, Legal control, and contact action stay hidden while the shell develops. They enter from left to right on staggered delays once there is room for them.
 
-Contact and newsletter POST to Vercel serverless functions in `api/`, which email the team via Resend. A honeypot filters bots. Contact templates prefill the form based on the type of enquiry, so the visitor isn't starting from a blank box and the right information reaches the right inbox.
+The entrance runs once per application session. A module-level flag records that it has completed, so moving between routes does not replay a launch animation every time.
 
-The part worth copying is the failure mode. Until `RESEND_API_KEY` is set, the functions return `503` and the front end falls back automatically: the contact form opens the visitor's mail client with the message composed, and the newsletter stays optimistic. The live site is never broken by a missing key — setting it upgrades the experience rather than enabling it.
+After the entrance, the shell responds to scroll direction. It leaves the viewport while the visitor moves down and returns when they move up. The threshold avoids reacting to tiny trackpad changes, and the first section has enough spacing that the pill never covers its heading.
 
-The alternative, which this site previously had, is a form that appears to submit and drops the enquiry on the floor. That's worse than no form at all.
+### Making Legal part of the same object
 
-## Stack
+The desktop Legal menu is attached to the pill. JavaScript measures the trigger and shell after opening and when the viewport changes. The panel meets the lower edge, loses its top border and top corner radii, and suppresses the shadow at the join.
 
-React 18 + Vite + Tailwind CSS v4, `react-router` with a central `routes.js` path map. Vercel serverless functions and Resend for forms. The original static site is archived in `legacy/`. Outstanding backend and content gaps are audited in `BACKEND_TODO.md` and marked in code with `TODO[backend/…]`, `TODO[content/…]` and `TODO[image/…]`, so nothing ships as a placeholder without a record of it being one.
+A 140 millisecond hover bridge keeps the menu open while the pointer crosses from the trigger into the panel. Without that small delay, a one-pixel gap was enough to close it.
 
-**Live:** [sunabtelecomservices.com](https://sunabtelecomservices.com/) · **Source:** [github.com/NeroSiegfried/sunab-telecommunications](https://github.com/NeroSiegfried/sunab-telecommunications)
+The result reads as the navbar stretching downward. There is no second floating box beneath it.
+
+### The same rule on mobile
+
+The mobile route list is rendered inside the shell. Opening the menu increases the height of the existing pill while its contents are clipped. The outer form remains continuous and the links appear inside it.
+
+This is the same interaction idea I later used while developing LoopBridge’s expanding navigation. The layouts are different, but both avoid dropping an unrelated panel beneath a carefully shaped header.
+
+## Rebuilding the supplied mark
+
+The available logo assets were too rough for a crisp header and favicon. I recreated the mark as SVG from the supplied reference.
+
+The drawing uses four round-capped signal arcs, a two-facet green tower that also reads as an upward arrow, and a small yellow beacon. Light and dark uses share the same paths. Only the surrounding colour treatment changes.
+
+This kept the identity consistent at favicon size, in the navigation, and in the footer. It also removed the blurred edge that appeared when the original raster mark was scaled on a dense screen.
+
+## Scroll motion and responsive behaviour
+
+Most section entrances use `IntersectionObserver`. Copy rises a short distance and images open through their masks. `prefers-reduced-motion` removes those transitions and exposes the content immediately.
+
+The pinned cycles need more care because they represent progress through actual content. Their wrapper height determines how long each state remains readable. I tuned desktop and mobile separately and kept the current heading attached to the card sequence until the last item settles.
+
+The About page and Services page use the same progress helper with different content. That shared implementation matters because the early versions had slightly different thresholds and felt unrelated.
+
+Full-bleed images also use restrained scale movement. A small Ken Burns effect keeps a long hero from feeling static, while explicit object positions protect important parts of each crop at phone and tablet widths.
+
+## Five strips between routes
+
+Client-side route changes were much faster than the rest of the interface. I added a transition built from five viewport strips.
+
+The transition clones the outgoing page, divides it into horizontal slices, and places the incoming route underneath. The slices leave from bottom to top with a 50 millisecond stagger. Their travel lasts 560 milliseconds.
+
+All five strips move in the same direction during one transition. The next navigation reverses that direction. The change avoids a repetitive wipe while keeping the movement easy to follow.
+
+The navbar is outside the captured page. It stays in place while the route moves beneath it. The new page scrolls to the top immediately before its reveal logic begins. Smooth scrolling at that point caused hidden sections to pass through the viewport and activate observers before the user saw them.
+
+Reduced-motion visitors get a direct route swap. There is also a completion fallback, so an interrupted animation cannot leave the old page covering the new one.
+
+## Website enquiries and Microsoft 365
+
+Microsoft 365 handles ordinary company email. Resend handles website-generated messages. Keeping those jobs separate makes the setup easier to reason about.
+
+The contact forms post to Vercel functions. They validate the submitted fields, include a honeypot, and send to the configured business inbox. Calls to action can add a topic to the URL, which prepares the contact form for the service the visitor was reading.
+
+If the Resend variables are missing or delivery fails, the browser opens a prepared email in the visitor’s mail client. The same subject and message remain visible, and the enquiry can still reach the Microsoft 365 address.
+
+The newsletter endpoint currently emails the team when somebody submits an address. It does not maintain a subscriber database or pretend to be a campaign platform. If Sunab begins publishing regularly, that part should move to a mailing product with confirmed opt-in, list management, and unsubscribe handling.
+
+## Shipping and checks
+
+Vercel builds the Vite application and serves `dist`. The SPA rewrite sends normal routes back to the app shell while preserving `/api` for the serverless handlers. Cloudflare sits in front of the custom domain.
+
+I checked the main routes at phone, tablet, desktop, and ultrawide widths. I also tested the navbar entrance only on a clean session, the Legal bridge with pointer and keyboard input, route transitions with reduced motion, and form fallback with the server variables removed.
+
+The project finished with a much clearer visual system than the first build. The early version was still useful. It established the content and exposed which parts of the layout had no rhythm. The second research pass gave me enough evidence to rebuild the system from its foundations.
+
+## What I would change next
+
+I would complete the photography plan before the first visual build. Image subject and crop are structural on this site, so placeholders influenced too many early decisions.
+
+I would also connect newsletter submissions to a proper consent-based mailing service if the business decides to publish updates. The current notification endpoint fits a launch site, but it is not a long-term mailing system.
+
+The main design decision still holds. The Amazon Leo research supplied a useful model for pacing and behaviour. Sunab’s own logo, content, and business constraints determined the finished site.
+
+## Stack and links
+
+**Client** React 18, Vite, React Router, Tailwind CSS 4
+
+**Motion** CSS transitions, `IntersectionObserver`, native scroll progress, `requestAnimationFrame`
+
+**Forms** Vercel functions, Resend, email-client fallback
+
+**Business email** Microsoft 365
+
+**Hosting** Vercel, Cloudflare
+
+**Live** [sunabtelecomservices.com](https://sunabtelecomservices.com/) · **Source** [github.com/NeroSiegfried/sunab-telecommunications](https://github.com/NeroSiegfried/sunab-telecommunications)

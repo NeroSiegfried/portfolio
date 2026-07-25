@@ -26,7 +26,7 @@ export const projects: Project[] = [
     id: 13,
     title: "Pengana Concept",
     description:
-      "A group website for a family-owned Nigerian holding company and its three businesses — property and hospitality, agriculture, and telecoms. One component system, four palettes: every page resolves its colour, imagery and navigation from a single `data-site` token.",
+      "A group site commissioned by the Sunab client for the rest of its family-owned holding company. The businesses share directors and company information, so Properties and Tishino have themed mini-sites in one system while the Sunab overview links to its existing website.",
     technologies: ["React", "Vite", "React Router", "CSS", "Leaflet", "Vercel"],
     showcaseMode: "web",
     liveUrl: "https://www.penganaconcept.com",
@@ -38,8 +38,8 @@ export const projects: Project[] = [
     id: 11,
     title: "Derivian",
     description:
-      "A professional website for a supported living business in London. Built with accessibility at its core — including an easy-read mode for visually impaired users — and equipped with business email infrastructure and templated contact flows to streamline every client interaction.",
-    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Vercel"],
+      "I turned a business plan and several reference sites into an accessible website and visual identity for a newly formed supported living provider. The wider setup included a logo, letterhead, Zoho business email, and help opening its business account.",
+    technologies: ["React", "Next.js", "JavaScript", "Prisma", "PostgreSQL", "CSS", "Vercel"],
     showcaseMode: "web",
     liveUrl: "https://www.derivian.co.uk",
     githubUrl: "https://github.com/NeroSiegfried/derivian-care",
@@ -50,7 +50,7 @@ export const projects: Project[] = [
     id: 12,
     title: "Sunab Telecommunications",
     description:
-      "Marketing site for a Nigerian telecoms company that connects mobile network operators — interconnection and clearing-house solutions for stable routing, accurate billing and consistent service across Nigeria and beyond.",
+      "A pre-launch website and Microsoft 365 email setup for a Nigerian telecom interconnect company. The client supplied its logo and company information, then gave me room to shape the full-bleed layout, scroll motion, and pill navigation that stretches into its dropdown.",
     technologies: ["React", "Vite", "Tailwind CSS", "React Router"],
     showcaseMode: "web",
     liveUrl: "https://sunabtelecomservices.com/",
@@ -60,8 +60,9 @@ export const projects: Project[] = [
   {
     id: 10,
     title: "Stitch Bloom",
-    description: "A custom web application and showcase for the Stitch Bloom brand.",
-    technologies: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
+    description:
+      "A catalogue site for a small accessories business that works with recycled yarn and wanted to reach new customers. I adapted the Moss and Stone template they chose, with an email-order cart so the owner can confirm availability without maintaining automated stock or a payment gateway.",
+    technologies: ["React", "Vite", "React Router", "CSS", "GitHub Pages"],
     showcaseMode: "web",
     liveUrl: "https://thestitchbloom.com/",
     githubUrl: "https://github.com/NeroSiegfried/stitch-bloom",
@@ -71,8 +72,8 @@ export const projects: Project[] = [
     id: 9,
     title: "LoopBridge (ongoing)",
     description:
-      "A website development project for a crypto trading community. Built in plain HTML, CSS, and JavaScript to keep contribution simple for frontend developers across different stacks.",
-    technologies: ["HTML", "CSS", "JavaScript"],
+      "An ongoing crypto community and learning platform implemented from the client's Figma file. It includes role-based authentication, separate user, author, and admin dashboards, payments, and a media pipeline.",
+    technologies: ["React", "Vite", "Express", "SQLite", "AWS", "Docker"],
     showcaseMode: "web",
     liveUrl: "https://www.loopbridge.network",
     githubUrl: "https://github.com/NeroSiegfried/LoopBridge",
@@ -167,7 +168,7 @@ export const projects: Project[] = [
 ]
 
 /** The website projects shown in the Work section (most recent first). */
-export const featuredProjects: Project[] = [13, 11, 12, 10, 9]
+export const featuredProjects: Project[] = [9, 13, 11, 12, 10]
   .map((id) => projects.find((p) => p.id === id))
   .filter((p): p is Project => Boolean(p))
 

@@ -1,0 +1,4 @@
+{
+  "title": "B+ tree page index",
+  "description": "A 3-key teaching tree paired with the real 4 KB source-page layout. Insert and scan rows while the trace follows execution, cursors, pages and linked leaves. FIND and DELETE are clearly labelled visual extensions."
+}

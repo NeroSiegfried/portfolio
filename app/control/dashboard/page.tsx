@@ -40,11 +40,11 @@ export default async function AdminDashboardPage() {
     .map((u) => ({
       id: u.id,
       username: u.username,
-      displayName: u.displayName,
+      displayName: u.displayName ?? null,
       email: u.email,
       role: u.role,
-      blocked: u.blocked,
-      avatarUrl: u.avatarUrl,
+      blocked: u.blocked ?? false,
+      avatarUrl: u.avatarUrl ?? null,
       createdAt: u.createdAt,
     }))
 

@@ -103,14 +103,15 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   "email"             TEXT UNIQUE NOT NULL,
   "status"            TEXT NOT NULL DEFAULT 'pending',   -- pending | confirmed | unsubscribed
   "confirm_token"     TEXT,
+  "confirm_expires_at" TIMESTAMPTZ,
   "unsubscribe_token" TEXT NOT NULL,
   "created_at"        TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "confirmed_at"      TIMESTAMPTZ,
   "unsubscribed_at"   TIMESTAMPTZ,
   "ip"                TEXT
 );
-CREATE INDEX IF NOT EXISTS idx_newsletter_confirm_token ON newsletter_subscribers(confirm_token);
-CREATE INDEX IF NOT EXISTS idx_newsletter_unsub_token ON newsletter_subscribers(unsubscribe_token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_confirm_token ON newsletter_subscribers(confirm_token) WHERE confirm_token IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_unsub_token ON newsletter_subscribers(unsubscribe_token);
 
 -- ─── Rate limiting (fixed-window; lib/security/rate-limit.ts) ─────────────────
 CREATE TABLE IF NOT EXISTS rate_limits (

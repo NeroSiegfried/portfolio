@@ -1,5 +1,5 @@
 // The entire "theming" behaviour on the real site: set one attribute.
-// Everything else — colour, rule, eyebrow, button, image wash — is CSS.
+// Colour, rules, type, buttons and the real project image all follow in CSS.
 var COPY = {
   concept: {
     name: "Pengana Concept",
@@ -15,13 +15,13 @@ var COPY = {
   },
   tishino: {
     name: "Tishino Ventures",
-    line: "Staple agriculture across grains, legumes, roots and tubers — with livestock and poultry as growth areas. Abuja office.",
+    line: "Staple agriculture across grains, legumes, roots and tubers, with livestock and poultry as growth areas. Abuja office.",
     cta: "Visit Tishino",
     deep: "#1C2417", accent: "#617149", pale: "#E3E4D3"
   },
   sunab: {
     name: "Sunab Telecoms",
-    line: "Carrier services connecting mobile network operators. Its own board, branding and website — reached through the same group system.",
+    line: "Carrier services connecting mobile network operators. Its own board, branding and website are reached through the same group system.",
     cta: "Go to Sunab",
     deep: "#0B1230", accent: "#3F4FB0", pale: "#D9DEF2"
   }

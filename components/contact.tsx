@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Send, Mail, Phone, MapPin } from "lucide-react"
+import { Turnstile } from "@/components/turnstile"
+import { AlertCircle, CheckCircle2, LoaderCircle, Send, Mail, Phone, MapPin } from "lucide-react"
+
+const TURNSTILE_ENABLED = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
 
 export default function Contact() {
   const [formState, setFormState] = useState({
@@ -16,7 +19,12 @@ export default function Contact() {
     email: "",
     message: "",
   })
+  const [website, setWebsite] = useState("")
+  const [token, setToken] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [status, setStatus] = useState<null | "ok" | "err">(null)
+  const [statusMessage, setStatusMessage] = useState("")
+  const [verificationKey, setVerificationKey] = useState(0)
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -27,24 +35,36 @@ export default function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (TURNSTILE_ENABLED && !token) {
+      setStatus("err")
+      setStatusMessage("Please complete the security check before sending.")
+      return
+    }
     setIsSubmitting(true)
+    setStatus(null)
 
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formState),
+        body: JSON.stringify({ ...formState, website, turnstileToken: token }),
       })
 
-      if (!response.ok) throw new Error("Network response was not ok")
+      const data = (await response.json().catch(() => ({}))) as { error?: string }
+      if (!response.ok) throw new Error(data.error ?? "There was an error sending your message.")
 
       setFormState({ name: "", email: "", message: "" })
-      alert("Message sent successfully!") // or use a toast
+      setStatus("ok")
+      setStatusMessage("Thanks — your message is on its way. I’ll get back to you soon.")
     } catch (error) {
-      console.error("Error submitting form:", error)
-      alert("There was an error sending your message.")
+      setStatus("err")
+      setStatusMessage(error instanceof Error ? error.message : "There was an error sending your message.")
     } finally {
       setIsSubmitting(false)
+      if (TURNSTILE_ENABLED) {
+        setToken("")
+        setVerificationKey((value) => value + 1)
+      }
     }
   }
 
@@ -197,6 +217,8 @@ export default function Contact() {
                     <Input
                       id="name"
                       name="name"
+                      autoComplete="name"
+                      maxLength={100}
                       value={formState.name}
                       onChange={handleChange}
                       placeholder="Your name"
@@ -213,6 +235,9 @@ export default function Contact() {
                       id="email"
                       name="email"
                       type="email"
+                      autoComplete="email"
+                      inputMode="email"
+                      maxLength={254}
                       value={formState.email}
                       onChange={handleChange}
                       placeholder="Your email address"
@@ -228,6 +253,8 @@ export default function Contact() {
                     <Textarea
                       id="message"
                       name="message"
+                      minLength={10}
+                      maxLength={5000}
                       value={formState.message}
                       onChange={handleChange}
                       placeholder="Your message"
@@ -236,33 +263,25 @@ export default function Contact() {
                       suppressHydrationWarning
                     />
                   </div>
+                  <input
+                    type="text"
+                    name="website"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="absolute left-[-9999px] h-px w-px overflow-hidden"
+                  />
+                  <Turnstile key={verificationKey} action="contact" onVerify={setToken} />
                   <Button
                     type="submit"
                     className="w-full h-12 bg-primary text-white transition-transform duration-200 hover:scale-[1.03]"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (TURNSTILE_ENABLED && !token)}
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
-                        <svg
-                          className="animate-spin h-4 w-4"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
+                        <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
                         Sending...
                       </span>
                     ) : (
@@ -272,6 +291,17 @@ export default function Contact() {
                       </span>
                     )}
                   </Button>
+                  <div className="min-h-12" aria-live="polite" aria-atomic="true">
+                    {status ? (
+                      <p
+                        className={status === "ok" ? "flex items-center gap-2 text-sm text-primary" : "flex items-center gap-2 text-sm text-destructive"}
+                        role={status === "ok" ? "status" : "alert"}
+                      >
+                        {status === "ok" ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : <AlertCircle className="h-4 w-4" aria-hidden="true" />}
+                        {statusMessage}
+                      </p>
+                    ) : null}
+                  </div>
                 </form>
               </CardContent>
             </Card>

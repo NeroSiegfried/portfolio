@@ -1,7 +1,15 @@
 // app/api/auth/oauth/github/route.ts
 import { randomBytes } from "crypto"
 import { NextResponse } from "next/server"
-import { setSessionCookie, hashPassword, isSecureRequest } from "@/lib/blog/auth"
+import {
+  consumeOAuthState,
+  clearOAuthStateCookie,
+  createOAuthState,
+  hashPassword,
+  isSecureRequest,
+  sanitizeReturnTo,
+  setSessionCookie,
+} from "@/lib/blog/auth"
 import { createId, getPool } from "@/lib/blog/store"
 
 const SESSION_DURATION_DAYS = 14
@@ -10,7 +18,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   const isLocal = !siteUrl || url.hostname === "localhost" || url.hostname === "127.0.0.1"
-  const baseUrl = isLocal ? url.origin : siteUrl!
+  const baseUrl = new URL(isLocal ? url.origin : siteUrl!).origin
   // redirect_uri must exactly match what is registered in GitHub OAuth app
   const redirectUri = `${baseUrl}/api/auth/oauth/github/`
 
@@ -20,26 +28,21 @@ export async function GET(request: Request) {
   // ── CALLBACK: GitHub redirected back with ?code= ─────────────────────────
   const code = url.searchParams.get("code")
   if (code) {
-    const stateParam = url.searchParams.get("state")
-    let returnTo = "/blog"
-    try {
-      if (stateParam) returnTo = Buffer.from(stateParam, "base64url").toString("utf-8")
-    } catch { /* ignore */ }
-    if (!returnTo.startsWith("/")) returnTo = "/blog"
-
     const failRedirect = `${baseUrl}/blog?auth_error=github`
-    if (!clientId || !clientSecret) return NextResponse.redirect(failRedirect)
+    const failureResponse = NextResponse.redirect(failRedirect)
+    const returnTo = consumeOAuthState(request, failureResponse, "github", url.searchParams.get("state"))
+    if (!returnTo || !clientId || !clientSecret) return failureResponse
 
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, redirect_uri: redirectUri }),
     })
-    if (!tokenRes.ok) return NextResponse.redirect(failRedirect)
+    if (!tokenRes.ok) return failureResponse
 
     const tokenData = (await tokenRes.json()) as { access_token?: string }
     const accessToken = tokenData.access_token
-    if (!accessToken) return NextResponse.redirect(failRedirect)
+    if (!accessToken) return failureResponse
 
     const [userRes, emailsRes] = await Promise.all([
       fetch("https://api.github.com/user", {
@@ -49,16 +52,17 @@ export async function GET(request: Request) {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/vnd.github+json" },
       }),
     ])
-    if (!userRes.ok) return NextResponse.redirect(failRedirect)
+    if (!userRes.ok) return failureResponse
 
     const ghUser = (await userRes.json()) as { login: string; id: number }
     const emails = emailsRes.ok
       ? ((await emailsRes.json()) as Array<{ email: string; primary: boolean; verified: boolean }>)
       : []
-    const primaryEmail =
+    const primaryEmail = (
       emails.find((e) => e.primary && e.verified)?.email ??
       emails.find((e) => e.verified)?.email ??
       `gh-${ghUser.id}@github.invalid`
+    ).trim().toLowerCase()
 
     const pool = getPool()
     let userRow = await pool.query("SELECT * FROM users WHERE email=$1 LIMIT 1", [primaryEmail])
@@ -72,10 +76,10 @@ export async function GET(request: Request) {
       )
       userRow = await pool.query("SELECT * FROM users WHERE email=$1 LIMIT 1", [primaryEmail])
     }
-    if (!userRow.rows.length) return NextResponse.redirect(failRedirect)
+    if (!userRow.rows.length) return failureResponse
 
     const r = userRow.rows[0]
-    if ((r.role as string) === "admin") return NextResponse.redirect(failRedirect)
+    if ((r.role as string) === "admin" || (r.blocked as boolean)) return failureResponse
 
     const token = randomBytes(32).toString("hex")
     const expiresAt = new Date()
@@ -87,6 +91,7 @@ export async function GET(request: Request) {
     )
 
     const response = NextResponse.redirect(`${baseUrl}${returnTo}`)
+    clearOAuthStateCookie(response, "github", isSecureRequest(url))
     setSessionCookie(response, token, isSecureRequest(url))
     return response
   }
@@ -96,12 +101,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "GitHub OAuth is not configured." }, { status: 503 })
   }
 
-  const returnTo = url.searchParams.get("returnTo") ?? "/blog"
+  const returnTo = sanitizeReturnTo(url.searchParams.get("returnTo"))
   const authUrl = new URL("https://github.com/login/oauth/authorize")
   authUrl.searchParams.set("client_id", clientId)
   authUrl.searchParams.set("redirect_uri", redirectUri)
   authUrl.searchParams.set("scope", "user:email")
-  authUrl.searchParams.set("state", Buffer.from(returnTo).toString("base64url"))
-
-  return NextResponse.redirect(authUrl.toString())
+  const response = NextResponse.redirect(authUrl.toString())
+  authUrl.searchParams.set("state", createOAuthState(response, "github", returnTo, isSecureRequest(url)))
+  response.headers.set("Location", authUrl.toString())
+  response.headers.set("Cache-Control", "no-store")
+  return response
 }

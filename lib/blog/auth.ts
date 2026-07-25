@@ -6,6 +6,8 @@ import { createId, getPool } from "@/lib/blog/store"
 
 const SESSION_COOKIE_NAME = "portfolio_blog_session"
 const SESSION_DURATION_DAYS = 14
+const PASSWORD_ITERATIONS = 600_000
+type OAuthProvider = "github" | "google"
 
 // Short-lived in-process cache for session → user lookups.
 // Avoids a DB round-trip on every server render for logged-in users.
@@ -14,9 +16,22 @@ const SESSION_USER_CACHE = new Map<string, { user: PublicUser | null; expires: n
 const SESSION_USER_TTL_MS = 30_000
 
 function parseHash(passwordHash: string) {
+  const versioned = passwordHash.split("$")
+  if (versioned.length === 4 && versioned[0] === "pbkdf2_sha256") {
+    const iterations = Number(versioned[1])
+    if (!Number.isInteger(iterations) || iterations < 1) return null
+    return {
+      iterations,
+      salt: Buffer.from(versioned[2], "hex"),
+      digest: Buffer.from(versioned[3], "hex"),
+    }
+  }
+
+  // Backwards compatibility for the original salt:digest format.
   const [saltHex, digestHex] = passwordHash.split(":")
   if (!saltHex || !digestHex) return null
   return {
+    iterations: 100_000,
     salt: Buffer.from(saltHex, "hex"),
     digest: Buffer.from(digestHex, "hex"),
   }
@@ -24,15 +39,20 @@ function parseHash(passwordHash: string) {
 
 export function hashPassword(password: string) {
   const salt = randomBytes(16)
-  const digest = pbkdf2Sync(password, salt, 100_000, 32, "sha256")
-  return `${salt.toString("hex")}:${digest.toString("hex")}`
+  const digest = pbkdf2Sync(password, salt, PASSWORD_ITERATIONS, 32, "sha256")
+  return `pbkdf2_sha256$${PASSWORD_ITERATIONS}$${salt.toString("hex")}$${digest.toString("hex")}`
 }
 
 export function verifyPassword(password: string, passwordHash: string) {
   const parsed = parseHash(passwordHash)
   if (!parsed) return false
-  const digest = pbkdf2Sync(password, parsed.salt, 100_000, 32, "sha256")
-  return timingSafeEqual(digest, parsed.digest)
+  const digest = pbkdf2Sync(password, parsed.salt, parsed.iterations, 32, "sha256")
+  return digest.length === parsed.digest.length && timingSafeEqual(digest, parsed.digest)
+}
+
+export function passwordNeedsRehash(passwordHash: string) {
+  const parsed = parseHash(passwordHash)
+  return !parsed || parsed.iterations < PASSWORD_ITERATIONS
 }
 
 export function toPublicUser(user: BlogUser): PublicUser {
@@ -88,6 +108,92 @@ export function clearSessionCookie(response: NextResponse, secure: boolean) {
   })
 }
 
+function oauthStateCookieName(provider: OAuthProvider) {
+  return `portfolio_oauth_state_${provider}`
+}
+
+/** Keep post-login redirects on this origin and strip ambiguous backslashes. */
+export function sanitizeReturnTo(value: string | null | undefined): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
+    return "/blog"
+  }
+  try {
+    const parsed = new URL(value, "https://portfolio.invalid")
+    if (parsed.origin !== "https://portfolio.invalid") return "/blog"
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`
+  } catch {
+    return "/blog"
+  }
+}
+
+/**
+ * Bind an OAuth authorization response to the browser that initiated it. The
+ * random provider state travels through OAuth; the return path stays in an
+ * HttpOnly, same-site cookie and cannot be tampered with from the page.
+ */
+export function createOAuthState(
+  response: NextResponse,
+  provider: OAuthProvider,
+  returnTo: string,
+  secure: boolean,
+): string {
+  const state = randomBytes(32).toString("base64url")
+  const encodedReturnTo = Buffer.from(sanitizeReturnTo(returnTo), "utf8").toString("base64url")
+  response.cookies.set(oauthStateCookieName(provider), `${state}.${encodedReturnTo}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+    path: "/api/auth/oauth",
+    maxAge: 10 * 60,
+  })
+  return state
+}
+
+export function clearOAuthStateCookie(
+  response: NextResponse,
+  provider: OAuthProvider,
+  secure: boolean,
+) {
+  response.cookies.set(oauthStateCookieName(provider), "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+    path: "/api/auth/oauth",
+    maxAge: 0,
+  })
+}
+
+export function consumeOAuthState(
+  request: Request,
+  response: NextResponse,
+  provider: OAuthProvider,
+  receivedState: string | null,
+): string | null {
+  const cookieName = oauthStateCookieName(provider)
+  const cookieHeader = request.headers.get("cookie") ?? ""
+  const rawCookie = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${cookieName}=`))
+    ?.slice(cookieName.length + 1)
+
+  clearOAuthStateCookie(response, provider, isSecureRequest(request.url))
+
+  if (!rawCookie || !receivedState) return null
+  const [expectedState, encodedReturnTo] = rawCookie.split(".", 2)
+  if (!expectedState || !encodedReturnTo) return null
+
+  const expected = Buffer.from(expectedState)
+  const received = Buffer.from(receivedState)
+  if (expected.length !== received.length || !timingSafeEqual(expected, received)) return null
+
+  try {
+    return sanitizeReturnTo(Buffer.from(encodedReturnTo, "base64url").toString("utf8"))
+  } catch {
+    return null
+  }
+}
+
 async function getCookieSessionToken() {
   const cookieStore = await cookies()
   return cookieStore.get(SESSION_COOKIE_NAME)?.value ?? null
@@ -105,8 +211,8 @@ export async function getSessionUser(): Promise<PublicUser | null> {
   if (cached && cached.expires > Date.now()) return cached.user
 
   const pool = getPool()
-  const result = await pool.query<{ id: string; username: string; role: string; display_name: string | null; avatar_url: string | null }>(
-    `SELECT u.id, u.username, u.role, u.display_name, u.avatar_url
+  const result = await pool.query<{ id: string; username: string; role: string; display_name: string | null; avatar_url: string | null; blocked: boolean }>(
+    `SELECT u.id, u.username, u.role, u.display_name, u.avatar_url, u.blocked
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.token = $1 AND s.expires_at > NOW()
@@ -115,7 +221,7 @@ export async function getSessionUser(): Promise<PublicUser | null> {
   )
 
   const row = result.rows[0]
-  const user: PublicUser | null = row
+  const user: PublicUser | null = row && !row.blocked
     ? {
         id: row.id,
         username: row.username,
