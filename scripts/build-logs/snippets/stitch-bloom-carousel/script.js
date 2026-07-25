@@ -9,11 +9,11 @@ var Y_STEP = 0.286;    // vertical step per position (this is the "diagonal")
 var VISIBLE_SIDE = 2;  // cards rendered either side of the active one
 
 var ITEMS = [
-  { name: "Najma handbag", price: "£78", a: "#8c6248", b: "#4a3323" },
-  { name: "Gadget sleeve", price: "£34", a: "#a98a72", b: "#6b4a34" },
-  { name: "iPad sleeve", price: "£42", a: "#7d6b5c", b: "#3d332b" },
-  { name: "Card holder", price: "£22", a: "#b39680", b: "#7a5a41" },
-  { name: "Tote, waxed", price: "£95", a: "#6f5744", b: "#2e241c" }
+  { name: "Najma handbag", price: "₦65,000", a: "#8c6248", b: "#4a3323" },
+  { name: "Laptop sleeve", price: "₦45,000", a: "#a98a72", b: "#6b4a34" },
+  { name: "iPad sleeve", price: "₦35,000", a: "#7d6b5c", b: "#3d332b" },
+  { name: "Key holder", price: "₦15,000", a: "#b39680", b: "#7a5a41" },
+  { name: "Najma clutch", price: "₦110,000", a: "#6f5744", b: "#2e241c" }
 ];
 
 var dc = document.getElementById("dc");
@@ -23,6 +23,26 @@ var count = document.getElementById("count");
 var active = 0;
 var cw = 0;
 var timer = null;
+
+// Build every card ONCE. This is the whole reason the deck animates: a CSS
+// transition can only animate a change on an element that was already in the
+// document. Re-creating the cards on each step — which is what a naive
+// innerHTML rebuild does — makes them appear at their new position with no
+// transition at all.
+var cards = ITEMS.map(function (item, i) {
+  var el = document.createElement("div");
+  el.className = "dc__card";
+  el.innerHTML =
+    '<span class="dc__art" style="background:linear-gradient(155deg,' + item.a + ',' + item.b + ')"></span>' +
+    '<span class="dc__label"><span class="dc__name">' + item.name + "</span>" +
+    '<span class="dc__price">' + item.price + "</span></span>";
+  el.addEventListener("click", function () { if (i !== active) goTo(i); });
+  el.addEventListener("keydown", function (e) { if (e.key === "Enter" && i !== active) goTo(i); });
+  stage.appendChild(el);
+  return el;
+});
+
+var lastOffset = ITEMS.map(function (_, i) { return i; });
 
 function geometry() {
   var cardW = cw > 0 ? Math.round(Math.max(140, Math.min(cw * 0.5, MAX_CARD_W))) : MAX_CARD_W;
@@ -35,87 +55,76 @@ function geometry() {
   return { cardW: cardW, cardH: cardH, xStep: xStep, yStep: yStep, stageH: stageH, cardLeft: cardLeft, cardTop: cardTop };
 }
 
-function render() {
+function render(instant) {
   var g = geometry();
   stage.style.height = g.stageH + "px";
-  stage.innerHTML = "";
 
-  ITEMS.forEach(function (item, i) {
+  cards.forEach(function (el, i) {
     var total = ITEMS.length;
     var w = i - active;
     if (w > total / 2) w -= total;
     if (w < -total / 2) w += total;
 
     var absW = Math.abs(w);
-    if (absW > VISIBLE_SIDE) return;
-
-    // Positive w → to the RIGHT → X increases, Y decreases.
-    var tx = w * g.xStep;
-    var ty = -w * g.yStep;
     var isActive = w === 0;
 
-    var card = document.createElement("div");
-    card.className = "dc__card" + (isActive ? " dc__card--active" : "");
-    card.style.width = g.cardW + "px";
-    card.style.height = g.cardH + "px";
-    card.style.top = g.cardTop + "px";
-    card.style.left = g.cardLeft + "px";
-    card.style.transform = "translateX(" + tx + "px) translateY(" + ty + "px) scale(" + (isActive ? 1 : 0.85) + ")";
-    card.style.opacity = isActive ? 1 : 0.5;
-    card.style.zIndex = isActive ? total + 1 : total - absW;
-    card.innerHTML =
-      '<span class="dc__art" style="background:linear-gradient(155deg,' + item.a + ',' + item.b + ')"></span>' +
-      '<span class="dc__label"><span class="dc__name">' + item.name + "</span>" +
-      '<span class="dc__price">' + item.price + "</span></span>";
+    // A card that wraps round the ring (e.g. +2 -> -2) would otherwise slide the
+    // entire width of the deck. The real component unmounts those; here the
+    // transition is suppressed for exactly that frame, which looks the same.
+    var wrapped = Math.abs(w - lastOffset[i]) > 1;
+    if (instant || wrapped) el.style.transition = "none";
 
-    if (!isActive) {
-      card.setAttribute("role", "button");
-      card.setAttribute("tabindex", "0");
-      card.setAttribute("aria-label", "Go to " + item.name);
-      card.addEventListener("click", function () { goTo(i); });
-      card.addEventListener("keydown", function (e) { if (e.key === "Enter") goTo(i); });
+    el.style.width = g.cardW + "px";
+    el.style.height = g.cardH + "px";
+    el.style.top = g.cardTop + "px";
+    el.style.left = g.cardLeft + "px";
+    el.style.transform =
+      "translateX(" + w * g.xStep + "px) translateY(" + -w * g.yStep + "px) scale(" + (isActive ? 1 : 0.85) + ")";
+    el.style.opacity = absW > VISIBLE_SIDE ? 0 : isActive ? 1 : 0.5;
+    el.style.zIndex = isActive ? total + 1 : total - absW;
+    el.className = "dc__card" + (isActive ? " dc__card--active" : "");
+    el.setAttribute("aria-hidden", absW > VISIBLE_SIDE ? "true" : "false");
+    el.setAttribute("tabindex", isActive || absW > VISIBLE_SIDE ? "-1" : "0");
+    el.setAttribute("aria-label", isActive ? ITEMS[i].name : "Go to " + ITEMS[i].name);
+    if (!isActive) el.setAttribute("role", "button"); else el.removeAttribute("role");
+
+    if (instant || wrapped) {
+      void el.offsetWidth;            // force reflow so the jump is not animated
+      el.style.transition = "";       // hand control back to the stylesheet
     }
-
-    stage.appendChild(card);
+    lastOffset[i] = w;
   });
 
   count.textContent = active + 1 + " / " + ITEMS.length;
 
   readout.innerHTML = [
-    ["container", cw + "px"],
-    ["cardW", g.cardW + "px"],
-    ["cardH", g.cardH + "px"],
-    ["xStep", g.xStep + "px"],
-    ["yStep", g.yStep + "px"],
-    ["stageH", g.stageH + "px"]
-  ].map(function (p) {
-    return "<div><dt>" + p[0] + "</dt><dd>" + p[1] + "</dd></div>";
-  }).join("");
+    ["container", cw + "px"], ["cardW", g.cardW + "px"], ["cardH", g.cardH + "px"],
+    ["xStep", g.xStep + "px"], ["yStep", g.yStep + "px"], ["stageH", g.stageH + "px"]
+  ].map(function (p) { return "<div><dt>" + p[0] + "</dt><dd>" + p[1] + "</dd></div>"; }).join("");
 }
 
 function goTo(i) {
   active = (i + ITEMS.length) % ITEMS.length;
-  render();
+  render(false);
   restart();
 }
 
 function restart() {
   clearInterval(timer);
-  timer = setInterval(function () { goTo(active + 1); }, 4000);
+  timer = setInterval(function () { goTo(active + 1); }, 3600);
 }
 
 document.getElementById("prev").addEventListener("click", function () { goTo(active - 1); });
 document.getElementById("next").addEventListener("click", function () { goTo(active + 1); });
 
 // One measurement drives everything. No breakpoints for the deck itself.
-var ro = new ResizeObserver(function () {
+new ResizeObserver(function () {
   var next = dc.offsetWidth;
   if (next === cw) return;
   cw = next;
-  render();
-});
-ro.observe(dc);
+  render(true);   // a resize should not animate
+}).observe(dc);
 
 cw = dc.offsetWidth;
-render();
+render(true);
 restart();

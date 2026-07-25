@@ -1,8 +1,8 @@
 ---
-title: "LoopBridge — From a Figma File to a Media Pipeline"
-excerpt: "A crypto community's marketing site that kept being asked to do more, until it wasn't a site any more. Three architectures, and what each one actually cost."
+title: "LoopBridge — Learning the Front End the Hard Way, Then Outgrowing It"
+excerpt: "A Figma file, a crypto community, and no framework. I hand-built the whole thing while learning CSS properly, and then video lessons turned it into something that needed real infrastructure."
 series: portfolio-projects
-publishedAt: 2026-07-01
+publishedAt: 2026-04-10
 ---
 
 ## Client
@@ -19,62 +19,77 @@ The backend requirements were a bit more unclear: the main feature of the site w
 
 I wasn't sure I was going to work on the backend just yet, so I didn't bother with creating any routes. I also just used plain HTML, CSS and JavaScript to get started. This had the added advantage of being easy to read for any developers that were going to hop on the project later.
 
-That decision — no framework, no build step — is worth defending, because it was right for about four months and then completely wrong. It's the clearest example I have of an architecture being correct *for a phase* rather than correct in general.
+It also meant I had to actually learn CSS, rather than reach for a framework that would hide it from me. Most of this build log is that.
+
+## Hand-building a Figma file
+
+The design had things in it that don't come out of a component library, so I built them one at a time and learned the platform on the way.
+
+**Fonts that refuse to load.** Cabinet Grotesk wouldn't apply. Schibsted Grotesk as a fallback worked immediately, so the problem was that font specifically. I'd copied the whole `cabinet-grotesk.css` into my stylesheet and it still didn't work, while it worked fine on the site I'd taken it from — which is the kind of thing that's only obvious once you know that a `@font-face` `src` is resolved relative to the stylesheet it's declared in, not the page.
+
+**Backgrounds at 40% without dimming the content.** The first section is a horizontal gradient from `#e1fbff` at 18% to `#d6f4e4` at 86%, at 40% opacity — but only the background. Putting `opacity` on the element takes the text with it. The background has to be its own layer.
+
+**A field of circles.** The Figma file had a decorative vector of scattered circles at the bottom-left of the join section. I didn't want to ship a vector, because I already knew what it had to do on mobile: stretch from under the heading all the way down behind the boxes. So it became CSS and a little JavaScript — about forty circles between 10px and 25px, colours sampled from a 33-colour range out of the design rather than hard-coded, each one drifting, fading out after a while, and a new one fading in at a random size, colour and speed. Cheap enough not to matter.
+
+**A four-pointed star.** I wanted star bullets. Font Awesome's star is a five-pointed star; the icon fonts I tried weren't right either. What I actually wanted was a four-pointed star with **concave sides and blunt points**, behaving like text so its colour could be changed. That's a custom SVG, sized and coloured from CSS.
+
+**An infinite marquee.** The currency ticker had to scroll right to left and loop seamlessly, at a **constant speed regardless of how much content is in it** — not "traverse the whole thing in 15 seconds", which is what you get if you animate a percentage. It also had to start in its resting position rather than off-screen, and the duplicated track has to be on the same line or the seam is visible.
+
+**An SVG used as a mask.** The newsletter banner in Figma was a vector grouped with a same-sized white layer — a mask. Working out that the mask was inverted relative to what I first assumed (the covered areas take the dark blue, the uncovered areas lighten) took several rounds, largely because changing the mask's colour and changing the mask's behaviour look identical if you only read the code.
+
+## The layout problems worth keeping
+
+These are the ones I'd hit again in any project.
+
+**A navbar with the links dead centre.** The logo sat in one flex child and the links plus the CTA in another, which means two children — and you cannot centre the middle of three things by balancing two. The logo must not take equal space (it should shrink as far as it can), but the links must be *dead centre* of the bar, not centred in the space left over. That's three flex children with the outer two given equal flex-basis, not two children with `space-between`.
+
+**Cards that fill their row without distorting.** I wanted a variable number of cards per row — five at 1200px, then three, then two, then one — with **equal widths, a constant gap, wrapping to a new line when they no longer fit, and the last partial row left-aligned with the row above it**, and the whole grid still optically centred. Flexbox gets you most of that and then fights you on the last row; `space-between` gives you spacing that changes with the viewport, which is exactly what I didn't want. It's a grid with a minimum track size, plus a flex fallback once everything fits on one line.
+
+**`position: relative` hiding the navbar.** Giving the hero `position: relative` put it above a fixed navbar that had no z-index of its own. Stacking contexts don't care that one element is fixed and the other isn't; once both are positioned, source order decides.
+
+**Everything in rem.** A pass converting every pixel measurement to its rem equivalent, so the whole site scales with the root size — done before the responsive work, not after, because doing it after means redoing the responsive work.
+
+## Then it became a platform
+
+Accounts, a saved-article feed, a course catalogue and a glossary all arrived. Eleven separate HTML documents each carrying their own copy of the header, nav and footer stopped being a contribution feature and became a bug source — one link change meant eleven edits, and the eleventh was always the one that got missed. More decisively, none of those features work without state that survives navigation.
+
+So: React 19 + Vite + `react-router` on the front, Express behind it, bcrypt and Google OAuth for accounts, SQLite for data.
 
 {{snippet:loopbridge-progress wide}}
 
-## Move one: the nav that had to be edited eleven times
+## Video broke it again
 
-Static pages are wonderful until the site has eleven of them. Every page carried its own copy of the header, the nav and the footer. Adding one link meant eleven edits, and the eleventh was always the one that got missed.
+A course lesson is a video, uploaded by an instructor in whatever format their phone produced. It has to be transcoded, stored somewhere that isn't the app server, streamed adaptively so a viewer on Nigerian mobile data gets a bitrate that plays, and — the part I underestimated — **played back the right way up**.
 
-The thing that finally forced the issue wasn't the duplication though — it was **state**. Accounts, a saved-articles feed and a course catalogue all need something that survives navigation, and "survives navigation" is the one thing a set of separate HTML documents cannot give you without a server round trip per click.
-
-So: React 19 + Vite + `react-router` on the front, Express behind it, bcrypt and Google OAuth for accounts, SQLite for data. The trade was explicit — a build step and a process to keep alive, in exchange for one nav.
-
-## Move two: video broke the model
-
-The eLearning half of the brief is where it stopped being a website.
-
-A course lesson is a video. Videos get uploaded by instructors, in whatever format their phone produced. That has to be transcoded to something streamable, stored somewhere that isn't the application server, delivered adaptively so a viewer on Nigerian mobile data gets a bitrate that actually plays, and — the part I underestimated — **played back at the right orientation**.
-
-None of that belongs in a request handler. So media moved out:
-
-- uploads go to **S3**, presigned so the file never transits the API;
-- **AWS MediaConvert** produces HLS renditions, with a callback Lambda telling the app when a job finishes;
-- **CloudFront** fronts both the static client and the media;
-- the app itself moved into a container on **ECS Fargate** behind an ALB, with **RDS Postgres** replacing SQLite and secrets in **Secrets Manager**.
+Media moved out: presigned uploads straight to S3, AWS MediaConvert producing HLS renditions with a Lambda callback, CloudFront in front of both the client and the media, the app itself in a container on ECS Fargate behind an ALB, RDS Postgres replacing SQLite, secrets in Secrets Manager, all of it in Terraform.
 
 ### The orientation bug, in four commits
 
-This one earned its place in the log because every fix was reasonable and the first three were wrong.
+Every fix here was reasonable and the first three were wrong.
 
-MediaConvert **encodes portrait video into landscape frames** — it doesn't preserve the source aspect ratio, it letterboxes. So by the time the HLS manifest reaches the browser, the stream genuinely *is* landscape, and every piece of runtime information the player can see agrees that it is.
+MediaConvert **encodes portrait video into landscape frames**. It doesn't preserve the source aspect ratio, it letterboxes. So by the time the HLS manifest reaches the browser, the stream genuinely is landscape, and every piece of runtime information the player can see agrees.
 
-1. **Detect at playback via the `resize` event.** Fails — the resize event reports the encoded (landscape) dimensions.
-2. **Read it from the HLS metadata on `MANIFEST_PARSED`.** Fails for the same reason, one layer up.
-3. **Probe at upload time and store it.** Right idea: `ffprobe` the file before the storage driver deletes the temp copy, account for rotation metadata, and persist `video_width` / `video_height` on the upload row. The player takes an `isPortraitHint` prop.
-4. **Make the hint authoritative.** Still broken in the sandbox, because `MANIFEST_PARSED` and `loadedmetadata` were still firing *after* the hint was applied and overwriting it with the landscape truth. The final change makes the hint tri-state — `true` / `false` / `null` — so "we know it's portrait" is distinguishable from "we haven't been told", and only `null` falls back to runtime detection.
+1. **Detect on the video's `resize` event.** Reports the encoded (landscape) dimensions.
+2. **Read it from the HLS metadata on `MANIFEST_PARSED`.** Same answer, one layer up.
+3. **Probe at upload time and store it.** `ffprobe` the temp file before the storage driver deletes it, account for rotation metadata, persist `video_width` / `video_height` on the upload row, pass the player an `isPortraitHint`.
+4. **Make the hint authoritative.** Still wrong in the sandbox, because `MANIFEST_PARSED` and `loadedmetadata` were still firing after the hint was applied and overwriting it. The hint became tri-state — `true` / `false` / `null` — so "we know it's portrait" is distinguishable from "we haven't been told", and only `null` falls back to runtime detection.
 
-The general shape: **when a transform destroys information, you cannot recover it downstream.** The only place the source orientation exists is before transcoding, so that's the only place it can be captured. Three of the four commits were spent looking for it somewhere cheaper.
+When a transform destroys information, you can't recover it downstream. The source orientation only exists before transcoding, so that's the only place it can be captured. Three of the four commits were spent looking somewhere cheaper.
 
-## What it looks like now
-
-Beyond the courses: a My Learning progress dashboard, threaded in-app messaging, profile updates gated behind OTP, an articles feed with categorisation, a glossary, analytics and a recommendation service, SSO, and payments. The Express app is organised as thin routes over a `services/` layer over a `repositories/` layer, which is what made the SQLite → Postgres swap survivable.
-
-Infrastructure is Terraform — RDS with Multi-AZ, 35-day automated backups, KMS encryption, Performance Insights and CloudWatch alarms; CloudFront with an ACM certificate. Deployment took several attempts to get right, including one memorable class of bug where a deploy would succeed and *wipe the HTTPS nginx config*, so the site came back on port 80 and the health check passed while the certificate was gone.
+There was also a deploy that would succeed and quietly wipe the HTTPS nginx config, so the site came back on port 80 with the health check passing and the certificate gone.
 
 ## What I'd do differently
 
-Nothing about move one. Plain HTML for the first phase got a real site in front of the client fast, and the contribution story was true — other developers did open files and change things.
+Nothing about the first phase. Hand-writing it taught me the CSS I use on every project since, and the contribution story was real — other developers did open files and change them.
 
-What I'd change is the **shape of the second move**. The SPA migration and the API arrived together in one push, which meant a period where two things were unproven at once and every bug had two possible homes. Doing the API first, against the static pages, would have kept one variable fixed at a time.
+What I'd change is the shape of the second move. The SPA migration and the API landed together, so for a while two things were unproven at once and every bug had two possible homes. Building the API first, against the static pages, would have kept one variable fixed at a time.
 
-I'd also have reached for a job queue at move three rather than callbacks-plus-polling. Most of the transcode-related commits in this repo are about state reconciliation between "MediaConvert says done", "the callback arrived", and "the row says processing" — which is a queue's problem, solved.
+I'd also reach for a job queue at the third phase instead of callbacks plus polling. Most of the transcode commits in this repo are reconciling "MediaConvert says done", "the callback arrived" and "the row still says processing", which is a queue's problem, already solved.
 
 ## Stack
 
 **Client:** React 19, Vite, `react-router` v7, `hls.js`.
-**Server:** Express, Postgres (`pg`), bcrypt, Google OAuth, Twilio, Nodemailer, Multer, `fluent-ffmpeg`, AWS SDK (S3, MediaConvert).
-**Infrastructure:** ECS Fargate, ALB, RDS Postgres, S3, CloudFront, Route 53 + ACM, Secrets Manager, CloudWatch, Lambda for transcode callbacks, Terraform for all of it.
+**Server:** Express, Postgres, bcrypt, Google OAuth, Twilio, Nodemailer, Multer, `fluent-ffmpeg`, AWS SDK (S3, MediaConvert).
+**Infrastructure:** ECS Fargate, ALB, RDS Postgres, S3, CloudFront, Route 53 + ACM, Secrets Manager, CloudWatch, Lambda for transcode callbacks, Terraform.
 
 **Live:** [loopbridge.network](https://www.loopbridge.network) · **Source:** [github.com/NeroSiegfried/LoopBridge](https://github.com/NeroSiegfried/LoopBridge)
