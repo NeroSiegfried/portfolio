@@ -21,7 +21,15 @@ const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render
  * and reports an empty token, so forms still work locally / before it's
  * configured (the server skips verification when the secret is also unset).
  */
-export function Turnstile({ onVerify, className }: { onVerify: (token: string) => void; className?: string }) {
+export function Turnstile({
+  onVerify,
+  className,
+  action,
+}: {
+  onVerify: (token: string) => void
+  className?: string
+  action?: string
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const widgetId = useRef<string | null>(null)
   const [nearViewport, setNearViewport] = useState(false)
@@ -58,6 +66,7 @@ export function Turnstile({ onVerify, className }: { onVerify: (token: string) =
         "expired-callback": () => onVerify(""),
         theme: "auto",
         size: "flexible",
+        ...(action ? { action } : {}),
       })
     }
 
