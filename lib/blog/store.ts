@@ -195,8 +195,12 @@ const readPublishedBlogDb = unstable_cache(
     const [series, posts, postVotes] = await Promise.all([
       pool.query("SELECT * FROM series ORDER BY title"),
       pool.query(
+        // `position` drives explicit series ordering in listPublishedPostsForSeries.
+        // Leaving it out of the projection silently zeroed it for every post, so a
+        // series could only ever sort by date.
         `SELECT id, slug, title, excerpt, cover_image, series_id, status, author_id,
-                published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+                published_at, created_at, updated_at, position,
+                NULL::text AS content, NULL::text AS custom_css
          FROM posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC`
       ),
       pool.query("SELECT * FROM post_votes"),
@@ -233,8 +237,10 @@ export const readBlogPostDb = unstable_cache(
     const [series, siblingPosts, snippets, postVotes] = await Promise.all([
       pool.query("SELECT * FROM series ORDER BY title"),
       pool.query(
+        // Same here: these siblings feed the in-series previous/next navigation.
         `SELECT id, slug, title, excerpt, cover_image, series_id, status, author_id,
-                published_at, created_at, updated_at, NULL::text AS content, NULL::text AS custom_css
+                published_at, created_at, updated_at, position,
+                NULL::text AS content, NULL::text AS custom_css
          FROM posts WHERE status='published' AND id != $1
          ORDER BY COALESCE(published_at, created_at) ASC`,
         [postId]

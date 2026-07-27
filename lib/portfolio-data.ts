@@ -168,7 +168,7 @@ export const projects: Project[] = [
 ]
 
 /** The website projects shown in the Work section (most recent first). */
-export const featuredProjects: Project[] = [9, 13, 11, 12, 10]
+export const featuredProjects: Project[] = [13, 11, 12, 10, 9]
   .map((id) => projects.find((p) => p.id === id))
   .filter((p): p is Project => Boolean(p))
 
