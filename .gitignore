@@ -50,6 +50,8 @@ test*
 /scripts/.preview/
 /scripts/.backups/
 /scripts/.tmp/
+# screenshots written by scripts/verify-*.mjs
+/.image-verify/
 
 # scratch session docs / unused assets
 /AWS_DEPLOYMENT_COMPLETE.md

@@ -7,6 +7,10 @@ const scriptSources = [
   ...(isDevelopment ? ["'unsafe-eval'"] : []),
   "https://vercel.live",
   "https://challenges.cloudflare.com",
+  // Cloudflare Web Analytics. The beacon is injected into the response by the
+  // Cloudflare proxy in front of the domain, so it can only be allowed here or
+  // turned off in the Cloudflare dashboard — it is not referenced by our code.
+  "https://static.cloudflareinsights.com",
 ].join(" ")
 
 const securityHeaders = [
@@ -32,7 +36,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://vercel.live",
       "img-src 'self' data: blob: https:",
       "font-src 'self' https://vercel.live",
-      "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com https://*.s3.amazonaws.com https://*.s3.us-east-1.amazonaws.com https://d2ukq6p6guyuw1.cloudfront.net https://vercel.live https://*.pusher.com wss://*.pusher.com https://challenges.cloudflare.com",
+      "connect-src 'self' https://nerosiegfried.com https://www.nerosiegfried.com https://*.s3.amazonaws.com https://*.s3.us-east-1.amazonaws.com https://d2ukq6p6guyuw1.cloudfront.net https://vercel.live https://*.pusher.com wss://*.pusher.com https://challenges.cloudflare.com https://cloudflareinsights.com",
       "frame-src 'self' https://vercel.live https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "object-src 'none'",

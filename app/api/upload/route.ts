@@ -75,8 +75,13 @@ export async function POST(req: Request) {
         CacheControl: "public, max-age=31536000, immutable",
         // Born as an unverified upload; promoted to keep=true once the content
         // referencing it is saved. The lifecycle backstop expires anything left
-        // at keep=false past the grace period. The client MUST echo this exact
-        // value in an `x-amz-tagging` header on the PUT (it's a signed header).
+        // at keep=false past the grace period.
+        //
+        // The presigner hoists this (and every other x-amz-* value) into the
+        // URL's *query string*, so the client must send it as part of the URL
+        // and NOT as a header: S3 rejects any x-amz-* header outside
+        // X-Amz-SignedHeaders with "AccessDenied: There were headers present in
+        // the request which were not signed".
         Tagging:      UPLOAD_TAGGING,
       }),
       { expiresIn: 300 }
@@ -91,5 +96,5 @@ export async function POST(req: Request) {
   }
 
   const cfUrl = `https://${process.env.AWS_CLOUDFRONT_DOMAIN ?? process.env.CLOUDFRONT_DOMAIN}/${key}`
-  return NextResponse.json({ uploadUrl, key, cfUrl, tagging: UPLOAD_TAGGING })
+  return NextResponse.json({ uploadUrl, key, cfUrl })
 }

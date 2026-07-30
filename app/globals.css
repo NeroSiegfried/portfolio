@@ -544,6 +544,58 @@
   max-width: 48rem;
 }
 
+/* ── In-body post images ──────────────────────────────────────────────────────
+   Emitted by components/blog-markdown.tsx: every markdown image becomes a
+   `.post-figure`, and the paragraph that held it becomes a `.post-figure-row`.
+   The row is the direct `.prose` child, so it — not the figure — carries the
+   measure/breakout behaviour. Squared corners, matching the rest of v2. */
+
+.post-figure-row {
+  display: grid;
+  gap: 1rem;
+  margin: 2.25rem 0;
+}
+
+/* Two or more images written on one line: side by side on a roomy viewport,
+   stacked once there isn't width for both. */
+@media (min-width: 40rem) {
+  .post-figure-row--split {
+    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+    align-items: start;
+  }
+}
+
+.post-figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.post-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--secondary));
+}
+
+.post-figure figcaption {
+  margin-top: 0.6rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: hsl(var(--muted-foreground));
+  text-align: left;
+}
+
+/* A `|wide` image fills the whole reading column rather than the measure.
+   `.snippet-breakout` (set alongside) does the escaping; this only restores the
+   breathing room a full-width figure wants. */
+.post-figure-row--wide {
+  margin: 3rem 0;
+}
+
 @keyframes carousel {
   0% {
     transform: translateX(0);

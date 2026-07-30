@@ -358,9 +358,11 @@ export async function updateDb<T>(updater: (db: BlogDb) => T): Promise<T> {
     }
     for (const v of db.commentVotes) {
       await client.query(
+        // $4 is the vote value; $3 is user_id (text) and would fail the
+        // smallint column with "column value is of type smallint".
         `INSERT INTO comment_votes (id,comment_id,user_id,value,created_at)
          VALUES ($1,$2,$3,$4,NOW())
-         ON CONFLICT (comment_id,user_id) DO UPDATE SET value=$3`,
+         ON CONFLICT (comment_id,user_id) DO UPDATE SET value=$4`,
         [v.id, v.commentId, v.userId, v.value]
       )
     }
@@ -368,7 +370,7 @@ export async function updateDb<T>(updater: (db: BlogDb) => T): Promise<T> {
       await client.query(
         `INSERT INTO post_votes (id,post_id,user_id,value,created_at)
          VALUES ($1,$2,$3,$4,NOW())
-         ON CONFLICT (post_id,user_id) DO UPDATE SET value=$3`,
+         ON CONFLICT (post_id,user_id) DO UPDATE SET value=$4`,
         [v.id, v.postId, v.userId, v.value]
       )
     }
@@ -423,6 +425,21 @@ export async function writePost(post: BlogPost): Promise<void> {
     [post.id, post.slug, post.title, post.excerpt, post.content, post.seriesId, post.status, post.authorId, post.createdAt, post.publishedAt, post.customCss ?? null, post.position ?? 0, post.coverImage ?? null]
   )
   revalidateTag("blog-data")
+}
+
+/**
+ * Delete a single post row. Returns false when the id doesn't exist.
+ *
+ * `updateDb` cannot do this: it is upsert-only, so dropping an entry from
+ * `db.posts` leaves the row in place and the caller sees a phantom success —
+ * while the route has already deleted the post's S3 images, leaving a live post
+ * with broken images. Deleting directly, like writePost, avoids both.
+ */
+export async function deletePost(id: string): Promise<boolean> {
+  const r = await getPool().query("DELETE FROM posts WHERE id=$1", [id])
+  if (!r.rowCount) return false
+  revalidateTag("blog-data")
+  return true
 }
 
 export function upsertSeries(db: BlogDb, series: BlogSeries) {

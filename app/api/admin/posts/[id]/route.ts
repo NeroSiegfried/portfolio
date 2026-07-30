@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { requireAdminUser } from "@/lib/blog/auth"
-import { updateDb, getPostById } from "@/lib/blog/store"
+import { deletePost, getPostById } from "@/lib/blog/store"
 import { deleteImages, imageUrlsIn } from "@/lib/blog/media"
 
 export async function DELETE(
@@ -16,18 +16,14 @@ export async function DELETE(
   // images once the delete commits.
   const doomed = await getPostById(id)
 
-  const result = await updateDb((db) => {
-    const exists = db.posts.some((p) => p.id === id)
-    if (!exists) return { error: "Post not found." }
-    db.posts = db.posts.filter((p) => p.id !== id)
-    return { deleted: true }
-  })
-
-  if ("error" in result) return NextResponse.json({ error: result.error }, { status: 404 })
+  const deleted = await deletePost(id)
+  if (!deleted) return NextResponse.json({ error: "Post not found." }, { status: 404 })
 
   // Code-driven GC: the post is gone, so its cover + body images are now orphans.
+  // Only reached once the row is really gone, so images are never reclaimed out
+  // from under a post that still exists.
   if (doomed) {
     void deleteImages([...(doomed.coverImage ? [doomed.coverImage] : []), ...imageUrlsIn(doomed.content)])
   }
-  return NextResponse.json(result)
+  return NextResponse.json({ deleted: true })
 }

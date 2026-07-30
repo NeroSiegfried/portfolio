@@ -19,6 +19,17 @@ const btn = "inline-flex items-center justify-center gap-2 border border-border 
 const btnPrimary = "inline-flex items-center justify-center gap-2 bg-primary px-5 py-2.5 font-mono text-xs uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
 const btnDanger = "inline-flex items-center justify-center gap-2 border border-destructive/50 px-4 py-2.5 font-mono text-xs uppercase tracking-[0.12em] text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
 const eyebrow = "font-mono text-[0.7rem] uppercase tracking-[0.16em] text-muted-foreground"
+/**
+ * Notebook-cell action link. Visible by default so touch devices — which never
+ * fire hover — can reach it; only pointers that *can* hover get the fade-in.
+ */
+const cellAction = (accent: string) =>
+  cn(
+    "font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 transition-colors disabled:opacity-30",
+    "[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100",
+    "[@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100",
+    accent,
+  )
 
 // ── Public prop shapes (author/post resolved server-side; no passwordHash) ──────
 export interface AdminComment {
@@ -53,6 +64,60 @@ interface AdminDashboardProps {
 }
 
 type Section = "posts" | "series" | "snippets" | "comments" | "users"
+
+/**
+ * Compress, presign and PUT one image, returning its CloudFront URL.
+ *
+ * Only `Content-Type` goes on the PUT. The `keep=false` lifecycle tag and every
+ * other x-amz-* value the server signed are hoisted into the presigned URL's
+ * query string; adding an `x-amz-tagging` *header* on top makes S3 reject the
+ * request with "There were headers present in the request which were not
+ * signed" (see app/api/upload/route.ts).
+ */
+async function uploadImage(
+  file: File,
+  opts: { maxWidth?: number; maxHeight?: number } = {},
+): Promise<string> {
+  const compressed = await compressImage(file, {
+    maxWidth: opts.maxWidth ?? 1200,
+    maxHeight: opts.maxHeight ?? 1200,
+    quality: 0.82,
+    skipBelowBytes: 300 * 1024,
+  })
+
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ purpose: "comment", contentType: compressed.type, size: compressed.size }),
+  })
+  if (!res.ok) {
+    let msg = "Upload failed."
+    try { const j = (await res.json()) as { error?: string }; if (j.error) msg = j.error } catch {}
+    throw new Error(msg)
+  }
+  const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl?: string; cfUrl?: string }
+  if (!uploadUrl || !cfUrl) throw new Error("Upload failed: incomplete server response.")
+
+  const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type }, body: compressed })
+  if (!put.ok) {
+    // Surface S3's own reason — a dead access key, an expired URL and a signing
+    // mistake are otherwise indistinguishable from the browser.
+    let detail = ""
+    try {
+      const m = (await put.text()).match(/<Message>([^<]+)<\/Message>/)?.[1]
+      if (m) detail = ` (${m})`
+    } catch {}
+    throw new Error(`Upload failed: could not store file${detail}.`)
+  }
+  return cfUrl
+}
+
+/** The first image file in a drop / paste, or null. */
+function imageFrom(items: DataTransfer | null): File | null {
+  if (!items) return null
+  const file = [...items.files].find((f) => f.type.startsWith("image/"))
+  return file ?? null
+}
 
 // ── Series tree picker ──────────────────────────────────────────────────────────
 
@@ -194,10 +259,11 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
   const content = cells.join("\n\n")
   const [showPreview, setShowPreview] = useState(false)
 
-  // ── Image upload for post cells ────────────────────────────────────────────
+  // ── In-body image upload for post cells (button, drag-drop, paste) ─────────
   const cellFileInputRef = useRef<HTMLInputElement>(null)
   const activeUploadCellRef = useRef<number>(-1)
   const [uploadingCell, setUploadingCell] = useState<number | null>(null)
+  const [dropCell, setDropCell] = useState<number | null>(null)
   const [cellUploadError, setCellUploadError] = useState<string | null>(null)
 
   // ── Cover image upload (card + article header) ─────────────────────────────
@@ -211,20 +277,7 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
     setCoverUploading(true)
     setError(null)
     try {
-      const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1200, quality: 0.82, skipBelowBytes: 300 * 1024 })
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ purpose: "comment", contentType: compressed.type, size: compressed.size }),
-      })
-      if (!res.ok) {
-        const j = (await res.json()) as { error?: string }
-        throw new Error(j.error ?? "Upload failed")
-      }
-      const { uploadUrl, cfUrl, tagging } = (await res.json()) as { uploadUrl: string; cfUrl: string; tagging?: string }
-      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type, ...(tagging ? { "x-amz-tagging": tagging } : {}) }, body: compressed })
-      if (!put.ok) throw new Error("Upload failed: could not store file.")
-      setCoverImage(cfUrl)
+      setCoverImage(await uploadImage(file, { maxWidth: 1600, maxHeight: 1200 }))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed")
     } finally {
@@ -237,33 +290,23 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
     cellFileInputRef.current?.click()
   }
 
-  const handleCellFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ""
-    const cellIdx = activeUploadCellRef.current
+  /**
+   * Upload `file` and append its markdown to cell `cellIdx`. The alt text seeds
+   * from the file name so the image is never published without one; the empty
+   * `""` title is the caption slot the author fills in (see BlogMarkdown).
+   */
+  const insertCellImage = async (cellIdx: number, file: File) => {
     if (cellIdx < 0) return
     setUploadingCell(cellIdx)
     setCellUploadError(null)
     try {
-      const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.82, skipBelowBytes: 300 * 1024 })
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ purpose: "comment", contentType: compressed.type, size: compressed.size }),
-      })
-      if (!res.ok) {
-        const j = (await res.json()) as { error?: string }
-        throw new Error(j.error ?? "Upload failed")
-      }
-      const { uploadUrl, cfUrl, tagging } = (await res.json()) as { uploadUrl: string; cfUrl: string; tagging?: string }
-      const put = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": compressed.type, ...(tagging ? { "x-amz-tagging": tagging } : {}) }, body: compressed })
-      if (!put.ok) throw new Error("Upload failed: could not store file.")
+      const cfUrl = await uploadImage(file, { maxWidth: 1600, maxHeight: 1600 })
+      const alt = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || "image"
       setCells((prev) =>
         prev.map((c, idx) => {
           if (idx !== cellIdx) return c
-          const sep = c && !c.endsWith("\n") ? "\n\n" : ""
-          return c + sep + `![image](${cfUrl})`
+          const sep = c.trim() ? (c.endsWith("\n") ? "\n" : "\n\n") : ""
+          return c + sep + `![${alt}](${cfUrl} "")`
         })
       )
     } catch (err) {
@@ -271,6 +314,28 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
     } finally {
       setUploadingCell(null)
     }
+  }
+
+  const handleCellFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    await insertCellImage(activeUploadCellRef.current, file)
+  }
+
+  const handleCellDrop = async (i: number, e: React.DragEvent) => {
+    const file = imageFrom(e.dataTransfer)
+    if (!file) return
+    e.preventDefault()
+    setDropCell(null)
+    await insertCellImage(i, file)
+  }
+
+  const handleCellPaste = async (i: number, e: React.ClipboardEvent) => {
+    const file = imageFrom(e.clipboardData)
+    if (!file) return
+    e.preventDefault()
+    await insertCellImage(i, file)
   }
 
   const snippetsBySlug = useMemo(() => new Map(snippets.map((s) => [s.slug, s])), [snippets])
@@ -618,7 +683,10 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
                   <span className="font-medium">{title || "Untitled"}</span>
                   {isDraft && <span className="border border-border bg-muted px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Draft</span>}
                 </div>
-                <div className="prose prose-neutral max-w-none dark:prose-invert">
+                {/* Same wrapper the article uses, so the preview inherits the
+                    real reading measure and keeps `wide` images/snippets inside
+                    the panel instead of breaking out to the viewport. */}
+                <div className="post-body post-body--column">
                   <BlogMarkdown markdown={content} snippetsBySlug={snippetsBySlug} />
                 </div>
               </div>
@@ -688,9 +756,17 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
                     {" or "}
                     <code className="bg-muted px-1 text-xs">{`{{snippet:slug wide}}`}</code>
                   </p>
+                  <p className="mb-1.5 text-xs text-muted-foreground">
+                    Images — press <span className="text-foreground">Image</span>, or drag a file onto a cell, or paste
+                    from the clipboard. Syntax:{" "}
+                    <code className="bg-muted px-1 text-xs">{`![alt](url "caption")`}</code>
+                    {" · full column width with "}
+                    <code className="bg-muted px-1 text-xs">{`![alt|wide](url)`}</code>
+                    {". Two images on one line become a side-by-side pair."}
+                  </p>
 
                   <input ref={cellFileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleCellFileChange} />
-                  {cellUploadError && <p className="text-xs text-destructive">{cellUploadError}</p>}
+                  {cellUploadError && <p className="mb-1.5 text-xs text-destructive">{cellUploadError}</p>}
 
                   <div className="space-y-2">
                     <button type="button" onClick={() => setCells((prev) => ["", ...prev])} className="w-full border border-dashed border-border/50 py-1.5 text-xs text-muted-foreground/60 transition-colors hover:border-primary/40 hover:bg-muted/30 hover:text-primary">
@@ -698,17 +774,26 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
                     </button>
 
                     {cells.map((cell, i) => (
-                      <div key={i} className="group relative border border-border bg-background transition-colors focus-within:border-primary/60">
-                        <div className="flex items-center justify-between px-2 pb-0 pt-1.5">
+                      <div
+                        key={i}
+                        data-dropping={dropCell === i ? "true" : undefined}
+                        className="group relative border border-border bg-background transition-colors focus-within:border-primary/60 data-[dropping=true]:border-primary data-[dropping=true]:bg-primary/5"
+                        onDragOver={(e) => { if (imageFrom(e.dataTransfer)) { e.preventDefault(); setDropCell(i) } }}
+                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropCell(null) }}
+                        onDrop={(e) => void handleCellDrop(i, e)}
+                      >
+                        <div className="flex items-center justify-between gap-2 px-2 pb-0 pt-1.5">
                           <span className="select-none font-mono text-[10px] text-muted-foreground/50">[{i + 1}]</span>
-                          <div className="flex items-center gap-2">
+                          {/* Kept visible on touch (no hover) and while a cell has
+                              focus; only mouse-capable, idle cells fade them out. */}
+                          <div className="flex items-center gap-3">
                             <button type="button" title="Upload image" onClick={() => handleCellImageUpload(i)} disabled={uploadingCell !== null}
-                              className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground/50 opacity-0 transition-colors hover:text-primary disabled:opacity-30 group-hover:opacity-100">
+                              className={cellAction("hover:text-primary")}>
                               {uploadingCell === i ? "Uploading…" : "Image"}
                             </button>
                             {cells.length > 1 && (
                               <button type="button" onClick={() => setCells((prev) => prev.filter((_, idx) => idx !== i))}
-                                className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground/50 opacity-0 transition-colors hover:text-destructive group-hover:opacity-100" title="Remove cell">
+                                className={cellAction("hover:text-destructive")} title="Remove cell">
                                 Remove
                               </button>
                             )}
@@ -719,6 +804,7 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
                           rows={Math.max(3, cell.split("\n").length + 1)}
                           value={cell}
                           onChange={(e) => setCells((prev) => prev.map((c, idx) => (idx === i ? e.target.value : c)))}
+                          onPaste={(e) => void handleCellPaste(i, e)}
                           placeholder={i === 0 ? "# Start writing…" : "Continue…"}
                           spellCheck={false}
                           onKeyDown={(e) => {
@@ -729,7 +815,7 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
                           }}
                         />
                         {cell.trim() && (
-                          <div className="prose prose-sm max-w-none border-t border-border/60 px-3 py-3 text-sm dark:prose-invert">
+                          <div className="post-body post-body--column border-t border-border/60 px-3 py-3">
                             <BlogMarkdown markdown={cell} snippetsBySlug={snippetsBySlug} />
                           </div>
                         )}
@@ -744,7 +830,10 @@ export default function AdminDashboard({ posts, series, snippets, comments, user
 
                 <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                   <button type="button" onClick={savePost} disabled={isPending} className={btnPrimary}>{isPending ? "Saving…" : "Save post"}</button>
-                  <button type="button" onClick={() => setShowPreview(true)} disabled={!content} className={btn}><Eye className="h-3.5 w-3.5" /> Preview</button>
+                  {/* Scroll up too: the Preview button sits at the bottom of a
+                      long editor, so without this you land mid-article with the
+                      "Back to editor" bar behind the sticky header. */}
+                  <button type="button" onClick={() => { setShowPreview(true); window.scrollTo({ top: 0 }) }} disabled={!content} className={btn}><Eye className="h-3.5 w-3.5" /> Preview</button>
                   {postId && (
                     <button type="button" onClick={deletePost} disabled={isPending} className={cn(btnDanger, "ml-auto")}><Trash2 className="h-3.5 w-3.5" /> Delete</button>
                   )}

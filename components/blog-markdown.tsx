@@ -1,8 +1,10 @@
-import ReactMarkdown from "react-markdown"
+import ReactMarkdown, { type Components } from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
+import type { Element } from "hast"
 import type { BlogSnippet, PublicUser } from "@/lib/blog/types"
 import BlogSnippetEmbed from "@/components/blog-snippet-embed"
+import { cn } from "@/lib/utils"
 
 /**
  * Converts isolated single newlines (soft breaks) to double newlines so
@@ -74,6 +76,40 @@ interface BlogMarkdownProps {
   user?: PublicUser | null
 }
 
+// ── In-body images ───────────────────────────────────────────────────────────
+//
+// Authors write plain markdown; the extras ride on parts of the syntax that are
+// otherwise unused, so the URL itself stays untouched (lib/blog/media.ts scans
+// post content for CloudFront URLs to drive media GC — a modified URL would
+// orphan the object).
+//
+//   ![alt](url)                 image at the reading measure
+//   ![alt](url "A caption")     … with a caption under it
+//   ![alt|wide](url)            breaks out to the full reading column
+//   ![a](url) ![b](url)         two on one line → responsive side-by-side pair
+//
+// Flags live after a `|` in the alt text, mirroring the `{{snippet:a|b}}`
+// convention already used above, and are stripped before the alt is emitted.
+
+const IMAGE_FLAGS = new Set(["wide"])
+
+function parseAlt(raw: string): { alt: string; wide: boolean } {
+  const parts = raw.split("|")
+  const flags = new Set<string>()
+  while (parts.length > 1 && IMAGE_FLAGS.has(parts[parts.length - 1].trim())) {
+    flags.add(parts.pop()!.trim())
+  }
+  return { alt: parts.join("|").trim(), wide: flags.has("wide") }
+}
+
+/** The `<img>` elements directly inside a paragraph node. */
+function imagesIn(node: Element | undefined): Element[] {
+  if (!node) return []
+  return node.children.filter(
+    (c): c is Element => c.type === "element" && c.tagName === "img",
+  )
+}
+
 type Block =
   | { type: "markdown"; value: string }
   | { type: "snippet"; slugs: string[]; wide: boolean; notabs: boolean; minHeight?: number }
@@ -133,6 +169,48 @@ function parseBlocks(markdown: string): Block[] {
   return blocks
 }
 
+const markdownComponents: Components = {
+  /**
+   * Images render as `<figure>`, which may not sit inside a `<p>`, so any
+   * paragraph containing one becomes a figure row instead. The row — not the
+   * figure — is the element that carries the layout classes, because the
+   * reading measure is applied to direct children of `.prose`
+   * (`.post-body--column > .prose > *`), which is what the row is.
+   */
+  p({ node, children, ...props }) {
+    const images = imagesIn(node)
+    if (images.length === 0) return <p {...props}>{children}</p>
+
+    const wide = images.some((img) => parseAlt(String(img.properties?.alt ?? "")).wide)
+    return (
+      <div
+        className={cn(
+          "post-figure-row",
+          images.length > 1 && "post-figure-row--split",
+          wide && "snippet-breakout post-figure-row--wide",
+        )}
+      >
+        {children}
+      </div>
+    )
+  },
+
+  img({ node: _node, src, alt, title, ...props }) {
+    const { alt: cleanAlt } = parseAlt(alt ?? "")
+    const caption = title?.trim()
+    return (
+      <figure className="post-figure">
+        {/* Plain <img>: markdown carries no intrinsic dimensions and next/image
+            requires them. Uploads are already downscaled + re-encoded in the
+            browser (lib/compress-image.ts) and served immutable via CloudFront. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={cleanAlt} loading="lazy" decoding="async" {...props} />
+        {caption ? <figcaption>{caption}</figcaption> : null}
+      </figure>
+    )
+  },
+}
+
 export default function BlogMarkdown({ markdown, snippetsBySlug, user }: BlogMarkdownProps) {
   const blocks = parseBlocks(markdown)
 
@@ -176,6 +254,7 @@ export default function BlogMarkdown({ markdown, snippetsBySlug, user }: BlogMar
             key={`md-${index}`}
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}
+            components={markdownComponents}
           >
             {normalizeMarkdownNewlines(block.value)}
           </ReactMarkdown>

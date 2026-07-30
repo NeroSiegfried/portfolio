@@ -121,19 +121,37 @@ async function uploadImagePresigned(
     try { const e = (await res.json()) as { error?: string }; if (e.error) msg = e.error } catch {}
     throw new Error(msg)
   }
-  const { uploadUrl, cfUrl, tagging } = (await res.json()) as { uploadUrl?: string; cfUrl?: string; tagging?: string }
+  const { uploadUrl, cfUrl } = (await res.json()) as { uploadUrl?: string; cfUrl?: string }
   if (!uploadUrl || !cfUrl) throw new Error("Upload failed: incomplete server response.")
 
-  // PUT the file directly to S3. The `x-amz-tagging` header is a signed header
-  // on the presigned URL, so it must be echoed exactly as the server returned it.
+  await putToS3(uploadUrl, compressed)
+  return cfUrl
+}
+
+/**
+ * PUT the file straight to S3 with the presigned URL.
+ *
+ * Send **only** `Content-Type`. Every `x-amz-*` value the server signed (the
+ * `keep=false` lifecycle tag included) is hoisted into the URL's query string by
+ * the presigner, and S3 rejects any *additional* `x-amz-*` request header with
+ * `AccessDenied: There were headers present in the request which were not
+ * signed`. Echoing `x-amz-tagging` back as a header is exactly that mistake.
+ */
+async function putToS3(uploadUrl: string, body: Blob): Promise<void> {
   const put = await fetch(uploadUrl, {
     method:  "PUT",
-    headers: { "Content-Type": compressed.type, ...(tagging ? { "x-amz-tagging": tagging } : {}) },
-    body:    compressed,
+    headers: { "Content-Type": body.type },
+    body,
   })
-  if (!put.ok) throw new Error("Upload failed: could not store file.")
-
-  return cfUrl
+  if (put.ok) return
+  // Surface S3's own reason — the difference between a dead access key, an
+  // expired URL and a signing mistake is otherwise invisible from the browser.
+  let detail = ""
+  try {
+    const code = (await put.text()).match(/<Message>([^<]+)<\/Message>/)?.[1]
+    if (code) detail = ` (${code})`
+  } catch {}
+  throw new Error(`Upload failed: could not store file${detail}.`)
 }
 
 // ─── Pending-image state helpers ─────────────────────────────────────────────
