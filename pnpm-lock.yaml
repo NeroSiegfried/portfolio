@@ -210,6 +210,9 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
     devDependencies:
+      '@types/hast':
+        specifier: 3.0.4
+        version: 3.0.4
       '@types/node':
         specifier: ^22
         version: 22.19.15

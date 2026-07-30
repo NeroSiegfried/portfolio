@@ -1,6 +1,9 @@
 import ReactMarkdown, { type Components } from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
+// @types/hast is a declared devDependency: react-markdown types `node` as a hast
+// Element, and pnpm on Vercel won't resolve it transitively the way local
+// hoisting does.
 import type { Element } from "hast"
 import type { BlogSnippet, PublicUser } from "@/lib/blog/types"
 import BlogSnippetEmbed from "@/components/blog-snippet-embed"
