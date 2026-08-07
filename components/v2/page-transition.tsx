@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, type Variants } from "framer-motion"
+import { isFrozenRoute } from "@/lib/frozen-routes"
 
 /**
  * Site-wide page transition (portfolie/reado). On an internal link click a solid
@@ -17,9 +18,6 @@ import { motion, type Variants } from "framer-motion"
 
 type Phase = "hidden" | "cover" | "reveal"
 
-const isFrozen = (p: string) =>
-  p === "/v1" || p.startsWith("/v1/") || p === "/control" || p.startsWith("/control/")
-
 function internalUrl(anchor: HTMLAnchorElement) {
   const raw = anchor.getAttribute("href")
   if (!raw || raw.startsWith("#") || raw.startsWith("mailto:") || raw.startsWith("tel:")) return null
@@ -28,7 +26,7 @@ function internalUrl(anchor: HTMLAnchorElement) {
 
   try {
     const url = new URL(anchor.href, window.location.href)
-    if (url.origin !== window.location.origin || isFrozen(url.pathname)) return null
+    if (url.origin !== window.location.origin || isFrozenRoute(url.pathname)) return null
     return url
   } catch {
     return null
@@ -98,7 +96,7 @@ export function PageTransition() {
       // Same page (identical path+query, or an in-page hash) → let the browser handle it.
       if (url.pathname === window.location.pathname && url.search === window.location.search) return
       // Never wrap the frozen v1 site or the admin area in the v2 transition.
-      if (isFrozen(window.location.pathname)) return
+      if (isFrozenRoute(window.location.pathname)) return
 
       e.preventDefault()
       prefetch(anchor)
@@ -110,8 +108,13 @@ export function PageTransition() {
       // first (otherwise the new page flashes underneath). We push once the cover
       // animation completes (see onAnimationComplete).
       clearFallback()
-      // Safety net: never get stuck covered if the route never commits.
-      fallback.current = setTimeout(startReveal, 2200)
+      // Safety net for a genuinely hung navigation only — NOT for an ordinary
+      // slow one. Firing this while the route hasn't committed yet reveals the
+      // OLD page (React has nothing else to show), then the real content swap
+      // happens later with no curtain covering it at all — worse than just
+      // waiting. Kept long specifically so normal slow-but-working loads never
+      // reach it.
+      fallback.current = setTimeout(startReveal, 8000)
     }
 
     document.addEventListener("click", onClick, true)

@@ -7,7 +7,6 @@ import { findPublishedPostBySlug, listSnippetsBySlug } from "@/lib/blog/queries"
 import BlogMarkdown from "@/components/blog-markdown"
 import PostVoteButton from "@/components/post-vote-button"
 import LazyComments from "@/components/lazy-comments"
-import { Cursor } from "@/components/v2/cursor"
 import { BlogNav } from "@/components/v2/blog/blog-nav"
 import { Footer } from "@/components/v2/footer"
 import { Eyebrow } from "@/components/v2/primitives"
@@ -41,7 +40,6 @@ export default async function BlogFeaturesDemoPage() {
 
   return (
     <>
-      <Cursor />
       <BlogNav />
 
       <div className="relative bg-background">

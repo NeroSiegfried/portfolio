@@ -3,7 +3,6 @@ import { readBlogHomeDb } from "@/lib/blog/store"
 import { listPublishedPosts, listSeriesTree } from "@/lib/blog/queries"
 import { getAdminEntryPath } from "@/lib/blog/auth"
 import AdminEntryHotkey from "@/components/admin-entry-hotkey"
-import { Cursor } from "@/components/v2/cursor"
 import { BlogNav } from "@/components/v2/blog/blog-nav"
 import { BlogIndex } from "@/components/v2/blog/blog-index"
 import { Footer } from "@/components/v2/footer"
@@ -48,7 +47,6 @@ export default async function BlogHomePage() {
 
   return (
     <>
-      <Cursor />
       <BlogNav />
       <AdminEntryHotkey adminPath={adminPath} />
       {/* Framed content column — mirrors the portfolio home so the two feel unified. */}

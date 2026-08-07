@@ -1,5 +1,4 @@
 import { Analytics } from "@vercel/analytics/next"
-import { Cursor } from "@/components/v2/cursor"
 import { SiteNav } from "@/components/v2/site-nav"
 import { Hero } from "@/components/v2/hero"
 import { Stats } from "@/components/v2/stats"
@@ -47,7 +46,6 @@ export default async function Home() {
   return (
     <>
       {isVercel && <Analytics />}
-      <Cursor />
       <SiteNav />
       {/* Full-bleed sticky hero — the framed content below slides up over it. */}
       <Hero />

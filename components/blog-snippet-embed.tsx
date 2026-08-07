@@ -40,12 +40,31 @@ const THEME_RESET = `
 html,body{margin:0;min-height:0!important;height:auto!important;
   background:var(--sn-bg);color:var(--sn-fg);
   transition:background 0.25s ease,color 0.25s ease;}
+/* Inside a snippet the OS cursor is what you get — the host hides its custom
+   one at the border. This class blanks OUR cursor for the case where the
+   pointer has left but the browser still resolves the cursor against this
+   document (it asks whichever one last got real pointer input). It is cleared
+   the instant real input arrives here again, so a snippet is never left
+   cursorless while you're actually in it. */
+@media (pointer: fine){
+  html.sn-cursor-none,html.sn-cursor-none *{cursor:none!important;}
+}
 `
 
 // Script injected into every iframe.
 const IFRAME_SCRIPT = `
 (function(){
-  // Receive theme-change and user-change from host
+  var _hid=false;
+  // Real pointer input in here means the browser is now resolving the cursor
+  // against THIS document, so we must be the one drawing it. Done locally and
+  // synchronously — waiting on a message from the host would leave a window
+  // with no cursor at all.
+  function _own(){
+    if(!_hid) return;
+    _hid=false;
+    document.documentElement.classList.remove('sn-cursor-none');
+  }
+  // Receive theme-change, user-change and cursor-mode from host
   window.addEventListener('message',function(e){
     if(!e.data) return;
     if(e.data.type==='theme-change'){
@@ -55,7 +74,41 @@ const IFRAME_SCRIPT = `
       window.__sn_user=e.data.user||null;
       document.dispatchEvent(new CustomEvent('sn:userchange',{detail:window.__sn_user}));
     }
+    if(e.data.type==='cursor-mode'){
+      // Not "is the pointer in me" — it's the host's page-wide answer to
+      // "should a native cursor be visible anywhere right now". Once you have
+      // moved inside this frame the browser keeps asking US for the cursor even
+      // when the pointer is out over the host page or inside a DIFFERENT
+      // snippet, so we have to answer for those positions too. Never times out
+      // or undoes itself; only the host, or real input here, changes it.
+      _hid=!!e.data.hide;
+      document.documentElement.classList.toggle('sn-cursor-none',_hid);
+    }
   });
+
+  // Pointer pass-through. mousemove does not cross into an iframe, so without
+  // this the host's idea of where the pointer is freezes at the point you
+  // entered the snippet — and every later hit test, including the one that
+  // detects you leaving, probes that stale point. The host keeps its cursor
+  // hidden while you're in here; it only needs the coordinates. Coalesced to
+  // one message per frame; coords are frame-local and the host offsets them by
+  // our bounding rect.
+  var _cp=null,_cf=0;
+  function _flushCursor(){
+    _cf=0;
+    if(_cp) window.parent.postMessage(_cp,'*');
+  }
+  document.addEventListener('mousemove',function(e){
+    _own();
+    var t=e.target,i=false;
+    try{i=!!(t&&t.closest&&t.closest('a,button,[role=button],input,textarea,select,label,summary'));}catch(_){}
+    _cp={type:'snippet-cursor',x:e.clientX,y:e.clientY,interactive:i};
+    if(!_cf) _cf=requestAnimationFrame(_flushCursor);
+  },true);
+  // A snippet scrolled under a stationary pointer gets no mousemove — the host
+  // covers that case — but a click without a preceding move still hands us the
+  // cursor, so claim it here too.
+  document.addEventListener('mousedown',_own,true);
 
   // Debounced auto-height: measure rendered body height, not scroll height
   var _rt=null;

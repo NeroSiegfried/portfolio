@@ -643,9 +643,15 @@ html { scroll-behavior: smooth; }
    V2 INTERACTIONS — custom cursor, hover text-slide, media zoom
 ═══════════════════════════════════════════════════════════════ */
 
-/* Custom cursor (pointer:fine only). .v2-cursor-scope hides the native cursor. */
+/* Custom cursor (pointer:fine only). .v2-cursor-scope hides the native cursor.
+   Driven through --v2-cursor rather than hard-coded to `none`: over a snippet
+   <iframe> the cursor component flips it to `default` so the OS cursor comes
+   back. That has to be an explicit value change in THIS document — a scroll
+   that moves a snippet under a stationary pointer changes which document owns
+   the pointer without changing any style, and the browser doesn't repaint the
+   cursor icon for that, which is what left either no cursor or two. */
 @media (pointer: fine) {
-  .v2-cursor-scope, .v2-cursor-scope * { cursor: none !important; }
+  .v2-cursor-scope, .v2-cursor-scope * { cursor: var(--v2-cursor, none) !important; }
 }
 .v2-cursor {
   position: fixed; top: 0; left: 0; z-index: 9999;
@@ -656,6 +662,9 @@ html { scroll-behavior: smooth; }
   will-change: transform;
 }
 .v2-cursor[data-variant="hover"] { width: 44px; height: 44px; }
+/* Pointer has left the window (or entered a frame we can't track through) —
+   fade out instead of sitting frozen wherever it was last seen. */
+.v2-cursor[data-hidden="true"] { opacity: 0; }
 /* Over project media: a ring (outline) with a big, sharp up-right arrow (portfoliod).
    Ring border width matches the arrow's stroke; the arrow fills ~65% of the ring. */
 .v2-cursor[data-variant="ring"] { width: 150px; height: 150px; background: transparent; border: 10px solid #fff; }

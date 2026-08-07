@@ -4,6 +4,8 @@ import { Inter, Inter_Tight, Nanum_Myeongjo, Geist_Mono, Great_Vibes } from "nex
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PageTransition } from "@/components/v2/page-transition"
+import { Cursor } from "@/components/v2/cursor"
+import { CURSOR_BOOT_SCRIPT } from "@/lib/cursor-boot"
 
 // Body sans (unchanged from v1). Display + serif + mono added for v2.
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap", preload: false })
@@ -69,10 +71,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontVars} font-sans antialiased min-h-screen flex flex-col`}>
+        {/* Blocking, and first — runs before any of the body paints. Replays
+            this tab's last known pointer position so the native cursor is
+            hidden and the custom one is placed without waiting on the JS
+            bundle, hydration, or a mouse move. Without it a hard load (worst
+            on a slow DB-backed render) shows the OS arrow the whole time.
+            See lib/cursor-boot.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: CURSOR_BOOT_SCRIPT }} />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {/* Persistent (mounted once, survives navigation) — remounting
+              per-page reset its pointer state on every navigation. Rendered
+              ahead of the page content so its markup lands in the first
+              streamed flush, matching the boot script above; it's
+              position:fixed at z-index 9999, so DOM order doesn't affect
+              stacking. Pauses itself on the frozen /v1 site and /control. */}
+          <Cursor />
           {children}
-          {/* Persistent (mounted once, survives navigation) so it can drive the
-              cover→reveal page transition across routes. */}
+          {/* Persistent for the same reason, so it can drive the cover→reveal
+              page transition across routes. */}
           <PageTransition />
           {/* Site-wide film grain (see .site-grain in globals.css): an empty
               overlay filtered by the #noise-bg-fx feTurbulence below, grayscaled

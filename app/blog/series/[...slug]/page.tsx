@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { readSeriesDb, getSeriesPath } from "@/lib/blog/store"
 import { findSeriesByPath, listPublishedPostsForSeries } from "@/lib/blog/queries"
-import { Cursor } from "@/components/v2/cursor"
 import { BlogNav } from "@/components/v2/blog/blog-nav"
 import { Footer } from "@/components/v2/footer"
 import { Eyebrow } from "@/components/v2/primitives"
@@ -74,7 +73,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
   return (
     <>
-      <Cursor />
       <BlogNav />
 
       <div className="relative bg-background">

@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { AnimatedArrow } from "@/components/v2/animated-arrow"
 import { Wordmark } from "@/components/v2/blog/wordmark"
-import { Cursor } from "@/components/v2/cursor"
 import { Footer } from "@/components/v2/footer"
 import { HoverSlide } from "@/components/v2/hover-slide"
 import { Eyebrow } from "@/components/v2/primitives"
@@ -10,7 +9,6 @@ import { SiteNav } from "@/components/v2/site-nav"
 export default function NotFound() {
   return (
     <>
-      <Cursor />
       <SiteNav homeLinks />
       <main className="pt-24 md:pt-28">
         <div className="mx-4 border-x border-border md:mx-6">

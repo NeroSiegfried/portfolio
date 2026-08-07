@@ -449,3 +449,77 @@ Owner feedback: masonry was bottom-heavy (top corners empty, tiles buried), zoom
   row was deleted afterwards. Automated Chromium cannot solve the production
   Turnstile challenge, so SES delivery through the live subscribe request still
   requires a human-widget smoke test after deployment.
+
+## 2026-08-07 — Custom cursor: page-load reveal + snippet iframe handoff
+
+- **Cursor hoisted to the root layout.** It was rendered separately inside six
+  `page.tsx` files, so it unmounted and lost all pointer state on every
+  client-side navigation. Now mounted once in `app/layout.tsx`, ahead of
+  `{children}` so its markup lands in the first streamed flush, with
+  pathname-driven pause/resume for the frozen `/v1` site and `/control`.
+  `isFrozenRoute` extracted to `lib/frozen-routes.ts` (was duplicated).
+- **Native cursor on page load.** `.v2-cursor-scope` (which carries
+  `cursor: none`) was only added by a `mousemove` handler, so every hard load
+  showed the OS arrow until the bundle downloaded, React hydrated *and* the user
+  moved the mouse — worst on a slow DB-backed render. Nothing reports pointer
+  position before its first input event, so the position is now mirrored to
+  `sessionStorage` and replayed pre-paint by a blocking inline script
+  (`lib/cursor-boot.ts`). Cleared on `mouseleave` of the window, so reloading
+  with the mouse off-page correctly falls back to the native cursor. A brand-new
+  tab still shows the OS cursor until the first move; that part is unfixable.
+- **Layout shift, not just scroll.** Snippet iframes are lazy-loaded, so after a
+  long scroll they keep loading and jumping from their 240px placeholder to their
+  real height (plus a 150ms height transition) for ~1s *after* scrolling stops —
+  measured the element under a stationary pointer going `P → DIV → H2 → P` over
+  2.5s. Re-resolving only on `scroll` + a 150ms poll meant hit-testing a layout
+  that had already moved. Now also triggered by `snippet-resize`, a
+  `ResizeObserver` on `document.body`, and capture-phase `load`.
+
+### The rule that governs the snippet handoff (got this wrong three times)
+
+**The browser takes the cursor from whichever document last received real
+pointer input, and scrolling is not input.** Everything else follows:
+
+- Crossing a frame boundary by scrolling changes which document owns the pointer
+  without changing any style, and the cursor icon is not repainted for that. So
+  we never rely on the browser re-resolving ownership: we decide from our own
+  `elementFromPoint` and write the answer into `--v2-cursor` on `<html>`, which
+  is a real computed-value change and does get painted.
+- Move inside a snippet and **that frame owns the cursor for the whole page**
+  until you move somewhere else — over the page body *and* over other snippets.
+  So "should a native cursor be visible right now?" is one page-wide question and
+  every frame must answer it identically; asking only the frame under the pointer
+  leaves the owner drawing a stale answer (an arrow stranded over the page, or
+  nothing at all over a different snippet).
+- The hide must not time out and undo itself, and must not be permanent either.
+  Both were tried and both broke a different case.
+
+Frames un-hide themselves synchronously on their own `mousemove`/`mousedown`, so
+the entry path never waits on a message round-trip.
+
+- **Verification.** Puppeteer against a production build: full continuous scroll
+  of a 5-snippet article, sampled per frame — 1157 samples, 127 with the pointer
+  genuinely over a snippet, zero sustained mismatches between ground truth and
+  cursor state (max 1 frame, which is sampler-vs-cursor rAF ordering). Note the
+  OS cursor *icon* itself is not observable from automation; only DOM/CSS state
+  is verified, so this is necessarily partial. Owner still reports occasional
+  imperfection — not fully resolved.
+- **Also fixed while here.** `page-transition.tsx`'s safety-net timer force-
+  revealed the curtain after 2200ms without checking whether the route had
+  committed, which on a genuinely slow navigation revealed the *old* page and
+  then swapped content with no curtain covering it. Widened to 8000ms so only a
+  hung navigation reaches it.
+
+### Environment traps hit during this session (cost several wasted cycles)
+
+- `next dev` and `next start` **share `.next`**. Running both left the production
+  server serving HTML that referenced chunks the dev server had overwritten
+  (400s, hydration never completed, snippets stuck as placeholders). Don't run
+  them together.
+- The Neon DB suspends; builds hit connect timeouts and **bake the
+  "DB unavailable" fallback into static pages**. One build produced a
+  snippet-free article that way. Worth knowing for production builds too.
+- `html { scroll-behavior: smooth }` silently invalidated three Puppeteer runs:
+  per-frame `scrollTo` was animated, so the real scroll position lagged far
+  behind and only the top of the page was ever sampled. Use `behavior: 'instant'`
+  in tests.
