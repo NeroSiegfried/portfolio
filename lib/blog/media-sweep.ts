@@ -1,5 +1,5 @@
 import { getPool } from "@/lib/blog/store"
-import { listObjects, imageUrlsIn, extractKey, deleteKey, setKeepTag } from "@/lib/blog/media"
+import { listObjects, imageUrlsIn, extractKey, deleteKey, setKeepTag, taggingEnabled } from "@/lib/blog/media"
 
 /** Grace period before an unreferenced upload is considered a true orphan. */
 const GRACE_MS = 30 * 24 * 60 * 60 * 1000
@@ -62,8 +62,13 @@ export async function reconcileMedia(now = Date.now()): Promise<SweepResult> {
 
   const result: SweepResult = { scanned: objects.length, referenced: 0, deleted: 0, tagged: 0, skipped: 0 }
 
+  // Only uploads/ carries the tag rule — and only when tagging is switched on
+  // at all (see lib/blog/media.ts). With it off this sweep is the *only* orphan
+  // collector, which it already is by design; it just stops writing tags.
+  const tagging = taggingEnabled()
+
   for (const obj of objects) {
-    const managedByRule = obj.key.startsWith("uploads/") // only uploads/ carries the tag rule
+    const managedByRule = obj.key.startsWith("uploads/") && tagging
 
     if (referenced.has(obj.key)) {
       result.referenced++
@@ -82,7 +87,7 @@ export async function reconcileMedia(now = Date.now()): Promise<SweepResult> {
       await setKeepTag(obj.key, false)
       result.tagged++
     } else {
-      result.skipped++ // young, unreferenced media/ object — leave it for now
+      result.skipped++ // young + unreferenced, and untaggable — leave it for now
     }
   }
 

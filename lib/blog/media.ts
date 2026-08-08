@@ -25,8 +25,17 @@ import { makeS3Client } from "@/lib/aws-clients"
  * objects are `keep=true` and are never touched. See lib/blog/media-sweep.ts for
  * the reconciliation sweep that is the primary orphan finder and self-heals tags.
  *
- * Requires IAM: s3:PutObject, s3:PutObjectTagging, s3:GetObject, s3:DeleteObject,
- * s3:ListBucket on uploads/* and media/* (see aws/iam-uploader-policy.json).
+ * **Tagging is OPTIONAL and off by default** (`S3_OBJECT_TAGGING`). It needs
+ * s3:PutObjectTagging, and a credential without it makes the *upload itself*
+ * fail: the presigned PUT carries `x-amz-tagging`, so S3 403s the whole request
+ * rather than just skipping the tag. With tagging off, nothing is tagged, the
+ * `keep=false` lifecycle rule matches nothing, and the reconciliation sweep in
+ * media-sweep.ts is the sole orphan collector (it only needs ListBucket +
+ * DeleteObject). Turn tagging back on once the IAM policy below is applied.
+ *
+ * Requires IAM: s3:PutObject, s3:GetObject, s3:DeleteObject, s3:ListBucket on
+ * uploads/* and media/*, plus s3:PutObjectTagging when `S3_OBJECT_TAGGING` is
+ * enabled (see aws/iam-uploader-policy.json).
  */
 
 export const CF_DOMAIN = () => process.env.AWS_CLOUDFRONT_DOMAIN ?? process.env.CLOUDFRONT_DOMAIN ?? ""
@@ -38,8 +47,30 @@ export const KEEP_TAG_KEY = "keep"
 export const KEEP_TEMP = "false"
 /** Value written once an object is confirmed referenced — never expired. */
 export const KEEP_PERMANENT = "true"
-/** `x-amz-tagging` header value the client must echo on the presigned PUT. */
+/** `x-amz-tagging` value hoisted into the presigned PUT's query string. */
 export const UPLOAD_TAGGING = `${KEEP_TAG_KEY}=${KEEP_TEMP}`
+
+/**
+ * Whether to write `keep` tags at all. Off unless `S3_OBJECT_TAGGING` is
+ * explicitly enabled, because the credential in use may lack
+ * s3:PutObjectTagging — and asking for a tag we can't write breaks uploads
+ * outright (S3 403s the presigned PUT). See the module header.
+ */
+export function taggingEnabled(): boolean {
+  const v = (process.env.S3_OBJECT_TAGGING ?? "").trim().toLowerCase()
+  return v === "1" || v === "true" || v === "on"
+}
+
+/** Log a tagging failure with the fix, without pretending it's fatal. */
+function logTagFailure(key: string, err: unknown): void {
+  const denied = err instanceof Error && /AccessDenied|not authorized/i.test(err.message)
+  console.error(
+    denied
+      ? `[media] tagging denied for ${key} — grant s3:PutObjectTagging or unset S3_OBJECT_TAGGING`
+      : `[media] tagging failed for ${key}`,
+    err,
+  )
+}
 
 /** Turns one of our CloudFront URLs back into its S3 object key, or null. */
 export function extractKey(url: string): string | null {
@@ -81,7 +112,7 @@ function keysFrom(urls: Iterable<string>, onlyUploads: boolean): Set<string> {
  */
 export async function markReferenced(urls: Iterable<string>): Promise<void> {
   const bucket = BUCKET()
-  if (!bucket) return
+  if (!bucket || !taggingEnabled()) return
   const keys = keysFrom(urls, true)
   if (!keys.size) return
   const s3 = makeS3Client()
@@ -89,7 +120,7 @@ export async function markReferenced(urls: Iterable<string>): Promise<void> {
     [...keys].map((Key) =>
       s3
         .send(new PutObjectTaggingCommand({ Bucket: bucket, Key, Tagging: { TagSet: [{ Key: KEEP_TAG_KEY, Value: KEEP_PERMANENT }] } }))
-        .catch((err) => console.error("[media] markReferenced failed for", Key, err)),
+        .catch((err) => logTagFailure(Key, err)),
     ),
   )
 }
@@ -141,10 +172,10 @@ export async function listObjects(prefix: string): Promise<StoredObject[]> {
   return out
 }
 
-/** Best-effort set the `keep` tag on a single key. */
+/** Best-effort set the `keep` tag on a single key. No-op when tagging is off. */
 export async function setKeepTag(key: string, keep: boolean): Promise<void> {
   const bucket = BUCKET()
-  if (!bucket) return
+  if (!bucket || !taggingEnabled()) return
   const s3 = makeS3Client()
   await s3
     .send(
@@ -154,7 +185,7 @@ export async function setKeepTag(key: string, keep: boolean): Promise<void> {
         Tagging: { TagSet: [{ Key: KEEP_TAG_KEY, Value: keep ? KEEP_PERMANENT : KEEP_TEMP }] },
       }),
     )
-    .catch((err) => console.error("[media] setKeepTag failed for", key, err))
+    .catch((err) => logTagFailure(key, err))
 }
 
 /** Best-effort delete a single key (already known to be one of ours). */

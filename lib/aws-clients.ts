@@ -7,8 +7,9 @@
  *  2. Scoped service account  (S3_UPLOADER_KEY_ID + S3_UPLOADER_SECRET)
  *     A dedicated IAM user scoped to the media prefixes — used by Amplify/Vercel
  *     compute environments that don't expose an execution role. Media GC needs
- *     more than PutObject: s3:PutObjectTagging, s3:GetObject, s3:DeleteObject and
- *     s3:ListBucket on uploads/* and media/* (see aws/iam-uploader-policy.json).
+ *     more than PutObject: s3:GetObject, s3:DeleteObject and s3:ListBucket on
+ *     uploads/* and media/* (see aws/iam-uploader-policy.json) — plus
+ *     s3:PutObjectTagging only if S3_OBJECT_TAGGING is enabled.
  *     These are NOT personal admin keys. Stored as S3_UPLOADER_* env vars
  *     (Amplify blocks AWS_* prefix; Vercel uses encrypted env vars).
  *

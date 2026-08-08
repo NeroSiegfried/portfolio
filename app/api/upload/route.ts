@@ -4,7 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { randomUUID } from "crypto"
 import { getSessionUser } from "@/lib/blog/auth"
 import { makeS3Client } from "@/lib/aws-clients"
-import { UPLOAD_TAGGING } from "@/lib/blog/media"
+import { UPLOAD_TAGGING, taggingEnabled } from "@/lib/blog/media"
 
 export const runtime = "nodejs"
 
@@ -73,16 +73,19 @@ export async function POST(req: Request) {
         Key:          key,
         ContentType:  contentType,
         CacheControl: "public, max-age=31536000, immutable",
-        // Born as an unverified upload; promoted to keep=true once the content
-        // referencing it is saved. The lifecycle backstop expires anything left
-        // at keep=false past the grace period.
+        // Optional (S3_OBJECT_TAGGING). When on, the object is born as an
+        // unverified upload, promoted to keep=true once the content referencing
+        // it is saved, and the lifecycle backstop expires anything left at
+        // keep=false past the grace period. When off we must NOT ask for a tag:
+        // the presigner hoists it into the URL's signed query string, so a
+        // credential without s3:PutObjectTagging makes S3 reject the entire PUT
+        // ("not authorized to perform: s3:PutObjectTagging"), not just the tag.
         //
-        // The presigner hoists this (and every other x-amz-* value) into the
-        // URL's *query string*, so the client must send it as part of the URL
-        // and NOT as a header: S3 rejects any x-amz-* header outside
+        // Either way the client sends the signed URL as-is and never echoes
+        // x-amz-tagging as a *header* — S3 rejects any x-amz-* header outside
         // X-Amz-SignedHeaders with "AccessDenied: There were headers present in
         // the request which were not signed".
-        Tagging:      UPLOAD_TAGGING,
+        ...(taggingEnabled() ? { Tagging: UPLOAD_TAGGING } : {}),
       }),
       { expiresIn: 300 }
     )
